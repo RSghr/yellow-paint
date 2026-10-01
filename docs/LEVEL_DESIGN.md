@@ -59,6 +59,11 @@ Behaviour that matters for layout:
 - **When lost** for a few seconds (no reachable paint, nothing to do), it gambles on an unpainted jump: a
   ~65% chance to land. Short safe hops make levels easier than you think; long gaps over pits stay dangerous.
 - **Dead ends need a way back.** A side ledge with a coin or button needs a painted splat back on the main path.
+- **Falls aren't the end.** If it falls (by accident) to a lower floor it survives, it retraces its painted route
+  back to the furthest point it reached. That only works if the paint it already used is reachable from where it
+  landed: on a tower, a splat at the bottom of each climb lets a fallen tester find the way back up.
+- **It walks in straight lines.** It plans straight walks between points and can't route around a pillar or corner.
+  On winding paths, put a splat at each turn (or accept that it will explore/improvise there).
 
 ## 5. Interactables
 
