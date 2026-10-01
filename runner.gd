@@ -37,6 +37,7 @@ const PERCEPTION_INTERVAL := 0.1
 @export var max_drop := 8.0  ## Will drop this far onto PAINT (it trusts paint).
 @export var max_unpainted_drop := 2.6  ## Without paint it's not THAT stupid (will hop off a plank wall, not into the pit).
 @export var jump_apex := 0.9
+@export var takeoff_margin := 0.6  ## Take-off spots stay this far from the edge (its body is 0.8m wide).
 
 @export_group("Perception")
 @export var view_distance := 22.0
@@ -50,8 +51,8 @@ const PERCEPTION_INTERVAL := 0.1
 @export var leap_error := 0.7  ## Unpainted jumps are guesses: landing error in metres.
 @export var wander_limit := 3  ## Wanders on its own this many times before giving up.
 @export var patience := 8.0  ## Seconds of being completely lost before it starts jumping at things unpainted.
-@export var desperate_fail_short := 0.25  ## Chance to fumble a short desperate jump...
-@export var desperate_fail_long := 0.75  ## ...rising to this at max jump distance. Paint makes jumps safe; this doesn't.
+@export_range(0.0, 1.0, 0.05) var desperate_fail_short := 0.25  ## Chance (0-1) to fumble a short desperate jump...
+@export_range(0.0, 1.0, 0.05) var desperate_fail_long := 0.75  ## ...rising to this (0-1) at max jump distance. Paint makes jumps safe; this doesn't.
 @export var coin_detour := 16.0  ## Will go out of its way this far (path cost) for a coin. A painted jump costs ~10.
 
 @export_group("Speech")
@@ -500,6 +501,12 @@ func _start_scan(duration: float) -> void:
 
 ## Ballistic jump that peaks `jump_apex` above the higher end. Leaps of faith are badly aimed.
 func _jump_to(step: Dictionary) -> void:
+	if not is_on_floor():
+		# Slipped off before taking off: no magic mid-air jump, it just falls.
+		_jump_flat_velocity = Vector3(velocity.x, 0, velocity.z)
+		state = State.JUMPING
+		_air_time = 0.0
+		return
 	var from := feet()
 	var target: Vector3 = step.pos
 	var flat := Vector3(target.x - from.x, 0, target.z - from.z)
@@ -813,16 +820,9 @@ func _try_leap_of_faith() -> bool:
 	var space := get_world_3d().direct_space_state
 
 	# Walk the ground toward the flag until it ends.
-	var p := feet()
-	var edge := p
-	for _i in 60:
-		var y = _ground_y(space, p + dir * 0.3, p.y, 0.45)
-		if y == null:
-			break
-		p = p + dir * 0.3
-		p.y = y
-		edge = p
-	edge -= dir * 0.3
+	var edge := _find_takeoff(space, feet(), dir)
+	if edge == Vector3.INF:
+		return false
 
 	# Look across for something to land on that isn't a terrifying drop.
 	for k in range(4, int(max_jump_distance / 0.25) + 1):
@@ -841,6 +841,8 @@ func _try_leap_of_faith() -> bool:
 			landing = hit.position
 		else:
 			landing.y = land_y
+		if _walkable(edge, landing):
+			continue  # Still the same ground, not across the gap.
 		_path.clear()
 		if edge.distance_to(feet()) > 0.3:
 			_path.append({pos = edge, jump = false, trust = 1, leap = false, paint = false, kind = "walk"})
@@ -860,20 +862,9 @@ func _try_desperate_jump() -> bool:
 	for a in 16:
 		var dir := Vector3(cos(a * TAU / 16.0), 0, sin(a * TAU / 16.0))
 		# Walk the current ground in this direction until it ends.
-		var p := origin
-		var edge := origin
-		var found_edge := false
-		for _i in 40:
-			var y = _ground_y(space, p + dir * 0.3, p.y, 0.45)
-			if y == null:
-				found_edge = true
-				break
-			p = p + dir * 0.3
-			p.y = y
-			edge = p
-		if not found_edge:
+		var edge := _find_takeoff(space, origin, dir, 12.0)
+		if edge == Vector3.INF:
 			continue
-		edge -= dir * 0.3
 		if edge.distance_to(origin) > 0.3 and not _walkable(origin, edge):
 			continue
 		# First thing to land on across the gap.
@@ -913,6 +904,26 @@ func _try_desperate_jump() -> bool:
 	_explored.append(best.landing)
 	_advance()
 	return true
+
+
+## Walk the ground from `from` along `dir` until it ends, and return a take-off point
+## `takeoff_margin` back from that edge. Returns Vector3.INF if no edge within `max_dist`
+## (or `from` itself if it's already closer to the edge than the margin).
+func _find_takeoff(space: PhysicsDirectSpaceState3D, from: Vector3, dir: Vector3, max_dist := 18.0) -> Vector3:
+	var p := from
+	var travelled := 0.0
+	while travelled < max_dist:
+		var y = _ground_y(space, p + dir * 0.1, p.y, 0.45)
+		if y == null:
+			var edge := p - dir * takeoff_margin
+			if (edge - from).dot(dir) <= 0.0:
+				return from
+			var ey = _ground_y(space, edge, p.y, 0.45)
+			return Vector3(edge.x, ey if ey != null else p.y, edge.z)
+		p += dir * 0.1
+		p.y = y
+		travelled += 0.1
+	return Vector3.INF
 
 
 ## Mooch around the current platform looking for yellow.
@@ -971,14 +982,17 @@ func _link(a: Vector3, b: Vector3, allow_jump := true) -> Dictionary:
 	# Paint marks where to LAND. Walk to a sensible take-off point on this ground first.
 	var space := get_world_3d().direct_space_state
 	var back := Vector3(-d.x, 0, -d.z).normalized()
-	for r in [2.0, 3.0, 4.0, 5.0, 1.2]:
-		if r >= flat:
-			continue
+	var r := 1.2
+	while r <= max_jump_distance and r < flat:
 		var launch: Vector3 = b + back * r
+		r += 0.2
 		var y = _ground_y(space, launch, a.y, 0.45)
 		if y == null:
 			continue
 		launch.y = y
+		# Keep a safety margin: there must still be ground between the feet and the edge.
+		if _ground_y(space, launch - back * takeoff_margin, y, 0.3) == null:
+			continue
 		var j: Vector3 = b - launch
 		if j.y > max_jump_up or j.y < -max_drop:
 			continue
