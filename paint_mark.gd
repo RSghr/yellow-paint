@@ -11,8 +11,9 @@ var normal := Vector3.UP
 var interact_point := Vector3.ZERO  ## For "interact" paint: where to stand to use the host.
 
 
-func build_visual(normal: Vector3, texture: Texture2D) -> void:
+func build_visual(normal: Vector3, texture: Texture2D, color := Color(1.0, 0.82, 0.05)) -> void:
 	var decal := Decal.new()
+	decal.modulate = color  # The image is white; this makes it yellow.
 	var s := randf_range(0.9, 1.3)
 	decal.size = Vector3(1.3 * s, 0.6, 1.3 * s)
 	decal.texture_albedo = texture

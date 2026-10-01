@@ -58,6 +58,7 @@ func smash() -> void:
 	if broken:
 		return
 	broken = true
+	Sfx.play("smash")
 	_spawn_debris()
 	visible = false
 	collision_layer = 0

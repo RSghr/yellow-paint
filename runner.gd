@@ -50,7 +50,7 @@ const PERCEPTION_INTERVAL := 0.1
 @export var hesitation_per_doubt := 0.9  ## Pause before jumping to a spot with only 1 splat.
 @export var leap_error := 0.7  ## Unpainted jumps are guesses: landing error in metres.
 @export var wander_limit := 3  ## Wanders on its own this many times before giving up.
-@export var patience := 8.0  ## Seconds of being completely lost before it starts jumping at things unpainted.
+@export var patience := 4.0  ## Seconds without progress (after a full look-around) before it jumps at things unpainted.
 @export_range(0.0, 1.0, 0.05) var desperate_success_chance := 0.65  ## Chance (0-1) that an unpainted desperate jump lands. A miss falls well short.
 @export var coin_detour := 16.0  ## Will go out of its way this far (path cost) for a coin. A painted jump costs ~10.
 
@@ -67,6 +67,7 @@ const PERCEPTION_INTERVAL := 0.1
 			_debug_mesh.visible = value
 
 var state := State.WAITING
+var tester_name := "Playtester"  ## Set by the Game scene (a random focus tester per run).
 
 var _path: Array[Dictionary] = []  ## Steps: {pos, jump, trust, leap}
 var _spawn: Transform3D
@@ -185,6 +186,7 @@ func say(text: String, force := false) -> void:
 		return
 	_speech_cooldown = 1.6
 	_speech.text = text
+	Sfx.play("voice", 0.2, -4.0)
 	said.emit(text)
 
 
@@ -386,6 +388,7 @@ func _process_jump(delta: float) -> void:
 		return
 	if _air_time > 0.1 and is_on_floor():
 		velocity = Vector3.ZERO
+		Sfx.play("land")
 		if not _path.is_empty():
 			var step: Dictionary = _path[0]
 			var off: Vector3 = step.pos - feet()
@@ -471,6 +474,7 @@ func _advance() -> void:
 		var doubt := maxf(0.0, 3.0 - step.trust) / 2.0  # trust 1 -> 1.0, 2 -> 0.5, 3+ -> 0
 		if step.get("desperate", false):
 			doubt = 1.6
+			Sfx.play("desperate", 0.0)
 			say(["Fine. I'll do it myself.", "No yellow anywhere. Improvising!", "Nobody's painting? I'm jumping.",
 				"This is what happens when you don't paint, boss."].pick_random(), true)
 		elif step.leap:
@@ -533,6 +537,7 @@ func _jump_to(step: Dictionary) -> void:
 		_face(flat.normalized())
 	state = State.JUMPING
 	_air_time = 0.0
+	Sfx.play("jump")
 	if not step.leap and step.trust >= 3:
 		say(["LOTS of yellow! Jumping!", "Yellow means jump!", "Wheee!"].pick_random())
 
@@ -540,6 +545,7 @@ func _jump_to(step: Dictionary) -> void:
 func _die() -> void:
 	state = State.DEAD
 	_path.clear()
+	Sfx.play("fall", 0.0)
 	if _last_jump_desperate:
 		say(["Improvising was a mistake.", "Should have waited for the yellow...", "Tell the designer I tried."].pick_random(), true)
 	else:

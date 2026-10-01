@@ -19,6 +19,7 @@ const FLY_SPEED := 8.0  ## Vertical speed in fly mode.
 @onready var camera: Camera3D = $Head/Camera3D
 
 var locked_mouse := true
+var active := true  ## False while spectating: no moving, looking or painting (gravity still applies).
 var flying := false  ## Fly mode: no gravity, Space up, Ctrl down.
 var pitch := 0.0
 var speed := BASE_SPEED
@@ -34,6 +35,8 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not active:
+		return
 	if event.is_action_pressed("lock_mouse"):
 		_set_mouse_locked(not locked_mouse)
 	elif event.is_action_pressed("toggle_fly"):
@@ -48,9 +51,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and locked_mouse:
-		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
-		pitch = clamp(pitch - event.relative.y * MOUSE_SENSITIVITY, deg_to_rad(-85), deg_to_rad(85))
+	if event is InputEventMouseMotion and locked_mouse and active:
+		var s := MOUSE_SENSITIVITY * Settings.mouse_sensitivity
+		rotate_y(-event.relative.x * s)
+		pitch = clamp(pitch - event.relative.y * s, deg_to_rad(-85), deg_to_rad(85))
 		head.rotation.x = pitch
 
 
@@ -63,7 +67,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _move(delta: float) -> void:
-	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if active else Vector2.ZERO
 	var direction := (global_basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 
 	var sprinting := Input.is_action_pressed("sprint") and input_dir != Vector2.ZERO
@@ -76,15 +80,15 @@ func _move(delta: float) -> void:
 	velocity.z = direction.z * speed
 
 	if flying:
-		var vertical := Input.get_axis("fly_down", "jump")
+		var vertical := Input.get_axis("fly_down", "jump") if active else 0.0
 		velocity.y = move_toward(velocity.y, vertical * FLY_SPEED, 40.0 * delta)
 	elif is_on_floor():
-		if Input.is_action_just_pressed("jump"):
+		if active and Input.is_action_just_pressed("jump"):
 			velocity.y = JUMP_VELOCITY
 	else:
 		velocity.y -= GRAVITY * delta
 		# Jetpack: keep holding jump in the air to float upward.
-		if Input.is_action_pressed("jump") and velocity.y < JETPACK_MAX_RISE:
+		if active and Input.is_action_pressed("jump") and velocity.y < JETPACK_MAX_RISE:
 			velocity.y = minf(velocity.y + JETPACK_ACCEL * delta, JETPACK_MAX_RISE)
 
 	move_and_slide()
@@ -92,17 +96,17 @@ func _move(delta: float) -> void:
 
 func _handle_paint(delta: float) -> void:
 	_paint_cooldown -= delta
-	if locked_mouse and Input.is_action_pressed("paint") and _paint_cooldown <= 0.0:
+	if active and locked_mouse and Input.is_action_pressed("paint") and _paint_cooldown <= 0.0:
 		_paint_cooldown = PAINT_REPEAT
 		var hit := _aim_ray()
-		if hit and _paint:
-			_paint.paint(hit.position, hit.normal, hit.collider)
+		if hit and _paint and _paint.paint(hit.position, hit.normal, hit.collider):
+			Sfx.play("spray", 0.12)
 
 
 func _scrape() -> void:
 	var hit := _aim_ray()
-	if hit and _paint:
-		_paint.scrape(hit.position)
+	if hit and _paint and _paint.scrape(hit.position) > 0:
+		Sfx.play("scrape")
 
 
 ## What the crosshair is pointing at (level geometry only).
