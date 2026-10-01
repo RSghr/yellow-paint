@@ -52,6 +52,7 @@ const PERCEPTION_INTERVAL := 0.1
 @export var wander_limit := 3  ## Wanders on its own this many times before giving up.
 @export var patience := 8.0  ## Seconds without progress (after a full look-around) before it jumps at things unpainted.
 @export_range(0.0, 1.0, 0.05) var desperate_success_chance := 0.65  ## Chance (0-1) that an unpainted desperate jump lands. A miss falls well short.
+@export var setback_drop := 1.5  ## Landing this far below the last trusted spot (by accident) counts as a fall: retrace.
 @export var coin_detour := 16.0  ## Will go out of its way this far (path cost) for a coin. A painted jump costs ~10.
 
 @export_group("Speech")
@@ -80,6 +81,8 @@ var _attention := {}  ## mark instance id -> how much it has looked at it (1.0 =
 var _seen := {}  ## mark instance id -> true
 var _visited: Array[Vector3] = []  ## Paint spots it has stood on.
 var _explored: Array[Vector3] = []  ## Places it wandered to (for picking new directions).
+var _furthest := Vector3.INF  ## The most recent NEW paint spot it reached: its best progress so far.
+var _retrace_to := Vector3.INF  ## After a fall: head back to this spot before exploring again.
 var _wanders := 0
 var _home_y := 0.0  ## Height of the last trusted ground; wandering stays near it.
 var _rethink := false  ## Something new was noticed; reconsider the plan at the next chance.
@@ -150,6 +153,8 @@ func reset_to_spawn() -> void:
 	_seen.clear()
 	_visited.clear()
 	_explored.clear()
+	_furthest = Vector3.INF
+	_retrace_to = Vector3.INF
 	_coin_attention.clear()
 	_seen_coins.clear()
 	_choices.clear()
@@ -397,9 +402,25 @@ func _process_jump(delta: float) -> void:
 			if off.length() < 1.2:
 				_arrive(step)
 				return
-			if step.leap:
+			# Any landing that isn't where it meant to go might be a fall.
+			if not _check_setback() and step.leap:
 				say(["Made it! ...mostly.", "Nailed it. Sort of."].pick_random(), true)
+		else:
+			_check_setback()  # Fell off something without meaning to.
 		_start_scan(scan_time * 0.5)
+
+
+## Landed somewhere it didn't mean to, well below its last trusted spot: that's a fall.
+## It heads back to the furthest paint it had reached, using the spots it knows as stepping stones.
+func _check_setback() -> bool:
+	if feet().y > _home_y - setback_drop:
+		return false
+	_home_y = feet().y  # It's on a new floor now: wander here, not on the floor it fell from.
+	_wanders = 0
+	if _furthest != Vector3.INF:
+		_retrace_to = _furthest
+		say(["Ow. Okay, I know the way back up.", "Fell. Let's retrace my steps.", "That was a shortcut. Down."].pick_random(), true)
+	return true
 
 
 func _process_interact() -> void:
@@ -452,8 +473,7 @@ func _arrive(step: Dictionary) -> void:
 	if step.get("kind", "") == "coin":
 		say(["Shiny!", "Ooh, a coin!", "Coin get."].pick_random(), true)
 	if step.get("paint", false):
-		if not _is_visited(step.pos):
-			_visited.append(step.pos)
+		_record_visit(step.pos)
 		_wanders = 0
 		_home_y = feet().y
 	if _path.is_empty():
@@ -735,8 +755,7 @@ func _decide() -> void:
 		while _path.size() > 1 and not _path[0].jump and _path[0].kind == "paint" \
 				and Vector2(_path[0].pos.x - feet().x, _path[0].pos.z - feet().z).length() < 0.35:
 			var here: Dictionary = _path.pop_front()
-			if not _is_visited(here.pos):
-				_visited.append(here.pos)
+			_record_visit(here.pos)
 		match kinds[target]:
 			"goal":
 				say(["I know where I'm going!", "Flag, here I come."].pick_random())
@@ -775,6 +794,16 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 	if goal_index != -1 and dist[goal_index] < INF:
 		return goal_index
 
+	# Retracing after a fall: go back to the furthest spot it had reached.
+	if _retrace_to != Vector3.INF:
+		for i in nodes.size():
+			if kinds[i] == "paint" and dist[i] < INF and nodes[i].distance_to(_retrace_to) < 1.0:
+				return i
+		# No painted way back up from here: forget where it's been and explore whatever it can reach.
+		_retrace_to = Vector3.INF
+		_visited.clear()
+		say(["No way back up. Starting over.", "Okay. New plan: any yellow will do."].pick_random(), true)
+
 	for i in nodes.size():
 		if kinds[i] == "task" and dist[i] < INF:
 			if best == -1 or trust[i] > trust[best] or (trust[i] == trust[best] and dist[i] < dist[best]):
@@ -806,8 +835,18 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 func _mark_spots_underfoot() -> void:
 	var f := feet()
 	for spot in known_spots():
-		if spot.pos.distance_to(f) < 1.0 and not _is_visited(spot.pos):
-			_visited.append(spot.pos)
+		if spot.pos.distance_to(f) < 1.0:
+			_record_visit(spot.pos)
+
+
+## Remember a paint spot as reached. New spots become its "best progress" (where to retrace to after a fall).
+func _record_visit(pos: Vector3) -> void:
+	if not _is_visited(pos):
+		_visited.append(pos)
+		_furthest = pos
+	if _retrace_to != Vector3.INF and pos.distance_to(_retrace_to) < 1.0:
+		_retrace_to = Vector3.INF
+		say(["Back where I was. Now, onwards.", "Right, I remember this bit."].pick_random())
 
 
 func _is_visited(p: Vector3) -> bool:
@@ -1145,6 +1184,10 @@ func _draw_debug() -> void:
 		im.surface_add_vertex(prev + Vector3.UP * 0.1)
 		im.surface_add_vertex(step.pos + Vector3.UP * 0.1)
 		prev = step.pos
+	if _retrace_to != Vector3.INF:
+		im.surface_set_color(Color(0.3, 0.6, 1.0))  # Where it's retracing to after a fall.
+		im.surface_add_vertex(_retrace_to)
+		im.surface_add_vertex(_retrace_to + Vector3.UP * 3.0)
 	if _goal_known:
 		im.surface_set_color(Color(1, 0.85, 0.1))
 		im.surface_add_vertex(_goal.global_position)

@@ -34,12 +34,16 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 - **Trust** = number of seen splats within `trust_radius`. Low trust → hesitates, walks slower, quick look-around.
 - Jumps only onto paint (or toward the flag once seen: "leap of faith", deliberately inaccurate). Paint marks the **landing**; the AI walks to a take-off point itself.
 - Walks freely on continuous ground; wanders a little, then gives up ("Hello? Level designer?").
-- **Desperation**: once it has done a full round of wandering AND `patience` seconds (default 4, chosen by the user) have passed without progress (reaching paint/coin/button/flag, seeing new paint, a door opening), so roughly 10-15s of being lost, it jumps at any ledge it can see
+- **Desperation**: once it has done a full round of wandering AND `patience` seconds (default 8, chosen by the user) have passed without progress (reaching paint/coin/button/flag, seeing new paint, a door opening), so roughly 10-15s of being lost, it jumps at any ledge it can see
   (closer to the flag if seen, else unexplored). It's a gamble: `desperate_success_chance` (0.65) that it lands,
   regardless of distance (a miss falls well short). Paint appearing during the wind-up cancels it. Won't drop more than
   `max_unpainted_drop` (2.6m) unpainted. Level minimums stay defined as what's *reliable*.
 - Take-off points always keep `takeoff_margin` (0.6m) from the edge, and it can never start a jump while airborne
   (if it slips off, it just falls). `desperate_success_chance` is a probability (0-1).
+- **Retrace after a fall**: landing by accident more than `setback_drop` (1.5m) below its last trusted spot = setback.
+  It heads back to `_furthest` (the most recent NEW paint spot it reached) using known spots as stepping stones,
+  then explores normally. If no painted way back exists, it clears `_visited` and explores anything reachable.
+- It only plans **straight-line walks** between points (no navmesh): it can't plan a walk around a pillar or corner.
 - Coins are seen without paint but only walked to (`coin_detour` path cost).
 - Breakables: side paint = smash, top paint = climb; more paint wins, ties are a remembered guess.
 - Priorities: nearby coin > flag > painted interactable > unvisited paint > leap of faith > wander > desperate jump.
