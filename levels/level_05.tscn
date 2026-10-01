@@ -1,0 +1,165 @@
+[gd_scene format=3 uid="uid://lv4kysgc0yvs"]
+
+[ext_resource type="PackedScene" path="res://breakable.tscn" id="3_7d3dm"]
+[ext_resource type="PackedScene" path="res://wall_button.tscn" id="4_n8w53"]
+[ext_resource type="PackedScene" path="res://door.tscn" id="5_a6hey"]
+[ext_resource type="PackedScene" uid="uid://caufl8sqp5orp" path="res://debug_block.tscn" id="block"]
+[ext_resource type="PackedScene" path="res://coin.tscn" id="coin"]
+[ext_resource type="PackedScene" path="res://goal.tscn" id="goal"]
+[ext_resource type="Script" uid="uid://d2xo6jturp86h" path="res://level.gd" id="lvl_script"]
+
+[node name="Level05" type="Node3D" unique_id=1747236043]
+editor_description = "Level root. Set level_name, intro_text and minimum_paint in the Inspector. See docs/LEVEL_DESIGN.md."
+script = ExtResource("lvl_script")
+level_name = "The Tower"
+intro_text = "Manage to reach the the top and collect all the coins!"
+minimum_paint = 999
+
+[node name="RunnerSpawn" type="Marker3D" parent="." unique_id=187521223]
+editor_description = "Where the playtester starts. Keep it 0.9 above the floor (its origin is at its middle)."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 3.3493469)
+
+[node name="OperatorSpawn" type="Marker3D" parent="." unique_id=1393547241]
+editor_description = "Where you (the operator) start. 1.05 above the floor. Rotate it to set the starting view."
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0.13785839, 1.05, 3.5102367)
+
+[node name="Geometry" type="Node3D" parent="." unique_id=428900340]
+editor_description = "Static blocks: instance debug_block.tscn and set size/color (never scale blocks)."
+
+[node name="PitFloor" parent="Geometry" unique_id=555554816 instance=ExtResource("block")]
+editor_description = "Catches falls. Its top (y = -4) is below the level's death_height (-2.5), so falling here = lost."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, -4.5, 0)
+size = Vector3(40, 1, 20)
+color = Color(0.35, 0.2, 0.2, 1)
+
+[node name="StartPlatform" parent="Geometry" unique_id=848956108 instance=ExtResource("block")]
+editor_description = "Top at y = 0 (center y = -2, height 4)."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, 3.3493469)
+size = Vector3(8, 4, 3)
+color = Color(0.58, 0.6, 0.64, 1)
+
+[node name="GoalPlatform" parent="Geometry" unique_id=1300737868 instance=ExtResource("block")]
+editor_description = "3m gap from StartPlatform: one painted splat on its near edge is enough."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.24154, 25.672436, 0)
+size = Vector3(8, 4, 6)
+color = Color(0.58, 0.6, 0.64, 1)
+
+[node name="Block" parent="Geometry" unique_id=1807350543 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.89538, 10.85961, 0)
+size = Vector3(10, 30, 6)
+
+[node name="Block2" parent="Geometry" unique_id=16863400 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.913171, 0.72171724, -4.5160522)
+size = Vector3(6, 3, 3)
+
+[node name="Block3" parent="Geometry" unique_id=363065101 instance=ExtResource("block")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 6.874711, 0.28211594, -0.0013952255)
+size = Vector3(6, 2, 2)
+
+[node name="Block4" parent="Geometry" unique_id=1577497694 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.416103, 2.4232373, -4.514578)
+size = Vector3(8, 3, 3)
+
+[node name="Block5" parent="Geometry" unique_id=1882780005 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.907999, 10.85961, -1.9966435)
+size = Vector3(2, 30, 2)
+
+[node name="Block6" parent="Geometry" unique_id=1237003703 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.907999, 10.85961, 1.9966438)
+size = Vector3(2, 30, 2)
+
+[node name="Block7" parent="Geometry" unique_id=1650017722 instance=ExtResource("block")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 20.094904, 3.7347703, 2.4297137)
+size = Vector3(7, 3, 4)
+
+[node name="Breakable" parent="Geometry" unique_id=1568687427 instance=ExtResource("3_7d3dm")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 19.793814, 6.7393417, 0.010732174)
+size = Vector3(2, 3, 0.25)
+
+[node name="Block8" parent="Geometry" unique_id=2009964755 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.491491, 5.406154, 4.4915657)
+size = Vector3(12, 3, 3)
+
+[node name="Block9" parent="Geometry" unique_id=604112322 instance=ExtResource("block")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5.9695597, 8.110504, -0.0013952255)
+size = Vector3(3, 2, 4)
+
+[node name="WallButton" parent="Geometry" unique_id=1274113368 instance=ExtResource("4_n8w53")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 7.7660246, 9.107955, -0.0013952255)
+target = NodePath("../Door")
+
+[node name="Door" parent="Geometry" unique_id=842539436 instance=ExtResource("5_a6hey")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5.9712524, 11.774636, -3.2310438)
+size = Vector3(0.5, 3.5, 4)
+
+[node name="Block10" parent="Geometry" unique_id=2117937915 instance=ExtResource("block")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 8.984846, 9.004345, -4.5172563)
+size = Vector3(3, 2, 10)
+
+[node name="Block11" parent="Geometry" unique_id=967914910 instance=ExtResource("block")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 17.233345, 11.014019, -4.5172563)
+size = Vector3(3, 2, 3)
+
+[node name="Block12" parent="Geometry" unique_id=1995388553 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.458008, 12.897214, -2.4923654)
+size = Vector3(3, 2, 7)
+
+[node name="Breakable2" parent="Geometry" unique_id=71381949 instance=ExtResource("3_7d3dm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.029793, 13.739384, 0.026247144)
+size = Vector3(2, 0.3, 2)
+
+[node name="Block13" parent="Geometry" unique_id=570256782 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.950571, 14.801603, 4.5020137)
+size = Vector3(6, 2, 3)
+
+[node name="Block14" parent="Geometry" unique_id=347045516 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.554966, 16.509193, 4.5020137)
+size = Vector3(12, 2, 3)
+
+[node name="WallButton2" parent="Geometry" unique_id=342755004 instance=ExtResource("4_n8w53")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 5.9645615, 16.293562, -2.122157)
+target = NodePath("../Door2")
+
+[node name="Door2" parent="Geometry" unique_id=1619902503 instance=ExtResource("5_a6hey")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.782, 16, 0)
+open_height = 10.0
+open_time = 3.0
+size = Vector3(4, 0.5, 4)
+
+[node name="Block15" parent="Geometry" unique_id=1362436523 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.600133, 15.756359, 0.13983011)
+size = Vector3(5, 1, 5)
+
+[node name="Interactables" type="Node3D" parent="." unique_id=410667203]
+editor_description = "Put breakable.tscn, door.tscn and wall_button.tscn instances here."
+
+[node name="Coins" type="Node3D" parent="." unique_id=1762539268]
+editor_description = "Instance coin.tscn here. The coin's origin sits on the floor."
+
+[node name="Coin" parent="Coins" unique_id=2034256738 instance=ExtResource("coin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.212893, 2.2647421, -4.7122164)
+
+[node name="Coin2" parent="Coins" unique_id=1608834748 instance=ExtResource("coin")]
+transform = Transform3D(-0.0884075, 0, 0.9960844, 0, 1, 0, -0.9960844, 0, -0.0884075, 18.595448, 4.995795, -0.08727789)
+
+[node name="Coin3" parent="Coins" unique_id=548415229 instance=ExtResource("coin")]
+transform = Transform3D(-0.0884075, 0, 0.9960844, 0, 1, 0, -0.9960844, 0, -0.0884075, 10.555983, 6.9002776, 4.5958996)
+
+[node name="Coin4" parent="Coins" unique_id=1831237582 instance=ExtResource("coin")]
+transform = Transform3D(0.99999183, 0, 0.0040316433, 0, 1, 0, -0.0040316433, 0, 0.99999183, 4.897734, 9.962051, -2.5953076)
+
+[node name="Coin5" parent="Coins" unique_id=1377249194 instance=ExtResource("coin")]
+transform = Transform3D(0.99999183, 0, 0.0040316433, 0, 1, 0, -0.0040316433, 0, 0.99999183, 17.243387, 11.99527, -4.6877923)
+
+[node name="Coin6" parent="Coins" unique_id=1217212480 instance=ExtResource("coin")]
+transform = Transform3D(0.99999183, 0, 0.0040316433, 0, 1, 0, -0.0040316433, 0, 0.99999183, 19.253342, 14.007896, -0.17167711)
+
+[node name="Coin7" parent="Coins" unique_id=2022864725 instance=ExtResource("coin")]
+transform = Transform3D(0.038701836, 0, 0.99925077, 0, 1, 0, -0.99925077, 0, 0.038701836, 5.0276933, 17.252077, 4.1174307)
+
+[node name="Coin8" parent="Coins" unique_id=1369053632 instance=ExtResource("coin")]
+transform = Transform3D(0.038701836, 0, 0.99925077, 0, 1, 0, -0.99925077, 0, 0.038701836, 19.068558, 26.90118, 0.024811506)
+
+[node name="Goal" parent="." unique_id=1591318712 instance=ExtResource("goal")]
+editor_description = "The flag. Its origin sits on the floor."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.24154, 27.672436, 0)

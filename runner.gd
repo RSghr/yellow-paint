@@ -50,7 +50,7 @@ const PERCEPTION_INTERVAL := 0.1
 @export var hesitation_per_doubt := 0.9  ## Pause before jumping to a spot with only 1 splat.
 @export var leap_error := 0.7  ## Unpainted jumps are guesses: landing error in metres.
 @export var wander_limit := 3  ## Wanders on its own this many times before giving up.
-@export var patience := 4.0  ## Seconds without progress (after a full look-around) before it jumps at things unpainted.
+@export var patience := 8.0  ## Seconds without progress (after a full look-around) before it jumps at things unpainted.
 @export_range(0.0, 1.0, 0.05) var desperate_success_chance := 0.65  ## Chance (0-1) that an unpainted desperate jump lands. A miss falls well short.
 @export var coin_detour := 16.0  ## Will go out of its way this far (path cost) for a coin. A painted jump costs ~10.
 
