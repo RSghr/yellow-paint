@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://de7c1hmd7mm61"]
+
+[ext_resource type="PackedScene" uid="uid://4pebb4dalsny" path="res://character.tscn" id="1_ig7tw"]
+[ext_resource type="PackedScene" uid="uid://caufl8sqp5orp" path="res://debug_block.tscn" id="2_0xm2m"]
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_7dm0k"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_0xm2m"]
+size = Vector2(60, 60)
+
+[sub_resource type="Environment" id="Environment_h2yge"]
+
+[node name="Main" type="Node3D" unique_id=612361996]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=1220110478]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1627185656]
+shape = SubResource("WorldBoundaryShape3D_7dm0k")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D" unique_id=1335677607]
+mesh = SubResource("PlaneMesh_0xm2m")
+
+[node name="CharacterBody" parent="." unique_id=362223709 instance=ExtResource("1_ig7tw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=818947397]
+environment = SubResource("Environment_h2yge")
+
+[node name="SpotLight3D" type="SpotLight3D" parent="." unique_id=45962151]
+transform = Transform3D(0.6537905, 0.75667566, -4.203517e-08, -0.5476717, 0.4732048, 0.6900239, 0.5221243, -0.45113105, 0.7237866, 0, 11.095271, 16.727657)
+light_energy = 3.86
+spot_range = 43.686058
+
+[node name="Blocks" type="Node3D" parent="." unique_id=966474131]
+
+[node name="Debug_Block" parent="Blocks" unique_id=1740086020 instance=ExtResource("2_0xm2m")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 9.590291, 0.77345467, 0)
+
+[node name="Debug_Block2" parent="Blocks" unique_id=1562891495 instance=ExtResource("2_0xm2m")]
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 9.590291, 1.2889366, -10.49308)
+
+[node name="Debug_Block3" parent="Blocks" unique_id=1741080543 instance=ExtResource("2_0xm2m")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0.024437904, 0.77345467, 10.197979)
+
+[node name="Debug_Block4" parent="Blocks" unique_id=746851071 instance=ExtResource("2_0xm2m")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 9.511952, 4.3475018, 8.097553)
+
+[node name="Debug_Block" parent="Blocks/Debug_Block4" unique_id=337889833 instance=ExtResource("2_0xm2m")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, -5.7256536, -1.0144761, -7.199604)

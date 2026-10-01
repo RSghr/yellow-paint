@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://4pebb4dalsny"]
+
+[ext_resource type="Script" uid="uid://cueestjc7kbo3" path="res://character.gd" id="1_glpr6"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_vu45j"]
+radius = 0.629395
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_glpr6"]
+
+[node name="CharacterBody" type="CharacterBody3D" unique_id=641964565]
+script = ExtResource("1_glpr6")
+
+[node name="Head" type="Node3D" parent="." unique_id=486954666]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.881923, -0.486606)
+
+[node name="Camera3D" type="Camera3D" parent="Head" unique_id=1256837296]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.0303379)
+fov = 90.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=906664445]
+shape = SubResource("CylinderShape3D_vu45j")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1542278676]
+mesh = SubResource("CylinderMesh_glpr6")
+
+[connection signal="mana_changed" from="." to="." method="_on_mana_changed"]
+[connection signal="money_changed" from="." to="." method="_on_money_changed"]

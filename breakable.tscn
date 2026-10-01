@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://breakable.gd" id="1_brk"]
+
+[node name="Breakable" type="StaticBody3D"]
+script = ExtResource("1_brk")
+size = Vector3(1.2, 1.2, 1.2)
+color = Color(0.62, 0.42, 0.22, 1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
