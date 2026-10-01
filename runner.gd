@@ -6,6 +6,7 @@ extends CharacterBody3D
 ##   - walk around on the ground it's standing on, looking around as it goes
 ##   - spot the goal flag if it's in view, and remember it
 ##   - risk an unpainted jump toward the flag when it can see a landing (badly aimed)
+##   - when it's been lost for a while, jump at ANY ledge it can see (a gamble that often fails)
 ## What it needs yellow paint for:
 ##   - any other jump. It won't trust a ledge that isn't painted.
 ##
@@ -34,7 +35,7 @@ const PERCEPTION_INTERVAL := 0.1
 @export var max_jump_distance := 5.5  ## Horizontal reach of a jump.
 @export var max_jump_up := 2.5
 @export var max_drop := 8.0  ## Will drop this far onto PAINT (it trusts paint).
-@export var max_unpainted_drop := 2.0  ## Without paint it's not THAT stupid.
+@export var max_unpainted_drop := 2.6  ## Without paint it's not THAT stupid (will hop off a plank wall, not into the pit).
 @export var jump_apex := 0.9
 
 @export_group("Perception")
@@ -48,6 +49,9 @@ const PERCEPTION_INTERVAL := 0.1
 @export var hesitation_per_doubt := 0.9  ## Pause before jumping to a spot with only 1 splat.
 @export var leap_error := 0.7  ## Unpainted jumps are guesses: landing error in metres.
 @export var wander_limit := 3  ## Wanders on its own this many times before giving up.
+@export var patience := 8.0  ## Seconds of being completely lost before it starts jumping at things unpainted.
+@export var desperate_fail_short := 0.25  ## Chance to fumble a short desperate jump...
+@export var desperate_fail_long := 0.75  ## ...rising to this at max jump distance. Paint makes jumps safe; this doesn't.
 @export var coin_detour := 16.0  ## Will go out of its way this far (path cost) for a coin. A painted jump costs ~10.
 
 @export_group("Speech")
@@ -78,6 +82,8 @@ var _explored: Array[Vector3] = []  ## Places it wandered to (for picking new di
 var _wanders := 0
 var _home_y := 0.0  ## Height of the last trusted ground; wandering stays near it.
 var _rethink := false  ## Something new was noticed; reconsider the plan at the next chance.
+var _lost_time := 0.0  ## Time spent confused since it last made progress. Desperation kicks in at `patience`.
+var _last_jump_desperate := false
 var _coin_attention := {}  ## coin instance id -> attention
 var _seen_coins := {}
 var _choices := {}  ## breakable id -> {i, t, choice}: remembered break-or-climb guesses
@@ -130,6 +136,7 @@ func _process(_delta: float) -> void:
 func start() -> void:
 	if state in [State.WAITING, State.CONFUSED]:
 		_wanders = 0
+		_lost_time = 0.0
 		say(["Okay! Let's see...", "Playtest starting. Where's the yellow?", "Right. Looking for yellow."].pick_random(), true)
 		_start_scan(scan_time)
 
@@ -150,6 +157,8 @@ func reset_to_spawn() -> void:
 	_goal_known = false
 	_wanders = 0
 	_rethink = false
+	_lost_time = 0.0
+	_last_jump_desperate = false
 	_home_y = _spawn.origin.y - FEET_OFFSET
 	_head.rotation = Vector3.ZERO
 	_body.rotation = Vector3.ZERO
@@ -285,13 +294,17 @@ func _physics_process(delta: float) -> void:
 				_decide()
 		State.HESITATING:
 			_idle_physics(delta)
-			if _timer >= _scan_duration:
+			if _rethink and _path[0].get("desperate", false):
+				say(["Oh! Yellow! Never mind.", "Wait, there's paint now?"].pick_random(), true)
+				_decide()  # Paint appeared while it was psyching itself up: use that instead.
+			elif _timer >= _scan_duration:
 				_jump_to(_path[0])
 		State.INTERACTING:
 			_idle_physics(delta)
 			_process_interact()
 		State.CONFUSED:
 			_idle_physics(delta)
+			_lost_time += delta
 			if _rethink or _timer >= 4.0:
 				_rethink = false
 				_wanders = 0
@@ -426,6 +439,8 @@ func _on_world_changed() -> void:
 ## Reached a step of the path.
 func _arrive(step: Dictionary) -> void:
 	_stuck_count = 0
+	if step.get("kind", "") in ["task", "coin", "paint", "goal"]:
+		_lost_time = 0.0
 	if step.get("kind", "") == "task":
 		_start_interacting(step)
 		return
@@ -452,7 +467,11 @@ func _advance() -> void:
 	var step: Dictionary = _path[0]
 	if step.jump:
 		var doubt := maxf(0.0, 3.0 - step.trust) / 2.0  # trust 1 -> 1.0, 2 -> 0.5, 3+ -> 0
-		if step.leap:
+		if step.get("desperate", false):
+			doubt = 1.6
+			say(["Fine. I'll do it myself.", "No yellow anywhere. Improvising!", "Nobody's painting? I'm jumping.",
+				"This is what happens when you don't paint, boss."].pick_random(), true)
+		elif step.leap:
 			doubt = 1.6
 			say(["No yellow... but the flag is RIGHT THERE.", "Unpainted jump. Here goes nothing.", "If I die, put that in the report."].pick_random(), true)
 		elif step.trust <= 1:
@@ -484,7 +503,15 @@ func _jump_to(step: Dictionary) -> void:
 	var from := feet()
 	var target: Vector3 = step.pos
 	var flat := Vector3(target.x - from.x, 0, target.z - from.z)
-	if step.leap and flat.length() > 0.01:
+	_last_jump_desperate = step.get("desperate", false)
+	if _last_jump_desperate and flat.length() > 0.01:
+		# A gamble: longer jumps are fumbled more often, and a fumble falls well short.
+		var k := clampf((flat.length() - 1.5) / (max_jump_distance - 1.5), 0.0, 1.0)
+		if randf() < lerpf(desperate_fail_short, desperate_fail_long, k):
+			target = from.lerp(target, randf_range(0.45, 0.65))
+		else:
+			target += flat.normalized() * randf_range(-0.2, 0.3)
+	elif step.leap and flat.length() > 0.01:
 		target += flat.normalized() * randf_range(-leap_error, leap_error * 0.6)
 	var d := target - from
 	var h := d.y
@@ -506,7 +533,10 @@ func _jump_to(step: Dictionary) -> void:
 func _die() -> void:
 	state = State.DEAD
 	_path.clear()
-	say(["But... it was yellow...", "The paint lied to me!", "Why was the pit yellow?!", "I trusted you!"].pick_random(), true)
+	if _last_jump_desperate:
+		say(["Improvising was a mistake.", "Should have waited for the yellow...", "Tell the designer I tried."].pick_random(), true)
+	else:
+		say(["But... it was yellow...", "The paint lied to me!", "Why was the pit yellow?!", "I trusted you!"].pick_random(), true)
 	died.emit()
 
 
@@ -587,6 +617,8 @@ func _can_see(space: PhysicsDirectSpaceState3D, eye: Vector3, look: Vector3, cos
 func _on_noticed(mark: PaintMark, blob: int) -> void:
 	if state in [State.WAITING, State.CELEBRATING]:
 		return
+	if mark.role in ["interact", "nav"]:
+		_lost_time = 0.0
 	if mark.role == "interact":
 		_rethink = true
 		_look_at(mark.global_position, 0.8)
@@ -705,6 +737,9 @@ func _decide() -> void:
 	if _wanders < wander_limit:
 		_wander()
 		return
+	if _lost_time >= patience and _try_desperate_jump():
+		_lost_time = 0.0  # One gamble, then it gets another patience period.
+		return
 
 	state = State.CONFUSED
 	_timer = 0.0
@@ -813,6 +848,71 @@ func _try_leap_of_faith() -> bool:
 		_advance()
 		return true
 	return false
+
+
+## Lost for too long: look all around for ANY ledge in jumping range and go for it.
+## Prefers landings closer to the flag (if seen), otherwise places it hasn't been.
+func _try_desperate_jump() -> bool:
+	var space := get_world_3d().direct_space_state
+	var origin := feet()
+	var best: Dictionary = {}
+	var best_score := -INF
+	for a in 16:
+		var dir := Vector3(cos(a * TAU / 16.0), 0, sin(a * TAU / 16.0))
+		# Walk the current ground in this direction until it ends.
+		var p := origin
+		var edge := origin
+		var found_edge := false
+		for _i in 40:
+			var y = _ground_y(space, p + dir * 0.3, p.y, 0.45)
+			if y == null:
+				found_edge = true
+				break
+			p = p + dir * 0.3
+			p.y = y
+			edge = p
+		if not found_edge:
+			continue
+		edge -= dir * 0.3
+		if edge.distance_to(origin) > 0.3 and not _walkable(origin, edge):
+			continue
+		# First thing to land on across the gap.
+		for k in range(3, int(max_jump_distance / 0.25) + 1):
+			var probe := edge + dir * (k * 0.25)
+			var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(
+				probe + Vector3.UP * (max_jump_up + 0.5), probe - Vector3.UP * max_unpainted_drop, 1, [get_rid()]))
+			if hit.is_empty() or hit.normal.y < 0.7:
+				continue
+			var dy: float = hit.position.y - edge.y
+			if dy > max_jump_up or dy < -max_unpainted_drop:
+				break
+			var landing: Vector3 = hit.position + dir * 0.8
+			var land_y = _ground_y(space, landing, hit.position.y, 0.45)
+			landing = hit.position if land_y == null else Vector3(landing.x, land_y, landing.z)
+			if _walkable(origin, landing) or not _jump_clear(edge, landing):
+				break  # Same ground (no jump needed), or something in the way.
+			var score: float
+			if _goal_known:
+				score = -landing.distance_to(_goal.global_position)
+			else:
+				var novelty := landing.distance_to(_spawn.origin)
+				for v in _visited + _explored:
+					novelty = minf(novelty, landing.distance_to(v))
+				score = novelty
+			score += randf() * 1.5 - edge.distance_to(landing) * 0.3
+			if score > best_score:
+				best_score = score
+				best = {edge = edge, landing = landing}
+			break
+	if best.is_empty():
+		return false
+	_path.clear()
+	if best.edge.distance_to(origin) > 0.3:
+		_path.append({pos = best.edge, jump = false, trust = 99, leap = false, paint = false, kind = "walk"})
+	_path.append({pos = best.landing, jump = true, trust = 1, leap = true, desperate = true, paint = false, kind = "leap"})
+	_explored.append(best.landing)
+	_advance()
+	return true
 
 
 ## Mooch around the current platform looking for yellow.
