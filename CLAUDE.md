@@ -26,7 +26,7 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 - **Trust** = number of seen splats within `trust_radius`. Low trust → hesitates, walks slower, quick look-around.
 - Jumps only onto paint (or toward the flag once seen: "leap of faith", deliberately inaccurate). Paint marks the **landing**; the AI walks to a take-off point itself.
 - Walks freely on continuous ground; wanders a little, then gives up ("Hello? Level designer?").
-- **Desperation**: after `patience` seconds (default 8) of being completely lost, it jumps at any ledge it can see
+- **Desperation**: once it has done a full round of wandering AND `patience` seconds (default 8) have passed without progress (reaching paint/coin/button/flag, seeing new paint, a door opening), so roughly 15-20s of being lost, it jumps at any ledge it can see
   (closer to the flag if seen, else unexplored). It's a gamble: `desperate_success_chance` (0.65) that it lands,
   regardless of distance (a miss falls well short). Paint appearing during the wind-up cancels it. Won't drop more than
   `max_unpainted_drop` (2.6m) unpainted. Level minimums stay defined as what's *reliable*.
