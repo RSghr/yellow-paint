@@ -82,7 +82,7 @@ var _explored: Array[Vector3] = []  ## Places it wandered to (for picking new di
 var _wanders := 0
 var _home_y := 0.0  ## Height of the last trusted ground; wandering stays near it.
 var _rethink := false  ## Something new was noticed; reconsider the plan at the next chance.
-var _lost_time := 0.0  ## Time spent confused since it last made progress. Desperation kicks in at `patience`.
+var _lost_time := 0.0  ## Seconds since it last made progress (reached paint/coin/button/flag, saw new paint, a door opened).
 var _last_jump_desperate := false
 var _coin_attention := {}  ## coin instance id -> attention
 var _seen_coins := {}
@@ -272,6 +272,8 @@ func known_coins() -> Array[Coin]:
 func _physics_process(delta: float) -> void:
 	_speech_cooldown -= delta
 	_timer += delta
+	if state not in [State.WAITING, State.CELEBRATING, State.DEAD]:
+		_lost_time += delta  # Reset whenever it makes progress; wandering doesn't count.
 
 	if state != State.DEAD:
 		_perceive_timer += delta
@@ -304,7 +306,6 @@ func _physics_process(delta: float) -> void:
 			_process_interact()
 		State.CONFUSED:
 			_idle_physics(delta)
-			_lost_time += delta
 			if _rethink or _timer >= 4.0:
 				_rethink = false
 				_wanders = 0
@@ -432,6 +433,7 @@ func _start_interacting(step: Dictionary) -> void:
 func _on_world_changed() -> void:
 	# A door opened or something broke: what it can reach has changed.
 	_rethink = true
+	_lost_time = 0.0
 	if state == State.CONFUSED:
 		_timer = 4.0
 
@@ -739,11 +741,13 @@ func _decide() -> void:
 
 	if _goal_known and _try_leap_of_faith():
 		return
+	# Out of ideas for `patience` seconds AND it has finished a full round of looking around
+	# (that's usually when it spots paint it missed): gamble on a jump instead of sulking.
+	if _lost_time >= patience and _wanders >= wander_limit and _try_desperate_jump():
+		_lost_time = 0.0  # One gamble, then it gets another patience period.
+		return
 	if _wanders < wander_limit:
 		_wander()
-		return
-	if _lost_time >= patience and _try_desperate_jump():
-		_lost_time = 0.0  # One gamble, then it gets another patience period.
 		return
 
 	state = State.CONFUSED
