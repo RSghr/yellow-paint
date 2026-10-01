@@ -48,7 +48,7 @@ const PERCEPTION_INTERVAL := 0.1
 @export var hesitation_per_doubt := 0.9  ## Pause before jumping to a spot with only 1 splat.
 @export var leap_error := 0.7  ## Unpainted jumps are guesses: landing error in metres.
 @export var wander_limit := 3  ## Wanders on its own this many times before giving up.
-@export var coin_detour := 10.0  ## Will go out of its way this far (path cost) for a coin.
+@export var coin_detour := 16.0  ## Will go out of its way this far (path cost) for a coin. A painted jump costs ~10.
 
 @export_group("Speech")
 @export var speech_pixel_size := 0.004  ## Text size up close (world units per font pixel).

@@ -1,39 +1,39 @@
 extends Node3D
-## Playtest flow, HUD and scoring.
+## The Game scene: loads the current Level (see Progress), then adds the playtester,
+## the operator, paint, HUD and scoring around it.
 ##
 ## Scoring: start at 5 stars, subtract a paint penalty and a coin penalty (minimum 1 star).
-##   Paint (optimal = minimum + optimal_margin):  <= optimal: 0 | 1-5 over: -1 | 6-10 over: -2 | more: -3
+##   Paint (optimal = level minimum + optimal_margin):  <= optimal: 0 | 1-5 over: -1 | 6-10 over: -2 | more: -3
 ##   Coins:  all: 0 | more than half: -1 | half or fewer: -2 | none: -3
 ## The can holds optimal + limit_margin splats. Scraping refunds paint.
 
-@export_group("Scoring")
-@export var minimum_paint := 10  ## Fewest splats that reliably get the playtester to the flag (measured: 7 for the test level).
-@export var optimal_margin := 5  ## Optimal = minimum + this. Enough slack to also grab the coins.
-@export var limit_margin := 10  ## Can size = optimal + this. Past it you'd be at the bottom anyway.
+const RUNNER_SCENE := preload("res://runner.tscn")
+const OPERATOR_SCENE := preload("res://character.tscn")
 
+@export_group("Scoring")
+@export var optimal_margin := 5  ## Optimal = level minimum + this. Enough slack to also grab the coins.
+@export var limit_margin := 10  ## Can size = optimal + this.
+
+var level: Level
+var runner: Runner
+var operator: CharacterBody3D
 var coins_collected := 0
+var _finished := false
 var _out_of_paint_timer := 0.0
 
-@onready var runner: Runner = $Runner
 @onready var paint: PaintManager = $PaintManager
 @onready var paint_label: Label = $HUD/PaintLabel
 @onready var paint_gauge: PaintGauge = $HUD/PaintGauge
 @onready var coin_label: Label = $HUD/CoinLabel
 @onready var status_label: Label = $HUD/StatusLabel
 @onready var message_label: Label = $HUD/MessageLabel
-
-
-func optimal_paint() -> int:
-	return minimum_paint + optimal_margin
-
-
-func paint_limit() -> int:
-	return optimal_paint() + limit_margin
+@onready var level_label: Label = $HUD/LevelLabel
 
 
 func _ready() -> void:
+	_load_level()
 	paint.paint_limit = paint_limit()
-	paint_gauge.setup(minimum_paint, optimal_paint(), paint_limit())
+	paint_gauge.setup(level.minimum_paint, optimal_paint(), paint_limit())
 	runner.said.connect(func(text): status_label.text = "Playtester: \"%s\"" % text)
 	runner.reached_goal.connect(_on_goal)
 	runner.died.connect(_on_died)
@@ -43,7 +43,33 @@ func _ready() -> void:
 		coin.collected.connect(_on_coin_collected)
 	_update_paint_label()
 	_update_coin_label()
-	message_label.text = "Paint a route, then press Enter to start the playtest."
+	level_label.text = "%s%s" % ["" if Progress.level_override != "" else "Level %d: " % (Progress.current + 1), level.level_name]
+	message_label.text = level.intro_text
+
+
+func _load_level() -> void:
+	var scene := load(Progress.current_path()) as PackedScene
+	level = scene.instantiate() as Level
+	add_child(level)
+
+	# Playtester and operator come after the level, so they can find its goal, coins, etc.
+	runner = RUNNER_SCENE.instantiate()
+	runner.death_height = level.death_height
+	runner.transform = level.runner_spawn()
+	add_child(runner)
+
+	operator = OPERATOR_SCENE.instantiate()
+	operator.name = "Operator"
+	operator.transform = level.operator_spawn()
+	add_child(operator)
+
+
+func optimal_paint() -> int:
+	return level.minimum_paint + optimal_margin
+
+
+func paint_limit() -> int:
+	return optimal_paint() + limit_margin
 
 
 func _process(delta: float) -> void:
@@ -58,15 +84,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		message_label.text = ""
 		runner.start()
 	elif event.is_action_pressed("reset_runner"):
-		message_label.text = ""
-		get_tree().call_group("resettable", "reset_state")  # Coins, doors, buttons, breakables.
-		coins_collected = 0
-		_update_coin_label()
-		runner.reset_to_spawn()
+		_retry()
 	elif event.is_action_pressed("clear_paint"):
 		paint.clear_all()
 	elif event.is_action_pressed("toggle_ai_debug"):
 		runner.debug_view = not runner.debug_view
+	elif event.is_action_pressed("next_level") and _finished:
+		Progress.play_next()
+	elif event.is_action_pressed("back_to_menu"):
+		Progress.to_menu()
+
+
+func _retry() -> void:
+	_finished = false
+	message_label.text = ""
+	get_tree().call_group("resettable", "reset_state")  # Coins, doors, buttons, breakables.
+	coins_collected = 0
+	_update_coin_label()
+	runner.reset_to_spawn()
 
 
 func _update_paint_label() -> void:
@@ -123,16 +158,23 @@ static func score(paint_used: int, optimal: int, coins: int, coin_total: int) ->
 	}
 
 
+func _nav_hint() -> String:
+	return "%sR: retry   Tab: level select" % ("N: next level   " if Progress.has_next() else "")
+
+
 func _on_goal() -> void:
+	_finished = true
 	var result := score(paint.splats_used, optimal_paint(), coins_collected, _coin_total())
 	var stars: int = result.stars
+	var new_best := Progress.record(Progress.current_path(), stars)
 	var paint_line := "Paint: %d  (optimal: %d or less)   %s" % [
 		paint.splats_used, optimal_paint(), "✓" if result.paint_penalty == 0 else "-%d★ immersion broken" % result.paint_penalty]
 	var coin_line := "Coins: %d / %d   %s" % [
 		coins_collected, _coin_total(), "✓" if result.coin_penalty == 0 else "-%d★" % result.coin_penalty]
-	message_label.text = "LEVEL COMPLETE   %s\n%s\n%s\nR to reset the level" % [
-		"★".repeat(stars) + "☆".repeat(5 - stars), paint_line, coin_line]
+	message_label.text = "LEVEL COMPLETE   %s%s\n%s\n%s\n%s" % [
+		"★".repeat(stars) + "☆".repeat(5 - stars), "   NEW BEST!" if new_best else "",
+		paint_line, coin_line, _nav_hint()]
 
 
 func _on_died() -> void:
-	message_label.text = "Playtester lost. Focus test scores plummeting.\nR to reset the level"
+	message_label.text = "Playtester lost. Focus test scores plummeting.\nR: retry   Tab: level select"
