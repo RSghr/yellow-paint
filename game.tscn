@@ -1,0 +1,133 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game.gd" id="game_script"]
+[ext_resource type="Script" uid="uid://cxeyun5o5jjgs" path="res://paint_manager.gd" id="4_ycdy4"]
+[ext_resource type="Script" uid="uid://12pf8yi2eayo" path="res://paint_gauge.gd" id="14_gauge"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_82xsv"]
+
+[sub_resource type="Sky" id="Sky_getpj"]
+sky_material = SubResource("ProceduralSkyMaterial_82xsv")
+
+[sub_resource type="Environment" id="Environment_ryguw"]
+background_mode = 2
+sky = SubResource("Sky_getpj")
+ambient_light_source = 3
+tonemap_mode = 2
+ssao_enabled = true
+
+[node name="Game" type="Node3D"]
+script = ExtResource("game_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_ryguw")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.81915206, 0.46984634, -0.32898995, 0, 0.57357645, 0.81915206, 0.57357645, -0.6710101, 0.46984634, 0, 0, 0)
+shadow_enabled = true
+
+[node name="PaintManager" type="Node3D" parent="."]
+script = ExtResource("4_ycdy4")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Crosshair" type="Label" parent="HUD"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -5.0
+offset_top = -11.5
+offset_right = 5.0
+offset_bottom = 11.5
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 28
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PaintLabel" type="Label" parent="HUD"]
+offset_left = 20.0
+offset_top = 16.0
+offset_right = 900.0
+offset_bottom = 39.0
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "Paint: 0 / 0"
+
+[node name="PaintGauge" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 46.0
+offset_right = 380.0
+offset_bottom = 62.0
+script = ExtResource("14_gauge")
+
+[node name="CoinLabel" type="Label" parent="HUD"]
+offset_left = 20.0
+offset_top = 70.0
+offset_right = 400.0
+offset_bottom = 93.0
+theme_override_colors/font_color = Color(1, 0.72, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "Coins: 0 / 0"
+
+[node name="StatusLabel" type="Label" parent="HUD"]
+offset_left = 20.0
+offset_top = 102.0
+offset_right = 900.0
+offset_bottom = 125.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 20
+
+[node name="HelpLabel" type="Label" parent="HUD"]
+modulate = Color(1, 1, 1, 0.75)
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -36.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 16
+text = "Hold LMB: paint   RMB: scrape (refunds paint)   Enter: start playtest   R: reset playtester   Backspace: clear paint   Space (hold): jetpack   F: fly mode (Ctrl/C down)   V: what the AI sees   Tab: level select   Esc: free mouse"
+
+[node name="MessageLabel" type="Label" parent="HUD"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -450.0
+offset_top = 90.0
+offset_right = 450.0
+offset_bottom = 260.0
+grow_horizontal = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+
+[node name="LevelLabel" type="Label" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -620.0
+offset_top = 16.0
+offset_right = -20.0
+offset_bottom = 46.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 1, 1, 0.9)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 24
+text = "Level"
+horizontal_alignment = 2
