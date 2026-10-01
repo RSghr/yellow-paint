@@ -35,6 +35,7 @@ func open() -> void:
 	if is_open:
 		return
 	is_open = true
+	Sfx.play("door", 0.0)
 	var paint := get_tree().get_first_node_in_group("paint_manager")
 	if paint:
 		paint.remove_marks_on(self)

@@ -9,6 +9,8 @@ extends Node3D
 
 const RUNNER_SCENE := preload("res://runner.tscn")
 const OPERATOR_SCENE := preload("res://character.tscn")
+const PAUSE_MENU := preload("res://pause_menu.gd")
+const SPECTATOR_CAMERA := preload("res://spectator_camera.gd")
 
 @export_group("Scoring")
 @export var optimal_margin := 5  ## Optimal = level minimum + this. Enough slack to also grab the coins.
@@ -21,6 +23,8 @@ var coins_collected := 0
 var _finished := false
 var _playtest_running := false  ## From Enter until R: scraping is locked so paint can't be recycled mid-run.
 var _out_of_paint_timer := 0.0
+var spectator: Camera3D
+var spectating := false
 
 @onready var paint: PaintManager = $PaintManager
 @onready var paint_label: Label = $HUD/PaintLabel
@@ -35,7 +39,7 @@ func _ready() -> void:
 	_load_level()
 	paint.paint_limit = paint_limit()
 	paint_gauge.setup(level.minimum_paint, optimal_paint(), paint_limit())
-	runner.said.connect(func(text): status_label.text = "Playtester: \"%s\"" % text)
+	runner.said.connect(func(text): status_label.text = "%s: \"%s\"" % [runner.tester_name, text])
 	runner.reached_goal.connect(_on_goal)
 	runner.died.connect(_on_died)
 	paint.paint_changed.connect(_update_paint_label)
@@ -46,7 +50,9 @@ func _ready() -> void:
 	_update_paint_label()
 	_update_coin_label()
 	level_label.text = "%s%s" % ["" if Progress.level_override != "" else "Level %d: " % (Progress.current + 1), level.level_name]
-	message_label.text = level.intro_text
+	_new_tester()
+	message_label.text = "%s\nToday's focus tester: %s" % [level.intro_text, runner.tester_name]
+	add_child(PAUSE_MENU.new())
 
 
 func _load_level() -> void:
@@ -64,6 +70,31 @@ func _load_level() -> void:
 	operator.name = "Operator"
 	operator.transform = level.operator_spawn()
 	add_child(operator)
+
+	spectator = SPECTATOR_CAMERA.new()
+	spectator.name = "SpectatorCamera"
+	spectator.target = runner
+	add_child(spectator)
+
+
+func _new_tester() -> void:
+	runner.tester_name = FocusGroup.random_tester()
+	status_label.text = "Focus tester: %s" % runner.tester_name
+
+
+## Swap between the operator's eyes and a camera following the playtester.
+func _toggle_spectator() -> void:
+	spectating = not spectating
+	if spectating:
+		spectator.yaw = operator.rotation.y  # Start looking the same way as the operator.
+		spectator.pitch = -0.35
+	spectator.active = spectating
+	operator.active = not spectating
+	if not spectating:
+		operator.camera.current = true
+	$HUD/Crosshair.visible = not spectating
+	$HUD/SpectatorLabel.visible = spectating
+	$HUD/SpectatorLabel.text = "Watching %s  (A to go back, mouse to orbit, wheel to zoom)" % runner.tester_name
 
 
 func optimal_paint() -> int:
@@ -93,6 +124,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		paint.clear_all()
 	elif event.is_action_pressed("toggle_ai_debug"):
 		runner.debug_view = not runner.debug_view
+	elif event.is_action_pressed("toggle_spectator"):
+		_toggle_spectator()
 	elif event.is_action_pressed("next_level") and _finished:
 		Progress.play_next()
 	elif event.is_action_pressed("back_to_menu"):
@@ -108,6 +141,7 @@ func _retry() -> void:
 	coins_collected = 0
 	_update_coin_label()
 	runner.reset_to_spawn()
+	_new_tester()  # The last one quit. A fresh focus tester walks in.
 
 
 func _update_paint_label() -> void:
@@ -121,6 +155,7 @@ func _on_out_of_paint() -> void:
 	if _out_of_paint_timer > 0.0:
 		return
 	_out_of_paint_timer = 1.5
+	Sfx.play("out_of_paint", 0.0)
 	paint_gauge.flash = 1.0
 	paint_label.add_theme_color_override("font_color", Color(1, 0.25, 0.2))
 	paint_label.text = "OUT OF PAINT! Scrape some (right click) to reuse it."
@@ -130,6 +165,7 @@ func _on_scrape_denied() -> void:
 	if _out_of_paint_timer > 0.0:
 		return
 	_out_of_paint_timer = 1.5
+	Sfx.play("out_of_paint", 0.0)
 	paint_label.add_theme_color_override("font_color", Color(1, 0.25, 0.2))
 	paint_label.text = "Can't scrape during a playtest. Press R to reset the playtester first."
 
@@ -185,10 +221,12 @@ func _on_goal() -> void:
 		paint.splats_used, optimal_paint(), "✓" if result.paint_penalty == 0 else "-%d★ immersion broken" % result.paint_penalty]
 	var coin_line := "Coins: %d / %d   %s" % [
 		coins_collected, _coin_total(), "✓" if result.coin_penalty == 0 else "-%d★" % result.coin_penalty]
-	message_label.text = "LEVEL COMPLETE   %s%s\n%s\n%s\n%s" % [
+	var review := "\"%s\"\n— %s, focus tester" % [FocusGroup.quote_for(result), runner.tester_name]
+	Sfx.play("goal", 0.0)
+	message_label.text = "LEVEL COMPLETE   %s%s\n%s\n%s\n%s\n\n%s" % [
 		"★".repeat(stars) + "☆".repeat(5 - stars), "   NEW BEST!" if new_best else "",
-		paint_line, coin_line, _nav_hint()]
+		paint_line, coin_line, review, _nav_hint()]
 
 
 func _on_died() -> void:
-	message_label.text = "Playtester lost. Focus test scores plummeting.\nR: retry   Tab: level select"
+	message_label.text = "%s is no longer with the focus group. Scores plummeting.\nR: retry with a new tester   Tab: level select" % runner.tester_name

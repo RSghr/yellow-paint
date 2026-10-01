@@ -100,21 +100,22 @@ offset_top = -36.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 16
-text = "Hold LMB: paint   RMB: scrape (refunds, only before a playtest)   Enter: start playtest   R: reset playtester   Backspace: clear paint   Space (hold): jetpack   F: fly mode (Ctrl/C down)   V: what the AI sees   Tab: level select   Esc: free mouse"
+text = "Esc: pause menu & controls"
 
 [node name="MessageLabel" type="Label" parent="HUD"]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -450.0
+offset_left = -650.0
 offset_top = 90.0
-offset_right = 450.0
-offset_bottom = 260.0
+offset_right = 650.0
+offset_bottom = 420.0
 grow_horizontal = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 30
 horizontal_alignment = 1
+autowrap_mode = 3
 
 [node name="LevelLabel" type="Label" parent="HUD"]
 anchors_preset = 1
@@ -131,3 +132,23 @@ theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 24
 text = "Level"
 horizontal_alignment = 2
+
+[node name="SpectatorLabel" type="Label" parent="HUD"]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -600.0
+offset_top = -80.0
+offset_right = 600.0
+offset_bottom = -44.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 0.82, 0.05, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "Watching"
+horizontal_alignment = 1

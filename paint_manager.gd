@@ -10,6 +10,8 @@ signal scrape_denied  ## Tried to scrape while scraping is locked (during a play
 @export var nav_merge_radius := 0.8  ## Splats closer than this to an existing nav point don't add a new one.
 @export var scrape_radius := 1.0
 @export var floor_min_normal_y := 0.7  ## How flat a surface must be to count as "walkable" paint.
+@export var splat_texture: Texture2D = preload("res://art/paint_splat.png")  ## White image, tinted by paint_color. Swap the file for your spray image.
+@export var paint_color := Color(1.0, 0.82, 0.05)
 
 @export var paint_limit := -1  ## Max splats on the level at once. -1 = unlimited. Set by the level.
 
@@ -51,7 +53,7 @@ func paint(hit_position: Vector3, hit_normal: Vector3, collider: Object = null) 
 	mark.stand_point = _safe_stand_point(hit_position) if is_nav else hit_position
 	if role == "interact":
 		mark.interact_point = host.interact_point(hit_position, hit_normal)
-	mark.build_visual(hit_normal, _get_splat_texture())
+	mark.build_visual(hit_normal, splat_texture if splat_texture else _get_splat_texture(), paint_color)
 	paint_changed.emit()
 	return mark
 
@@ -171,7 +173,7 @@ func _ground_y(space: PhysicsDirectSpaceState3D, pos: Vector3, ref_y: float) -> 
 	return hit.position.y if hit else null
 
 
-## Procedural splat: a lumpy yellow blob with soft edges.
+## Fallback if no splat image is set: a procedural lumpy white blob with soft edges.
 static func _get_splat_texture() -> ImageTexture:
 	if _splat_texture:
 		return _splat_texture
@@ -187,6 +189,6 @@ static func _get_splat_texture() -> ImageTexture:
 			var ang := p.angle()
 			var radius := 0.7 + 0.18 * noise.get_noise_2d(cos(ang), sin(ang))
 			var a := clampf((radius - p.length()) * 12.0, 0.0, 1.0)
-			img.set_pixel(x, y, Color(1.0, 0.82, 0.05, a))
+			img.set_pixel(x, y, Color(1.0, 1.0, 1.0, a))
 	_splat_texture = ImageTexture.create_from_image(img)
 	return _splat_texture

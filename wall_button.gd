@@ -54,6 +54,7 @@ func press() -> void:
 		return
 	pressed = true
 	_update_look()
+	Sfx.play("button", 0.0)
 	var t := get_node_or_null(target)
 	if t and t.has_method("open"):
 		t.open()

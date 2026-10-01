@@ -29,6 +29,7 @@ func _on_body_entered(body: Node3D) -> void:
 		return
 	taken = true
 	visible = false
+	Sfx.play("coin")
 	set_deferred("monitoring", false)
 	collected.emit(self)
 
