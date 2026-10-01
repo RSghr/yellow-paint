@@ -13,7 +13,7 @@ editor_description = "Level root. Set level_name, intro_text and minimum_paint i
 script = ExtResource("lvl_script")
 level_name = "The Tower"
 intro_text = "Manage to reach the the top and collect all the coins!"
-minimum_paint = 999
+minimum_paint = 20
 
 [node name="RunnerSpawn" type="Marker3D" parent="." unique_id=187521223]
 editor_description = "Where the playtester starts. Keep it 0.9 above the floor (its origin is at its middle)."
