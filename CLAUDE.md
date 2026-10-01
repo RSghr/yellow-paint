@@ -30,6 +30,8 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
   (closer to the flag if seen, else unexplored). It's a gamble: fumble chance `desperate_fail_short` (0.25) rising to
   `desperate_fail_long` (0.75) at max distance. Paint appearing during the wind-up cancels it. Won't drop more than
   `max_unpainted_drop` (2.6m) unpainted. Level minimums stay defined as what's *reliable*.
+- Take-off points always keep `takeoff_margin` (0.6m) from the edge, and it can never start a jump while airborne
+  (if it slips off, it just falls). Fumble chances are probabilities (0-1).
 - Coins are seen without paint but only walked to (`coin_detour` path cost).
 - Breakables: side paint = smash, top paint = climb; more paint wins, ties are a remembered guess.
 - Priorities: nearby coin > flag > painted interactable > unvisited paint > leap of faith > wander > desperate jump.
