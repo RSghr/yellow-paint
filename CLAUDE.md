@@ -34,6 +34,13 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 Start at 5★. Paint penalty vs optimal (= level `minimum_paint` + 5): over by 1-5 → -1, 6-10 → -2, >10 → -3.
 Coins: all → 0, more than half → -1, half or fewer → -2, none → -3. Minimum 1★. Can size = optimal + 10.
 Scraping refunds paint; paint destroyed with smashed/opened objects stays spent.
+Scraping (and Backspace clear) is **locked during a playtest**: from Enter until R (reset). Adding paint is still allowed.
+
+## Levels (in `Progress.LEVELS` order)
+1. `level_01` Onboarding: paint landings (min 3).
+2. `level_02` Breakables: planks side = smash, crate top = climb; coin on a crate (min 3).
+3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back (min 6).
+4. `level_04` The Gauntlet: everything combined (min 10, set by the user from playtesting).
 
 ## Adding a level
 1. Duplicate a file in `levels/`, edit geometry with `debug_block.tscn` instances (set `size`/`color`), add interactables, coins, Goal, spawns.

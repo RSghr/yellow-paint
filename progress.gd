@@ -5,7 +5,9 @@ extends Node
 
 const LEVELS: Array[Dictionary] = [
 	{name = "Onboarding", path = "res://levels/level_01.tscn"},
-	{name = "The Gauntlet", path = "res://levels/level_02.tscn"},
+	{name = "Breakables", path = "res://levels/level_02.tscn"},
+	{name = "Buttons", path = "res://levels/level_03.tscn"},
+	{name = "The Gauntlet", path = "res://levels/level_04.tscn"},
 ]
 const SAVE_PATH := "user://progress.cfg"
 const GAME_SCENE := "res://game.tscn"

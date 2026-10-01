@@ -19,6 +19,7 @@ var runner: Runner
 var operator: CharacterBody3D
 var coins_collected := 0
 var _finished := false
+var _playtest_running := false  ## From Enter until R: scraping is locked so paint can't be recycled mid-run.
 var _out_of_paint_timer := 0.0
 
 @onready var paint: PaintManager = $PaintManager
@@ -39,6 +40,7 @@ func _ready() -> void:
 	runner.died.connect(_on_died)
 	paint.paint_changed.connect(_update_paint_label)
 	paint.paint_denied.connect(_on_out_of_paint)
+	paint.scrape_denied.connect(_on_scrape_denied)
 	for coin in get_tree().get_nodes_in_group("coin"):
 		coin.collected.connect(_on_coin_collected)
 	_update_paint_label()
@@ -82,6 +84,8 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("start_test"):
 		message_label.text = ""
+		_playtest_running = true
+		paint.scrape_locked = true
 		runner.start()
 	elif event.is_action_pressed("reset_runner"):
 		_retry()
@@ -97,6 +101,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _retry() -> void:
 	_finished = false
+	_playtest_running = false
+	paint.scrape_locked = false
 	message_label.text = ""
 	get_tree().call_group("resettable", "reset_state")  # Coins, doors, buttons, breakables.
 	coins_collected = 0
@@ -118,6 +124,14 @@ func _on_out_of_paint() -> void:
 	paint_gauge.flash = 1.0
 	paint_label.add_theme_color_override("font_color", Color(1, 0.25, 0.2))
 	paint_label.text = "OUT OF PAINT! Scrape some (right click) to reuse it."
+
+
+func _on_scrape_denied() -> void:
+	if _out_of_paint_timer > 0.0:
+		return
+	_out_of_paint_timer = 1.5
+	paint_label.add_theme_color_override("font_color", Color(1, 0.25, 0.2))
+	paint_label.text = "Can't scrape during a playtest. Press R to reset the playtester first."
 
 
 func _on_coin_collected(_coin: Coin) -> void:
