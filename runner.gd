@@ -51,8 +51,7 @@ const PERCEPTION_INTERVAL := 0.1
 @export var leap_error := 0.7  ## Unpainted jumps are guesses: landing error in metres.
 @export var wander_limit := 3  ## Wanders on its own this many times before giving up.
 @export var patience := 8.0  ## Seconds of being completely lost before it starts jumping at things unpainted.
-@export_range(0.0, 1.0, 0.05) var desperate_fail_short := 0.25  ## Chance (0-1) to fumble a short desperate jump...
-@export_range(0.0, 1.0, 0.05) var desperate_fail_long := 0.75  ## ...rising to this (0-1) at max jump distance. Paint makes jumps safe; this doesn't.
+@export_range(0.0, 1.0, 0.05) var desperate_success_chance := 0.65  ## Chance (0-1) that an unpainted desperate jump lands. A miss falls well short.
 @export var coin_detour := 16.0  ## Will go out of its way this far (path cost) for a coin. A painted jump costs ~10.
 
 @export_group("Speech")
@@ -512,9 +511,8 @@ func _jump_to(step: Dictionary) -> void:
 	var flat := Vector3(target.x - from.x, 0, target.z - from.z)
 	_last_jump_desperate = step.get("desperate", false)
 	if _last_jump_desperate and flat.length() > 0.01:
-		# A gamble: longer jumps are fumbled more often, and a fumble falls well short.
-		var k := clampf((flat.length() - 1.5) / (max_jump_distance - 1.5), 0.0, 1.0)
-		if randf() < lerpf(desperate_fail_short, desperate_fail_long, k):
+		# A gamble with fixed odds: a miss falls well short, a hit lands about where it aimed.
+		if randf() >= desperate_success_chance:
 			target = from.lerp(target, randf_range(0.45, 0.65))
 		else:
 			target += flat.normalized() * randf_range(-0.2, 0.3)
