@@ -1,0 +1,74 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://level.gd" id="lvl_script"]
+[ext_resource type="PackedScene" uid="uid://caufl8sqp5orp" path="res://debug_block.tscn" id="block"]
+[ext_resource type="PackedScene" path="res://goal.tscn" id="goal"]
+[ext_resource type="PackedScene" path="res://coin.tscn" id="coin"]
+[ext_resource type="PackedScene" path="res://door.tscn" id="door"]
+[ext_resource type="PackedScene" path="res://wall_button.tscn" id="btn"]
+
+[node name="Level03" type="Node3D"]
+script = ExtResource("lvl_script")
+level_name = "Buttons"
+intro_text = "Buttons! The playtester only presses buttons painted yellow (painting the door won't help).\nA side ledge needs a painted way back, too. Press Enter when ready."
+minimum_paint = 6
+
+[node name="RunnerSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 0)
+
+[node name="OperatorSpawn" type="Marker3D" parent="."]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -3.5, 1.05, 2)
+
+[node name="Geometry" type="Node3D" parent="."]
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="Coins" type="Node3D" parent="."]
+
+[node name="PitFloor" parent="Geometry" instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, -4.5, -3)
+size = Vector3(54, 1, 22)
+color = Color(0.35, 0.2, 0.2, 1)
+
+[node name="A_Start" parent="Geometry" instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, 0)
+size = Vector3(8, 4, 6)
+color = Color(0.58, 0.6, 0.64, 1)
+
+[node name="B" parent="Geometry" instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, -2, 0)
+size = Vector3(17, 4, 6)
+color = Color(0.58, 0.6, 0.64, 1)
+
+[node name="C" parent="Geometry" instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34.5, -1.75, 0)
+size = Vector3(15, 4.5, 6)
+color = Color(0.58, 0.6, 0.64, 1)
+
+[node name="E_SideLedge" parent="Geometry" instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.5, -1.75, -7)
+size = Vector3(3, 4.5, 3)
+color = Color(0.58, 0.6, 0.64, 1)
+
+[node name="Door1" parent="Interactables" instance=ExtResource("door")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 1.75, 0)
+
+[node name="Button1" parent="Interactables" instance=ExtResource("btn")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 14.5, 0, -2.6)
+target = NodePath("../Door1")
+
+[node name="Door2" parent="Interactables" instance=ExtResource("door")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37, 2.25, 0)
+
+[node name="Button2" parent="Interactables" instance=ExtResource("btn")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 30.5, 0.5, -8)
+target = NodePath("../Door2")
+
+[node name="CoinBehindDoor" parent="Coins" instance=ExtResource("coin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 1.5)
+
+[node name="CoinOnLedge" parent="Coins" instance=ExtResource("coin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.6, 0.5, -6.2)
+
+[node name="Goal" parent="." instance=ExtResource("goal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.5, 0.5, 0)

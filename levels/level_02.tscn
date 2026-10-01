@@ -1,18 +1,16 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" uid="uid://caufl8sqp5orp" path="res://debug_block.tscn" id="2_efxa6"]
-[ext_resource type="PackedScene" path="res://goal.tscn" id="5_w48qg"]
-[ext_resource type="PackedScene" path="res://breakable.tscn" id="10_brk"]
-[ext_resource type="PackedScene" path="res://door.tscn" id="11_door"]
-[ext_resource type="PackedScene" path="res://wall_button.tscn" id="12_btn"]
-[ext_resource type="PackedScene" path="res://coin.tscn" id="13_coin"]
 [ext_resource type="Script" path="res://level.gd" id="lvl_script"]
+[ext_resource type="PackedScene" uid="uid://caufl8sqp5orp" path="res://debug_block.tscn" id="block"]
+[ext_resource type="PackedScene" path="res://goal.tscn" id="goal"]
+[ext_resource type="PackedScene" path="res://coin.tscn" id="coin"]
+[ext_resource type="PackedScene" path="res://breakable.tscn" id="brk"]
 
 [node name="Level02" type="Node3D"]
 script = ExtResource("lvl_script")
-level_name = "The Gauntlet"
-intro_text = "Gaps, planks, a locked door and a crate.\nPaint a route, then press Enter to start the playtest."
-minimum_paint = 10
+level_name = "Breakables"
+intro_text = "Breakables! Paint the SIDE of something and the playtester smashes it.\nPaint the TOP and it climbs on it. Choose wisely, then press Enter."
+minimum_paint = 3
 
 [node name="RunnerSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 0)
@@ -22,78 +20,45 @@ transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -3.5
 
 [node name="Geometry" type="Node3D" parent="."]
 
-[node name="PitFloor" parent="Geometry" instance=ExtResource("2_efxa6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, -4.5, 0)
-size = Vector3(76, 1, 20)
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="Coins" type="Node3D" parent="."]
+
+[node name="PitFloor" parent="Geometry" instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, -4.5, -2)
+size = Vector3(50, 1, 20)
 color = Color(0.35, 0.2, 0.2, 1)
 
-[node name="P1_Start" parent="Geometry" instance=ExtResource("2_efxa6")]
+[node name="A_Start" parent="Geometry" instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, 0)
 size = Vector3(8, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="P2" parent="Geometry" instance=ExtResource("2_efxa6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, -2, 0)
-size = Vector3(4, 4, 6)
+[node name="B_Long" parent="Geometry" instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, -2, 0)
+size = Vector3(20, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="P3_High" parent="Geometry" instance=ExtResource("2_efxa6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, -1.25, 0)
-size = Vector3(4, 5.5, 6)
+[node name="C_High" parent="Geometry" instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.5, -0.6, 0)
+size = Vector3(9, 6.8, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="P4_Low" parent="Geometry" instance=ExtResource("2_efxa6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.5, -1.75, 0)
-size = Vector3(7, 4.5, 6)
-color = Color(0.58, 0.6, 0.64, 1)
-
-[node name="P5_Long" parent="Geometry" instance=ExtResource("2_efxa6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -0.75, 0)
-size = Vector3(20, 6.5, 6)
-color = Color(0.58, 0.6, 0.64, 1)
-
-[node name="CoinLedge" parent="Geometry" instance=ExtResource("2_efxa6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 41, -0.75, -6.5)
-size = Vector3(2, 6.5, 2)
-color = Color(0.58, 0.6, 0.64, 1)
-
-[node name="P6_High" parent="Geometry" instance=ExtResource("2_efxa6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54, 0.4, 0)
-size = Vector3(8, 9.8, 6)
-color = Color(0.58, 0.6, 0.64, 1)
-
-[node name="RampFromPit" parent="Geometry" instance=ExtResource("2_efxa6")]
-transform = Transform3D(0.9397934, -0.34174305, 0, 0.34174305, 0.9397934, 0, 0, 0, 1, -9.431651, -2.1879587, 0)
-size = Vector3(11.7046995, 0.4, 3)
-color = Color(0.45, 0.47, 0.5, 1)
-
-[node name="Interactables" type="Node3D" parent="."]
-
-[node name="PlankWall" parent="Interactables" instance=ExtResource("10_brk")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37, 3.75, 0)
+[node name="PlankWall" parent="Interactables" instance=ExtResource("brk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 1.25, 0)
 size = Vector3(0.4, 2.5, 6)
 
-[node name="Door" parent="Interactables" instance=ExtResource("11_door")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, 4.25, 0)
+[node name="StepCrate" parent="Interactables" instance=ExtResource("brk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.3, 0.6, 0)
 
-[node name="DoorButton" parent="Interactables" instance=ExtResource("12_btn")]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 43, 2.5, -2.6)
-target = NodePath("../Door")
+[node name="CoinCrate" parent="Interactables" instance=ExtResource("brk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.6, 2.2)
 
-[node name="Crate" parent="Interactables" instance=ExtResource("10_brk")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48.9, 3.1, 0)
+[node name="CoinBehindPlanks" parent="Coins" instance=ExtResource("coin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -1.5)
 
-[node name="Coin1" parent="Interactables" instance=ExtResource("13_coin")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33, 2.5, 1.5)
+[node name="CoinOnCrate" parent="Coins" instance=ExtResource("coin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1.2, 2.2)
 
-[node name="Coin2" parent="Interactables" instance=ExtResource("13_coin")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.5, 2.5, 2)
-
-[node name="Coin3_Ledge" parent="Interactables" instance=ExtResource("13_coin")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 41, 2.5, -6.5)
-
-[node name="Coin4" parent="Interactables" instance=ExtResource("13_coin")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 2.5, -2)
-
-[node name="Goal" parent="." instance=ExtResource("5_w48qg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55.5, 5.3, 0)
+[node name="Goal" parent="." instance=ExtResource("goal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 2.8, 0)

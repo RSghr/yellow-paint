@@ -5,12 +5,16 @@ extends Node3D
 
 signal paint_changed
 signal paint_denied  ## Tried to paint with an empty can.
+signal scrape_denied  ## Tried to scrape while scraping is locked (during a playtest).
 
 @export var nav_merge_radius := 0.8  ## Splats closer than this to an existing nav point don't add a new one.
 @export var scrape_radius := 1.0
 @export var floor_min_normal_y := 0.7  ## How flat a surface must be to count as "walkable" paint.
 
 @export var paint_limit := -1  ## Max splats on the level at once. -1 = unlimited. Set by the level.
+
+## While true, paint can still be added but not scraped or cleared (no refunds mid-playtest).
+var scrape_locked := false
 
 ## Splats currently "spent". Scraping refunds; paint lost to smashed planks or opened doors doesn't.
 var splats_used := 0
@@ -83,6 +87,9 @@ func paint_left() -> int:
 
 ## Remove all paint near a point (the scraper / right click). Free undo: the paint goes back in the can.
 func scrape(hit_position: Vector3) -> int:
+	if scrape_locked:
+		scrape_denied.emit()
+		return 0
 	var removed := 0
 	for mark: PaintMark in get_marks():
 		if mark.global_position.distance_to(hit_position) <= scrape_radius:
@@ -96,6 +103,9 @@ func scrape(hit_position: Vector3) -> int:
 
 
 func clear_all() -> void:
+	if scrape_locked:
+		scrape_denied.emit()
+		return
 	for mark in get_marks():
 		mark.queue_free()
 		remove_child(mark)
