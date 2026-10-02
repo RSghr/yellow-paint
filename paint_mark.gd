@@ -12,6 +12,10 @@ var interact_point := Vector3.ZERO  ## For "interact" paint: where to stand to u
 var hotfix := false  ## Painted during a playtest (a "hotfix"): red, counted separately in the score, removed on reset.
 
 
+var _follow: Node3D  ## A moving platform this paint is stuck to.
+var _local_transform: Transform3D
+var _local_stand: Vector3
+
 var _decal: Decal
 var _age := 0.0
 var _base_size := Vector3.ONE
@@ -40,6 +44,30 @@ func build_visual(normal: Vector3, texture: Texture2D, color := Color(1.0, 0.82,
 	var x_axis := up.cross(helper).normalized()
 	var z_axis := x_axis.cross(up).normalized()
 	decal.global_basis = Basis(x_axis, up, z_axis).rotated(up, randf() * TAU)
+
+
+## Stick to a moving platform: from now on this mark (and its stand point) moves with it.
+func attach_to(node: Node3D) -> void:
+	_follow = node
+	_local_transform = node.global_transform.affine_inverse() * global_transform
+	_local_stand = node.global_transform.affine_inverse() * stand_point
+	set_physics_process(true)
+
+
+func follows() -> bool:
+	return _follow != null
+
+
+func _ready() -> void:
+	set_physics_process(_follow != null)
+
+
+func _physics_process(_delta: float) -> void:
+	if not is_instance_valid(_follow):
+		set_physics_process(false)
+		return
+	global_transform = _follow.global_transform * _local_transform
+	stand_point = _follow.global_transform * _local_stand
 
 
 ## Hotfix splats slap down with a pop, then keep pulsing.

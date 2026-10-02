@@ -100,8 +100,8 @@ func _start_round(index: int) -> void:
 		"" if Progress.level_override != "" else "Level %d: " % (Progress.current + 1), level.level_name,
 		index + 1, Level.ROUNDS, r.tester, FocusGroup.trait_line(r.tester)]
 	status_label.text = "Focus tester: %s" % r.tester
-	message_label.text = "ROUND %d/%d   Today's focus tester: %s\n%s%s" % [index + 1, Level.ROUNDS, r.tester,
-		FocusGroup.trait_line(r.tester),
+	message_label.text = "ROUND %d/%d   Today's focus tester: %s\n\"%s\"\n%s%s" % [index + 1, Level.ROUNDS,
+		FocusGroup.byline(r.tester), FocusGroup.intro(r.tester), FocusGroup.trait_line(r.tester),
 		"\nYour paint from the last round is still there. Adapt it, then press Enter." if index > 0 else ""]
 
 
@@ -289,7 +289,7 @@ func _on_goal() -> void:
 		coins_collected, _coin_total(), "✓" if result.coin_penalty == 0 else "-%d★" % result.coin_penalty]
 	var hotfix_line := "Hotfixes: %d   %s" % [hotfixes,
 		"✓" if result.hotfix_penalty == 0 else "-%d★ patched mid-playtest" % result.hotfix_penalty]
-	var review := "\"%s\"\n— %s, focus tester" % [FocusGroup.quote_for(result), runner.tester_name]
+	var review := "\"%s\"\n— %s" % [FocusGroup.quote_for(result), FocusGroup.byline(runner.tester_name)]
 	Sfx.play("goal", 0.0)
 	var header := "ROUND %d/%d COMPLETE   %s" % [round_index + 1, Level.ROUNDS, "★".repeat(stars) + "☆".repeat(5 - stars)]
 	var footer := ""

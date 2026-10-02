@@ -126,8 +126,9 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 5.96
 target = NodePath("../Door2")
 
 [node name="Door2" parent="Geometry" unique_id=1619902503 instance=ExtResource("5_a6hey")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.782, 16, 0)
-open_height = 10.0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.782, 16.01, 0)
+move_distance = 10.0
+is_platform = true
 open_time = 3.0
 size = Vector3(4, 0.5, 4)
 

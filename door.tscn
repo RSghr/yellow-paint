@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://door.gd" id="1_door"]
 
-[node name="Door" type="StaticBody3D"]
+[node name="Door" type="AnimatableBody3D"]
 script = ExtResource("1_door")
 size = Vector3(0.5, 3.5, 6)
 color = Color(0.3, 0.38, 0.5, 1)

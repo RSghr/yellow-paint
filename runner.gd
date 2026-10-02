@@ -18,12 +18,14 @@ extends CharacterBody3D
 ##   - buttons: pressed only when painted
 ##   - breakables: paint on the SIDE = smash it, paint on TOP = stand on it.
 ##     Both? It goes with whichever has more paint, and guesses on a tie.
+##   - moving platforms (Door with is_platform): painted top = a landing. It stands still while one
+##     moves under its feet (RIDING), and won't use a spot on one until it has stopped.
 
 signal reached_goal
 signal died
 signal said(text: String)
 
-enum State { WAITING, SCANNING, WALKING, HESITATING, JUMPING, INTERACTING, CONFUSED, CELEBRATING, DEAD }
+enum State { WAITING, SCANNING, WALKING, HESITATING, JUMPING, INTERACTING, CONFUSED, CELEBRATING, DEAD, RIDING }
 
 const GRAVITY := 9.8
 const FEET_OFFSET := 0.9  ## Body origin is this far above the feet.
@@ -253,6 +255,8 @@ func known_spots() -> Array[Dictionary]:
 	for mark in seen:
 		if not mark.is_nav:
 			continue
+		if mark.follows() and mark.host.moving:
+			continue  # Won't aim for a landing that's still moving.
 		if is_instance_valid(mark.host) and mark.host.kind == "breakable" and _breakable_choice(mark.host, seen) == "break":
 			continue  # It's going to smash this, not stand on it.
 		var trust := 0
@@ -343,6 +347,12 @@ func _physics_process(delta: float) -> void:
 			if debug_view:
 				_draw_debug()
 
+	if state in [State.SCANNING, State.WALKING, State.HESITATING, State.CONFUSED] and _moving_floor():
+		_path.clear()
+		state = State.RIDING
+		_timer = 0.0
+		say(["Whoa, the floor's moving!", "Going up! I think?", "Free ride!", "Nobody said the floor moves."].pick_random(), true)
+
 	if _urgent and is_on_floor() and state in [State.SCANNING, State.HESITATING, State.CONFUSED]:
 		_urgent = false
 		_wanders = 0
@@ -367,6 +377,12 @@ func _physics_process(delta: float) -> void:
 		State.INTERACTING:
 			_idle_physics(delta)
 			_process_interact()
+		State.RIDING:
+			_idle_physics(delta)
+			if not _moving_floor() and _timer > 0.2:
+				_lost_time = 0.0  # Getting somewhere new counts as progress.
+				_home_y = feet().y
+				_start_scan(scan_time * 0.5)  # New view from up here: look around.
 		State.CONFUSED:
 			_idle_physics(delta)
 			if _rethink or _timer >= 4.0:
@@ -380,6 +396,17 @@ func _physics_process(delta: float) -> void:
 
 	if state != State.DEAD and global_position.y < death_height:
 		_die()
+
+
+## The moving platform it's standing on, if it's moving right now.
+func _moving_floor() -> Node:
+	if not is_on_floor():
+		return null
+	var q := PhysicsRayQueryParameters3D.create(feet() + Vector3.UP * 0.2, feet() - Vector3.UP * 0.4, 1, [get_rid()])
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	if hit and hit.collider.is_in_group("mover") and hit.collider.moving:
+		return hit.collider
+	return null
 
 
 func _idle_physics(delta: float) -> void:
