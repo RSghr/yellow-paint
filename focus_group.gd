@@ -36,7 +36,7 @@ const ROSTER := {
 		outlet = "Eurogamble",
 		intro = "Only plays on Nightmare difficulty. Flawless jumper, once there's enough paint to convince him it's intended."},
 	"Frank Rate": {jump = 2, trust = 2, patience = 2,
-		outlet = "PC Gamerish (240 FPS edition)",
+		outlet = "PC Gamerish: 240 FPS Edition",
 		intro = "Hardcore. Needs nothing from you and will mention it in the review."},
 	"Dee Sync": {jump = 0, trust = 2, patience = 1,
 		outlet = "Twitchy (streamer, 14 viewers)",

@@ -38,6 +38,9 @@ func _ready() -> void:
 	add_child(_layer)
 	_build_taskbar()
 
+	if Progress.new_mail_ping and Progress.seen_intro:
+		Progress.new_mail_ping = false
+		_toast.call_deferred()
 	if not Progress.seen_intro:
 		_open_inlook.call_deferred("welcome")  # First day at work.
 	elif Progress.open_levels_on_menu:
@@ -178,6 +181,49 @@ func _draw_icon(c: Control, kind: String) -> void:
 				c.draw_line(Vector2(x, 22), Vector2(x, 54), Color(0.5, 0.55, 0.62), 2.0)
 			# A crumpled grey box (the old art direction) sticking out.
 			c.draw_rect(Rect2(26, 2, 14, 10), Color(0.55, 0.56, 0.6))
+
+
+## "You've got mail" popup above the taskbar (bottom right). Click it to open Inlook.
+func _toast() -> void:
+	var n := INBOX.unread_count()
+	if n == 0:
+		return
+	Sfx.play("mail", 0.0)
+	var toast := Button.new()
+	toast.text = "  Inlook\n  %d new email%s" % [n, "" if n == 1 else "s"]
+	toast.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	toast.add_theme_font_size_override("font_size", 18)
+	toast.add_theme_color_override("font_color", Color.WHITE)
+	toast.add_theme_color_override("font_hover_color", YELLOW)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.11, 0.12, 0.16, 0.97)
+	style.border_width_left = 5
+	style.border_color = Color(0.85, 0.15, 0.12)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(14)
+	style.shadow_color = Color(0, 0, 0, 0.5)
+	style.shadow_size = 12
+	for state in ["normal", "hover", "pressed", "focus"]:
+		toast.add_theme_stylebox_override(state, style)
+	toast.custom_minimum_size = Vector2(300, 0)
+	toast.focus_mode = Control.FOCUS_NONE
+	add_child(toast)
+	await get_tree().process_frame
+	var screen := get_viewport_rect().size
+	toast.position = Vector2(screen.x + 10, screen.y - TASKBAR_H - toast.size.y - 16)
+	toast.pressed.connect(func():
+		toast.queue_free()
+		_open_inlook())
+	var t := toast.create_tween()
+	t.tween_property(toast, "position:x", screen.x - toast.size.x - 16, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_interval(6.0)
+	t.tween_property(toast, "modulate:a", 0.0, 0.6)
+	t.tween_callback(toast.queue_free)
+	if _inbox_badge:  # Little bounce on the desktop badge too.
+		_inbox_badge.pivot_offset = _inbox_badge.size / 2.0
+		var b := _inbox_badge.create_tween()
+		b.tween_property(_inbox_badge, "scale", Vector2(1.5, 1.5), 0.15)
+		b.tween_property(_inbox_badge, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _update_badge() -> void:
@@ -340,8 +386,14 @@ func _open_levels() -> void:
 	pad.add_child(col)
 	col.add_child(_label("Scheduled playtest sessions", 24, INK))
 	col.add_child(_label("Each session: 3 focus testers, one after the other. Your paint stays between testers.", 15, MUTED))
+	var hidden := 0
 	for i in Progress.LEVELS.size():
-		col.add_child(_level_row(i))
+		if Progress.is_unlocked(i):
+			col.add_child(_level_row(i))
+		else:
+			hidden += 1  # Locked levels are invisible: they arrive by email.
+	if hidden > 0:
+		col.add_child(_label("More playtests will be scheduled based on your results (%d/15 or better)." % Progress.UNLOCK_STARS, 15, MUTED))
 	var w := _window("levels", "Level Select - PlaytestScheduler Pro", pad, Vector2(560, 120))
 	_focus_first_play(w)
 
@@ -393,6 +445,7 @@ func _open_inlook(select := "") -> void:
 	if _windows.has("inlook"):
 		_raise(_windows.inlook)
 		return
+	var _mails := INBOX.all_mails()
 	var root := HBoxContainer.new()
 	root.add_theme_constant_override("separation", 0)
 	root.custom_minimum_size = Vector2(1240, 720)
@@ -414,6 +467,14 @@ func _open_inlook(select := "") -> void:
 	list.add_child(search)
 	var folder := _label("", 18, INK)
 	list.add_child(folder)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	list.add_child(scroll)
+	var rows_box := VBoxContainer.new()
+	rows_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rows_box.add_theme_constant_override("separation", 6)
+	scroll.add_child(rows_box)
 
 	# Right: reading pane.
 	var right := PanelContainer.new()
@@ -429,7 +490,7 @@ func _open_inlook(select := "") -> void:
 
 	var rows := []
 	var show_mail := func(index: int) -> void:
-		var mail: Dictionary = INBOX.MAILS[index]
+		var mail: Dictionary = _mails[index]
 		Progress.mark_mail_read(mail.id)
 		for child in pane.get_children():
 			child.queue_free()
@@ -451,25 +512,31 @@ func _open_inlook(select := "") -> void:
 		if mail.id == "welcome":
 			pane.add_child(_welcome_buttons())
 		for r in rows.size():
-			_style_mail_row(rows[r], INBOX.MAILS[r], r == index)
+			_style_mail_row(rows[r], _mails[r], r == index)
 		folder.text = "Inbox (%d unread)" % INBOX.unread_count()
 		_update_badge()
 
-	for i in INBOX.MAILS.size():
+	for i in _mails.size():
 		var row := Button.new()
 		row.custom_minimum_size = Vector2(0, 74)
 		row.focus_mode = Control.FOCUS_NONE
 		row.pressed.connect(func(): Sfx.play("ui_click"); show_mail.call(i))
-		list.add_child(row)
+		rows_box.add_child(row)
 		rows.append(row)
-		_style_mail_row(row, INBOX.MAILS[i], false)
+		_style_mail_row(row, _mails[i], false)
 	folder.text = "Inbox (%d unread)" % INBOX.unread_count()
 
 	_window("inlook", "Inlook - Inbox - contractor-4471@synergex-interactive.biz", root, Vector2(300, 70))
-	var start := 0
-	for i in INBOX.MAILS.size():
-		if INBOX.MAILS[i].id == select:
+	var start := -1
+	for i in _mails.size():
+		if _mails[i].id == select:
 			start = i
+	if start == -1:  # Otherwise the newest unread one.
+		for i in _mails.size():
+			if not INBOX.is_read(_mails[i].id):
+				start = i
+				break
+	start = maxi(start, 0)
 	if select != "" or INBOX.unread_count() > 0:
 		show_mail.call(start)
 	else:

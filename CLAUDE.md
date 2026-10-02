@@ -11,7 +11,9 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 |---|---|
 | `level_select.tscn/.gd` | Main scene = the operator's company **desktop** (built in code): icons Inlook / Level Select / Company Settings / Recycle Bin, taskbar with Start menu and clock. Quit = Start > Shut down ("...may result in your ~~contract~~ termination"). First launch opens Inlook on the welcome mail; returning from a level reopens Level Select (`Progress.open_levels_on_menu`). |
 | `desk_window.gd` | Draggable desktop window (title bar, close) used by the desktop. |
-| `inbox.gd` | Inlook's emails (`MAILS`, BBCode bodies). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, "early build" grey boxes). Read state in `Progress.read_mails`/`seen_intro`. |
+| `inbox.gd` | Inlook's starting emails (`MAILS`, BBCode bodies) + `all_mails()` (delivered ones first). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, "early build" grey boxes). Read state in `Progress.read_mails`/`seen_intro`. |
+| `mail_writer.gd` | Emails written during progression: Chad's new-level announcement (opening line by score bracket 15 / 14-10 / 9-5 / 4-0), his performance review when a level scores under 10, and flavor mails (toxic-workplace parody): one about a tester of the new level chosen by their traits (`TESTER_STORIES`, e.g. Explorer leaked the level, admin123) + sometimes an office one (`OFFICE_STORIES`, sent once each). |
+| `results_card.gd` | End-of-round results card (same style as the tester card): stars pop in, paint/coins/hotfix rows, review quote + byline, level total /15 after round 3 with NEW BEST / "New playtest scheduled" / "on hold" note, key chips. Also the "Focus tester lost" card. |
 | `round_intro.gd` | Start of each round: level intro banner at the top (round 1 only) + tester card sliding in bottom-left (name, outlet, intro, stars popping in). Fades after `hold_time` (7s) or when the playtest starts. **C** (`toggle_tester_card`) brings the card back / hides it (it stays until C again). The top-right HUD shows the level name and "Focus tester: name" (StatusLabel). |
 | `speech_feed.gd` | Tester speech on the HUD as a chat log under the tester name: "Name: message", oldest on top, newest at the bottom, max 3 lines, each fades `line_life` (6s) after it was said. The newest line is `newest_scale` (1.2x) bigger until the next one. Hidden while spectating. |
 | `progress.gd` | Autoload `Progress`: **auto-discovers** `levels/level_*.tscn` (file-name order, names from `level_name`), current level, best stars in `user://progress.cfg`. |
@@ -33,6 +35,14 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 | `breakable.gd`, `door.gd`, `wall_button.gd`, `coin.gd` | Interactables. Group `interactable` objects implement `paint_role(normal)`, `interact_point()`, `interact()`, `is_used()`, `kind`, `state_changed`. Group `resettable` implements `reset_state()`. |
 | `block.gd` + `debug_block.tscn` | Static level block, resized via `size` (never scale physics bodies). Grid shader for readable distances. |
 | `paint_gauge.gd` | HUD paint bar with min/optimal ticks. |
+
+## Progression (Progress + mail_writer.gd)
+- Levels 1-3 (`TUTORIAL_COUNT`) are always in Level Select. Level N (4+) is **invisible** until level N-1's best is
+  `UNLOCK_STARS` (10/15) or more (`Progress.is_unlocked`). N after the last round only goes to an unlocked level.
+- `Progress.level_finished(total)` (called by game.gd after round 3): if the next level just became available, Chad's
+  announcement + 1-2 flavor mails are delivered (once, id `unlock_<level>`); if the score is under 10, Chad's review
+  (once per level and score bracket). Mails persist in `Progress.delivered_mails`; the desktop shows a "new email" toast
+  (sound `mail`) and the red unread badge on Inlook.
 
 ## Focus testers and rounds
 - A level is played by **3 testers in a row** (`Level.rounds()`), set per level. **Paint carries over** between rounds;

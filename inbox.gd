@@ -1,6 +1,7 @@
 extends RefCounted
 ## The emails in Inlook (the desktop's mail app). Newest first. Bodies are BBCode (RichTextLabel).
-## Add a mail: append a dictionary to MAILS with a unique `id`. Read state is saved in Progress.read_mails.
+## Add a starting mail: append a dictionary to MAILS with a unique `id`. Read state is saved in Progress.read_mails.
+## Mails that arrive during play (new levels, flavor) are written by mail_writer.gd and stored in Progress.
 ## The "welcome" mail is the story intro: Inlook opens on it at first launch.
 
 const MAILS := [
@@ -106,9 +107,17 @@ People & Culture""",
 ]
 
 
+## Everything in the inbox, newest first: mails received during play, then the starting ones.
+static func all_mails() -> Array:
+	var mails: Array = Progress.delivered_mails.duplicate()
+	mails.reverse()
+	mails.append_array(MAILS)
+	return mails
+
+
 static func unread_count() -> int:
 	var n := 0
-	for m in MAILS:
+	for m in all_mails():
 		if m.id not in Progress.read_mails and not (m.id == "welcome" and Progress.seen_intro):
 			n += 1
 	return n
