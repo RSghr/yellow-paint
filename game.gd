@@ -18,6 +18,7 @@ const PAUSE_MENU := preload("res://pause_menu.gd")
 const SPECTATOR_CAMERA := preload("res://spectator_camera.gd")
 const ROUND_INTRO := preload("res://round_intro.gd")
 const SPEECH_FEED := preload("res://speech_feed.gd")
+const RESULTS_CARD := preload("res://results_card.gd")
 
 @export_group("Scoring")
 @export var optimal_margin := 5  ## Optimal = round minimum + this. Enough slack to also grab the coins.
@@ -37,6 +38,7 @@ var round_index := 0  ## 0-2: which focus tester is playing.
 var round_stars: Array[int] = [0, 0, 0]  ## Stars per round (0 = not finished yet).
 var round_intro: Control  ## Level intro banner + sliding tester card (round_intro.gd).
 var speech_feed: Control  ## The tester's last 3 lines, top right (speech_feed.gd).
+var results_card: Control  ## End-of-round results / tester lost (results_card.gd).
 
 @onready var paint: PaintManager = $PaintManager
 @onready var paint_label: Label = $HUD/PaintLabel
@@ -64,6 +66,8 @@ func _ready() -> void:
 		coin.collected.connect(_on_coin_collected)
 	round_intro = ROUND_INTRO.new()
 	$HUD.add_child(round_intro)
+	results_card = RESULTS_CARD.new()
+	$HUD.add_child(results_card)
 	_start_round(0)
 	add_child(PAUSE_MENU.new())
 
@@ -186,6 +190,7 @@ func _reset_run() -> void:
 	hotfixes = 0
 	paint.remove_hotfixes()  # Back to the route as it was before the playtest.
 	message_label.text = ""
+	results_card.hide_card()
 	get_tree().call_group("resettable", "reset_state")  # Coins, doors, buttons, breakables.
 	coins_collected = 0
 	_update_coin_label()
@@ -284,38 +289,46 @@ static func score(paint_used: int, optimal: int, coins: int, coin_total: int, ho
 	}
 
 
-func _nav_hint() -> String:
+## Key hints shown at the bottom of the results card: [[key, text], ...]
+func _nav_keys() -> Array:
+	var keys := []
 	if round_index + 1 < Level.ROUNDS:
-		return "N: next tester   R: retry this tester   Tab: level select"
-	return "%sR: retry this tester   Tab: level select" % ("N: next level   " if Progress.has_next() else "")
+		keys.append(["N", "next tester"])
+	elif Progress.has_next():
+		keys.append(["N", "next level"])
+	keys.append(["R", "retry this tester"])
+	keys.append(["Tab", "level select"])
+	return keys
 
 
 func _on_goal() -> void:
 	_finished = true
 	var result := score(paint.splats_used, optimal_paint(), coins_collected, _coin_total(), hotfixes)
-	var stars: int = result.stars
-	round_stars[round_index] = stars
-	var paint_line := "Paint: %d  (optimal: %d or less)   %s" % [
-		paint.splats_used, optimal_paint(), "✓" if result.paint_penalty == 0 else "-%d★ immersion broken" % result.paint_penalty]
-	var coin_line := "Coins: %d / %d   %s" % [
-		coins_collected, _coin_total(), "✓" if result.coin_penalty == 0 else "-%d★" % result.coin_penalty]
-	var hotfix_line := "Hotfixes: %d   %s" % [hotfixes,
-		"✓" if result.hotfix_penalty == 0 else "-%d★ patched mid-playtest" % result.hotfix_penalty]
-	var review := "\"%s\"\n— %s" % [FocusGroup.quote_for(result), FocusGroup.byline(runner.tester_name)]
+	round_stars[round_index] = result.stars
 	Sfx.play("goal", 0.0)
-	var header := "ROUND %d/%d COMPLETE   %s" % [round_index + 1, Level.ROUNDS, "★".repeat(stars) + "☆".repeat(5 - stars)]
-	var footer := ""
+	var data := {
+		round_index = round_index, round_count = Level.ROUNDS, tester = runner.tester_name, result = result,
+		paint_used = paint.splats_used, optimal = optimal_paint(), coins = coins_collected,
+		coin_total = _coin_total(), hotfixes = hotfixes, quote = FocusGroup.quote_for(result),
+	}
 	if round_index + 1 == Level.ROUNDS:
 		var total := 0
-		var parts: PackedStringArray = []
+		var rounds := []
 		for i in Level.ROUNDS:
 			total += round_stars[i]
-			parts.append("%s %d★" % [level.rounds()[i].tester, round_stars[i]])
+			rounds.append({tester = level.rounds()[i].tester, stars = round_stars[i]})
 		var new_best := Progress.record(Progress.current_path(), total)
-		footer = "\nLEVEL COMPLETE   %d / %d★%s\n%s\n" % [total, Level.ROUNDS * 5, "   NEW BEST!" if new_best else "",
-			"   ".join(parts)]
-	message_label.text = "%s\n%s\n%s\n%s\n%s\n%s\n%s" % [header, paint_line, coin_line, hotfix_line, review, footer, _nav_hint()]
+		var unlocked := Progress.level_finished(total)
+		var hint := ""
+		if unlocked == "" and not Progress.has_next() and Progress.current + 1 < Progress.LEVELS.size() \
+				and Progress.level_override == "":
+			hint = "The next playtest is on hold until this one scores %d/15 or better." % Progress.UNLOCK_STARS
+		data.level = {rounds = rounds, total = total, max = Level.ROUNDS * 5, new_best = new_best,
+			unlocked = unlocked, locked_hint = hint}
+	data.nav = _nav_keys()
+	message_label.text = ""
+	results_card.show_round(data)
 
 
 func _on_died() -> void:
-	message_label.text = "%s is no longer with the focus group. Scores plummeting.\nR: retry   Tab: level select" % runner.tester_name
+	results_card.show_death(runner.tester_name, [["R", "retry"], ["Tab", "level select"]])

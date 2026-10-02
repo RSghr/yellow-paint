@@ -8,12 +8,18 @@ const LEVEL_DIR := "res://levels/"
 const SAVE_PATH := "user://progress.cfg"
 const GAME_SCENE := "res://game.tscn"
 const MENU_SCENE := "res://level_select.tscn"
+const MAIL_WRITER := preload("res://mail_writer.gd")
+
+const TUTORIAL_COUNT := 3  ## Levels 1-3 are always available.
+const UNLOCK_STARS := 10  ## A level after the tutorials appears once the previous one scored this much (out of 15).
 
 var LEVELS: Array[Dictionary] = []  ## [{name, path}], filled by _discover_levels().
 var current := 0  ## Index into LEVELS.
 var level_override := ""  ## Set when a level scene is launched directly (F6) and isn't in LEVELS.
 var seen_intro := false  ## The boss's welcome email has been read (Inlook opens on it at first launch).
 var read_mails: Array = []  ## Ids of Inlook emails already opened (see inbox.gd).
+var delivered_mails: Array = []  ## Emails received during play (mail_writer.gd), oldest first.
+var new_mail_ping := false  ## New mail since the desktop was last shown (it plays a sound).
 var open_levels_on_menu := false  ## Coming back from a level: the desktop reopens the Level Select window.
 var best_stars := {}  ## "level_01" -> best total stars over the 3 rounds, out of 15 (0 = never finished)
 
@@ -70,7 +76,60 @@ func play_path(path: String) -> void:
 
 
 func has_next() -> bool:
-	return level_override == "" and current + 1 < LEVELS.size()
+	return level_override == "" and current + 1 < LEVELS.size() and is_unlocked(current + 1)
+
+
+## Tutorials are always open; after that a level shows up once the previous one scored UNLOCK_STARS.
+func is_unlocked(index: int) -> bool:
+	if index < TUTORIAL_COUNT:
+		return true
+	if index <= 0 or index >= LEVELS.size():
+		return false
+	return best(LEVELS[index - 1].path) >= UNLOCK_STARS
+
+
+## Called by the game when the 3 rounds of the current level are done (after record()).
+## Sends Chad's mails and returns the name of a level that just got unlocked ("" if none).
+func level_finished(total: int) -> String:
+	if level_override != "":
+		return ""
+	var next := current + 1
+	if next < TUTORIAL_COUNT or next >= LEVELS.size():
+		return ""
+	var next_info: Dictionary = LEVELS[next]
+	var unlock_id := "unlock_" + _key(next_info.path)
+	if is_unlocked(next):
+		if _has_mail(unlock_id):
+			return ""
+		var testers := level_testers(next_info.path)
+		var mail := MAIL_WRITER.announcement(next_info.name, total, testers)
+		_deliver(mail, unlock_id)
+		var used: Array = delivered_mails.map(func(m): return m.get("template", ""))
+		var flavors: Array = MAIL_WRITER.flavor_for(testers, used)
+		for i in flavors.size():
+			_deliver(flavors[i], "%s_flavor_%d" % [unlock_id, i])
+		_save()
+		return next_info.name
+	# Not good enough yet: one review per score bracket.
+	var bracket := "15" if total >= 15 else ("10" if total >= 10 else ("5" if total >= 5 else "0"))
+	var perf_id := "perf_%s_%s" % [_key(LEVELS[current].path), bracket]
+	if not _has_mail(perf_id):
+		_deliver(MAIL_WRITER.performance(LEVELS[current].name, total, UNLOCK_STARS), perf_id)
+		_save()
+	return ""
+
+
+func _deliver(mail: Dictionary, id: String) -> void:
+	mail.id = id
+	delivered_mails.append(mail)
+	new_mail_ping = true
+
+
+func _has_mail(id: String) -> bool:
+	for m in delivered_mails:
+		if m.id == id:
+			return true
+	return false
 
 
 func play_next() -> void:
@@ -137,6 +196,7 @@ func _load() -> void:
 	# "best_total" (out of 15, 3 testers per level). The old "best_stars" section (out of 5) is ignored.
 	seen_intro = cfg.get_value("story", "seen_intro", false)
 	read_mails = cfg.get_value("story", "read_mails", [])
+	delivered_mails = cfg.get_value("story", "delivered_mails", [])
 	for key in cfg.get_section_keys("best_total") if cfg.has_section("best_total") else []:
 		best_stars[key] = cfg.get_value("best_total", key, 0)
 
@@ -145,6 +205,7 @@ func _save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("story", "seen_intro", seen_intro)
 	cfg.set_value("story", "read_mails", read_mails)
+	cfg.set_value("story", "delivered_mails", delivered_mails)
 	for key in best_stars:
 		cfg.set_value("best_total", key, best_stars[key])
 	cfg.save(SAVE_PATH)

@@ -96,7 +96,14 @@ Everything resets when the player presses R (doors close, crates come back, coin
   planned route (white walk / orange jump), interactables it plans to use (magenta), coins it has seen (gold).
 - Press **A** (AZERTY; the key left of Z) to follow the playtester with the spectator camera.
 
-## 7. Pick the 3 testers
+## 7. Where the level appears
+
+Levels 1-3 are the tutorials and are always in Level Select. Every level after that is **hidden** until the level
+before it scores at least **10/15**. Then Chad emails the player that a new playtest was scheduled (with the new
+level's testers), plus one or two flavor emails, one of them about one of your testers. So the file order is also the
+unlock order: make sure each level is beatable at 10/15 by someone who just finished the previous one.
+
+## 7b. Pick the 3 testers
 
 Every level is played by 3 focus testers in a row; the player's paint carries over from one to the next.
 
@@ -133,7 +140,7 @@ The numbers behind the stars are in `runner.gd`, export group "Traits" (one valu
 | Cass Cene | Cinematic Universe Digest | ★★☆ Hit or miss | ★★☆ Thoughtful | ★☆☆ No paint, no way |
 | Lou Tbox | Kotakoo | ★★★ Precise | ★★☆ Thoughtful | ★★★ Explorer |
 | Max Levell | Eurogamble | ★★★ Precise | ★☆☆ Needs a whole bucket | ★★☆ Lost fast |
-| Frank Rate | PC Gamerish (240 FPS edition) | ★★★ Precise | ★★★ Blind trust | ★★★ Explorer |
+| Frank Rate | PC Gamerish: 240 FPS Edition | ★★★ Precise | ★★★ Blind trust | ★★★ Explorer |
 | Dee Sync | Twitchy (streamer, 14 viewers) | ★☆☆ Incapable | ★★★ Blind trust | ★★☆ Lost fast |
 | Sven Tory | Destructoad | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★★ Explorer |
 | Hugh Dee | The Casual Observer | ★★☆ Hit or miss | ★★★ Blind trust | ★☆☆ No paint, no way |

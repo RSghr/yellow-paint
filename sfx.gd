@@ -22,6 +22,7 @@ const SOUNDS := {
 	"door": "Door opens",
 	"goal": "Level complete",
 	"ui_click": "Menu button clicked",
+	"mail": "New email in Inlook (desktop notification)",
 }
 const PLAYER_COUNT := 10
 

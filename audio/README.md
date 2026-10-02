@@ -20,6 +20,7 @@ Missing files are silent, so you can add them one at a time.
 | `door` | Door opens |
 | `goal` | Level complete |
 | `ui_click` | Menu button clicked |
+| `mail` | New email in Inlook (desktop notification) |
 
 The list lives in `sfx.gd` (`SOUNDS`). To add a new sound, add a line there and call
 `Sfx.play("name")` where it should play. Volume is controlled by the Master volume in Settings.
