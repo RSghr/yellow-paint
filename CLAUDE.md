@@ -48,14 +48,17 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 - It only plans **straight-line walks** between points (no navmesh): it can't plan a walk around a pillar or corner.
 - Coins are seen without paint but only walked to (`coin_detour` path cost).
 - Breakables: side paint = smash, top paint = climb; more paint wins, ties are a remembered guess.
-- Priorities: nearby coin > flag > painted interactable > unvisited paint > leap of faith > wander > desperate jump.
+- **Hotfixes** (red splats painted mid-playtest) are an order: noticed instantly with line of sight in any direction
+  (no view cone, no attention build-up), trusted at `hotfix_trust` (5), top priority, and the whole route to one is
+  walked without hesitation or look-arounds. It replans on the spot (`_urgent`). Hotfix paint on a breakable decides it.
+- Priorities: unused hotfix > nearby coin > flag > painted interactable > unvisited paint > leap of faith > wander > desperate jump.
 
 ## Scoring (game.gd `score()`)
 Start at 5★. Paint penalty vs optimal (= level `minimum_paint` + 5): over by 1-5 → -1, 6-10 → -2, >10 → -3.
 Coins: all → 0, more than half → -1, half or fewer → -2, none → -3.
 Hotfixes (splats painted during a playtest): 0 → 0, 1-3 → -1, 4+ → -2. They come from outside the can (no limit,
 not in `splats_used`, no paint penalty) and are **removed on R**. From Enter until R the can is in **Hotfix mode**:
-can, crosshair, HUD and new splats turn red (`PaintManager.hotfix_color`) so the player sees what they patched.
+can, crosshair, HUD and new splats turn red (`PaintManager.hotfix_color`); hotfix splats are bigger, pop in and pulse.
 Minimum 1★. Can size = optimal + 10. Hotfix quotes in `FocusGroup.HOTFIX_QUOTES`; the tester reacts when it notices one.
 Scraping refunds paint; paint destroyed with smashed/opened objects stays spent.
 Scraping (and Backspace clear) is **locked during a playtest**: from Enter until R (reset). Adding paint is still allowed

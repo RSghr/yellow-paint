@@ -12,11 +12,22 @@ var interact_point := Vector3.ZERO  ## For "interact" paint: where to stand to u
 var hotfix := false  ## Painted during a playtest (a "hotfix"): red, counted separately in the score, removed on reset.
 
 
+var _decal: Decal
+var _age := 0.0
+var _base_size := Vector3.ONE
+
+
 func build_visual(normal: Vector3, texture: Texture2D, color := Color(1.0, 0.82, 0.05)) -> void:
 	var decal := Decal.new()
+	_decal = decal
 	decal.modulate = color  # The image is white; this makes it yellow (or red for a hotfix).
 	var s := randf_range(0.9, 1.3)
+	if hotfix:
+		s = 1.5  # Big, glowing and pulsing: a hotfix should be impossible to miss.
+		decal.texture_emission = texture
+		decal.emission_energy = 2.0
 	decal.size = Vector3(1.3 * s, 0.6, 1.3 * s)
+	_base_size = decal.size
 	decal.texture_albedo = texture
 	decal.albedo_mix = 1.0
 	decal.upper_fade = 0.05
@@ -29,3 +40,16 @@ func build_visual(normal: Vector3, texture: Texture2D, color := Color(1.0, 0.82,
 	var x_axis := up.cross(helper).normalized()
 	var z_axis := x_axis.cross(up).normalized()
 	decal.global_basis = Basis(x_axis, up, z_axis).rotated(up, randf() * TAU)
+
+
+## Hotfix splats slap down with a pop, then keep pulsing.
+func _process(delta: float) -> void:
+	if not hotfix or not _decal:
+		set_process(false)
+		return
+	_age += delta
+	var pop := 1.0 + 0.6 * exp(-_age * 8.0) * cos(_age * 25.0)  # Overshoot, then settle.
+	var pulse := 1.0 + 0.08 * sin(_age * 6.0)
+	var k := pop * pulse
+	_decal.size = Vector3(_base_size.x * k, _base_size.y, _base_size.z * k)
+	_decal.emission_energy = 1.5 + 1.5 * (0.5 + 0.5 * sin(_age * 6.0))

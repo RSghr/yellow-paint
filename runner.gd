@@ -44,6 +44,7 @@ const PERCEPTION_INTERVAL := 0.1
 @export var view_angle_deg := 100.0
 @export var notice_rate := 1.6  ## Higher = spots paint faster. Lone splats at 5m take about a second of looking.
 @export var trust_radius := 1.3  ## Splats within this radius pile up into one spot's trust.
+@export var hotfix_trust := 5  ## A hotfix splat is trusted like a big blob: no hesitation, confident walk.
 
 @export_group("Personality")
 @export var scan_time := 1.8  ## A full look-around, left to right.
@@ -87,6 +88,7 @@ var _detoured := false  ## Went off its route for a coin or to use something: ma
 var _wanders := 0
 var _home_y := 0.0  ## Height of the last trusted ground; wandering stays near it.
 var _rethink := false  ## Something new was noticed; reconsider the plan at the next chance.
+var _urgent := false  ## A hotfix appeared: drop whatever it's standing around doing and replan now.
 var _lost_time := 0.0  ## Seconds since it last made progress (reached paint/coin/button/flag, saw new paint, a door opened).
 var _last_jump_desperate := false
 var _coin_attention := {}  ## coin instance id -> attention
@@ -165,6 +167,7 @@ func reset_to_spawn() -> void:
 	_goal_known = false
 	_wanders = 0
 	_rethink = false
+	_urgent = false
 	_lost_time = 0.0
 	_last_jump_desperate = false
 	_home_y = _spawn.origin.y - FEET_OFFSET
@@ -216,10 +219,14 @@ func known_spots() -> Array[Dictionary]:
 		if is_instance_valid(mark.host) and mark.host.kind == "breakable" and _breakable_choice(mark.host, seen) == "break":
 			continue  # It's going to smash this, not stand on it.
 		var trust := 0
+		var hot := false
 		for other in seen:
 			if other.role == "nav" and other.global_position.distance_to(mark.global_position) <= trust_radius:
 				trust += 1
-		spots.append({pos = mark.stand_point, trust = trust, host = mark.host})
+				hot = hot or other.hotfix
+		if hot:
+			trust = maxi(trust, hotfix_trust)  # The operator stepped in mid-run: that's an order.
+		spots.append({pos = mark.stand_point, trust = trust, host = mark.host, hotfix = hot})
 	return spots
 
 
@@ -232,8 +239,9 @@ func known_tasks() -> Array[Dictionary]:
 			continue
 		var id := mark.host.get_instance_id()
 		if not by_host.has(id):
-			by_host[id] = {pos = mark.interact_point, trust = 0, host = mark.host}
-		by_host[id].trust += 1
+			by_host[id] = {pos = mark.interact_point, trust = 0, host = mark.host, hotfix = false}
+		by_host[id].trust += hotfix_trust if mark.hotfix else 1
+		by_host[id].hotfix = by_host[id].hotfix or mark.hotfix
 	var tasks: Array[Dictionary] = []
 	for task in by_host.values():
 		if task.host.kind == "breakable" and _breakable_choice(task.host, seen) != "break":
@@ -248,10 +256,11 @@ func _breakable_choice(host: Node, seen: Array[PaintMark]) -> String:
 	var t := 0
 	for mark in seen:
 		if mark.host == host:
+			var weight := 10 if mark.hotfix else 1  # A hotfix settles the question.
 			if mark.role == "interact":
-				i += 1
+				i += weight
 			elif mark.role == "nav":
-				t += 1
+				t += weight
 	if i == 0:
 		return "climb"
 	if t == 0:
@@ -293,6 +302,11 @@ func _physics_process(delta: float) -> void:
 			_perceive_timer = 0.0
 			if debug_view:
 				_draw_debug()
+
+	if _urgent and is_on_floor() and state in [State.SCANNING, State.HESITATING, State.CONFUSED]:
+		_urgent = false
+		_wanders = 0
+		_decide()  # No scanning, no psyching up: the operator just pointed somewhere.
 
 	match state:
 		State.WALKING:
@@ -599,6 +613,11 @@ func _perceive(dt: float) -> void:
 				continue
 			# Aim a little off the surface: paint on a ledge lip wraps over the edge and shows from below.
 			var target := mark.global_position + (Vector3.UP * 0.3 if mark.role == "nav" else mark.normal * 0.25)
+			# A hotfix grabs its attention at once, even outside its view cone (it still needs line of sight).
+			if mark.hotfix and _can_see(space, eye, look, -1.0, target):
+				_seen[id] = true
+				_on_noticed(mark, 1)
+				continue
 			if not _can_see(space, eye, look, cos_half, target):
 				continue
 			# Bigger blobs of paint are more eye-catching.
@@ -656,9 +675,15 @@ func _on_noticed(mark: PaintMark, blob: int) -> void:
 		return
 	if mark.role in ["interact", "nav"]:
 		_lost_time = 0.0
-	if mark.hotfix and state not in [State.WAITING, State.CELEBRATING]:
+	if mark.hotfix:
+		_lost_time = 0.0
+		_rethink = true
+		_urgent = true
+		_look_at(mark.global_position, 1.0)
 		say(["Was that there a second ago?", "Hey! The level just changed!", "Is someone patching this live?",
-			"New yellow? Did I miss a patch note?", "Okay, who's painting behind my back?"].pick_random(), true)
+			"Red paint? Okay, OKAY, I'm going!", "Okay, who's painting behind my back?",
+			"A hotfix! Over there!"].pick_random(), true)
+		return
 	if mark.role == "interact":
 		_rethink = true
 		_look_at(mark.global_position, 0.8)
@@ -691,26 +716,31 @@ func _decide() -> void:
 	var trust: Array[int] = [99]
 	var kinds: Array[String] = ["me"]
 	var payload: Array = [null]
+	var hot: Array[bool] = [false]  ## Hotfix paint: goes to the front of the queue.
 	for s in known_spots():
 		nodes.append(s.pos)
 		trust.append(s.trust)
 		kinds.append("paint")
 		payload.append(null)
+		hot.append(s.hotfix)
 	if _goal_known:
 		nodes.append(_goal.global_position)
 		trust.append(5)
 		kinds.append("goal")
 		payload.append(null)
+		hot.append(false)
 	for t in known_tasks():
 		nodes.append(t.pos)
 		trust.append(t.trust)
 		kinds.append("task")
 		payload.append(t.host)
+		hot.append(t.hotfix)
 	for c in known_coins():
 		nodes.append(c.global_position)
 		trust.append(5)
 		kinds.append("coin")
 		payload.append(c)
+		hot.append(false)
 
 	# Dijkstra. Jumps only land on paint or the flag. Low-trust spots cost extra.
 	var n := nodes.size()
@@ -747,7 +777,7 @@ func _decide() -> void:
 				via_jump[v] = link.jump
 				via_point[v] = link.get("via")
 
-	var target := _pick_target(nodes, trust, kinds, dist)
+	var target := _pick_target(nodes, trust, kinds, dist, hot)
 	_path.clear()
 	if target != -1:
 		var i := target
@@ -758,6 +788,10 @@ func _decide() -> void:
 				_path.push_front({pos = via_point[i], jump = false, trust = 99, leap = false,
 					paint = false, kind = "walk", host = null})
 			i = prev[i]
+		if hot[target]:
+			# Heading for a hotfix: no doubts or look-arounds on the way, it's on a mission.
+			for step in _path:
+				step.trust = maxi(step.trust, hotfix_trust)
 		# Already standing on the first step? Skip it (otherwise it "arrives" there forever).
 		while _path.size() > 1 and not _path[0].jump and _path[0].kind == "paint" \
 				and Vector2(_path[0].pos.x - feet().x, _path[0].pos.z - feet().z).length() < 0.35:
@@ -788,9 +822,22 @@ func _decide() -> void:
 		"I need yellow to understand things.", "Hello? Level designer?"].pick_random(), true)
 
 
-## Priorities: a nearby coin > the flag > painted things to use > unvisited paint.
-func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String], dist: Array[float]) -> int:
+## Priorities: hotfixes > a nearby coin > the flag > painted things to use > unvisited paint.
+func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String], dist: Array[float],
+		hot: Array[bool]) -> int:
 	var best := -1
+	# Hotfixes are the operator stepping in mid-run: go there before anything else (nearest unused one).
+	# Once it has stood on it (or used it), it goes back to its normal priorities.
+	for i in nodes.size():
+		if not hot[i] or dist[i] == INF:
+			continue
+		if (kinds[i] == "paint" and not _is_visited(nodes[i])) or kinds[i] == "task":
+			if best == -1 or dist[i] < dist[best]:
+				best = i
+	if best != -1:
+		_retrace_to = Vector3.INF
+		return best
+
 	for i in nodes.size():
 		if kinds[i] == "coin" and dist[i] <= coin_detour and (best == -1 or dist[i] < dist[best]):
 			best = i
