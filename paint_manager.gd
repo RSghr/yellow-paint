@@ -7,20 +7,28 @@ signal paint_changed
 signal splat_added(mark: PaintMark)
 signal paint_denied  ## Tried to paint with an empty can.
 signal scrape_denied  ## Tried to scrape while scraping is locked (during a playtest).
+signal hotfix_mode_changed(on: bool)
 
 @export var nav_merge_radius := 0.8  ## Splats closer than this to an existing nav point don't add a new one.
 @export var scrape_radius := 1.0
 @export var floor_min_normal_y := 0.7  ## How flat a surface must be to count as "walkable" paint.
 @export var splat_texture: Texture2D = preload("res://art/paint_splat.png")  ## White image, tinted by paint_color. Swap the file for your spray image.
 @export var paint_color := Color(1.0, 0.82, 0.05)
+@export var hotfix_color := Color(0.9, 0.1, 0.08)  ## Hotfix splats (and the can in Hotfix mode) so you can see what you patched.
 
 @export var paint_limit := -1  ## Max splats on the level at once. -1 = unlimited. Set by the level.
 
 ## While true, paint can still be added but not scraped or cleared (no refunds mid-playtest).
 var scrape_locked := false
 
-## True during a playtest: new splats are flagged as hotfixes.
-var hotfix_mode := false
+## True during a playtest: new splats are flagged as hotfixes. They ignore the paint limit, don't
+## count in splats_used (they're scored separately) and are removed on reset.
+var hotfix_mode := false:
+	set(v):
+		if v == hotfix_mode:
+			return
+		hotfix_mode = v
+		hotfix_mode_changed.emit(v)
 
 ## Splats currently "spent". Scraping refunds; paint lost to smashed planks or opened doors doesn't.
 var splats_used := 0
@@ -34,10 +42,12 @@ func _ready() -> void:
 
 ## Spray a splat. `collider` is what was hit, so interactables can say what the paint means.
 func paint(hit_position: Vector3, hit_normal: Vector3, collider: Object = null) -> PaintMark:
-	if not can_paint():
-		paint_denied.emit()
-		return null
-	splats_used += 1
+	# Hotfixes (painted during a playtest) come from outside the can: no limit, not in splats_used.
+	if not hotfix_mode:
+		if not can_paint():
+			paint_denied.emit()
+			return null
+		splats_used += 1
 	var host := _find_interactable(collider)
 	var role: String
 	if host:
@@ -58,7 +68,8 @@ func paint(hit_position: Vector3, hit_normal: Vector3, collider: Object = null) 
 	if role == "interact":
 		mark.interact_point = host.interact_point(hit_position, hit_normal)
 	mark.hotfix = hotfix_mode
-	mark.build_visual(hit_normal, splat_texture if splat_texture else _get_splat_texture(), paint_color)
+	mark.build_visual(hit_normal, splat_texture if splat_texture else _get_splat_texture(),
+		hotfix_color if hotfix_mode else paint_color)
 	splat_added.emit(mark)
 	paint_changed.emit()
 	return mark
@@ -108,6 +119,18 @@ func scrape(hit_position: Vector3) -> int:
 		splats_used = maxi(splats_used - removed, 0)
 		paint_changed.emit()
 	return removed
+
+
+## Remove every hotfix splat (on reset). They were never in splats_used, so nothing is refunded.
+func remove_hotfixes() -> void:
+	var removed := false
+	for mark in get_marks():
+		if mark.hotfix:
+			mark.queue_free()
+			remove_child(mark)
+			removed = true
+	if removed:
+		paint_changed.emit()
 
 
 func clear_all() -> void:

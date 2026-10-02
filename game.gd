@@ -5,7 +5,7 @@ extends Node3D
 ## Scoring: start at 5 stars, subtract paint, coin and hotfix penalties (minimum 1 star).
 ##   Paint (optimal = level minimum + optimal_margin):  <= optimal: 0 | 1-5 over: -1 | 6-10 over: -2 | more: -3
 ##   Coins:  all: 0 | more than half: -1 | half or fewer: -2 | none: -3
-##   Hotfixes (splats painted DURING the playtest):  0: 0 | 1-3: -1 | 4+: -2
+##   Hotfixes (splats painted DURING the playtest, outside the can, removed on R):  0: 0 | 1-3: -1 | 4+: -2
 ## The can holds optimal + limit_margin splats. Scraping refunds paint.
 
 const RUNNER_SCENE := preload("res://runner.tscn")
@@ -35,6 +35,7 @@ var spectating := false
 @onready var status_label: Label = $HUD/StatusLabel
 @onready var message_label: Label = $HUD/MessageLabel
 @onready var level_label: Label = $HUD/LevelLabel
+@onready var crosshair: Label = $HUD/Crosshair
 
 
 func _ready() -> void:
@@ -48,6 +49,7 @@ func _ready() -> void:
 	paint.paint_denied.connect(_on_out_of_paint)
 	paint.scrape_denied.connect(_on_scrape_denied)
 	paint.splat_added.connect(_on_splat_added)
+	paint.hotfix_mode_changed.connect(func(_on): _update_paint_label())
 	for coin in get_tree().get_nodes_in_group("coin"):
 		coin.collected.connect(_on_coin_collected)
 	_update_paint_label()
@@ -137,11 +139,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _retry() -> void:
+	_out_of_paint_timer = 0.0  # Drop any timed HUD message (e.g. "HOTFIX #n").
 	_finished = false
 	_playtest_running = false
 	paint.scrape_locked = false
 	paint.hotfix_mode = false
 	hotfixes = 0
+	paint.remove_hotfixes()  # Back to the route as it was before the playtest.
 	message_label.text = ""
 	get_tree().call_group("resettable", "reset_state")  # Coins, doors, buttons, breakables.
 	coins_collected = 0
@@ -154,9 +158,14 @@ func _update_paint_label() -> void:
 	paint_gauge.used = paint.splats_used
 	if _out_of_paint_timer > 0.0:
 		return  # A timed message (out of paint, hotfix...) is showing; _process restores the label after.
+	var hotfix := paint.hotfix_mode
+	var color := paint.hotfix_color.lightened(0.25) if hotfix else Color(1, 0.85, 0.1)
+	crosshair.add_theme_color_override("font_color", color)
 	paint_label.remove_theme_color_override("font_color")
-	paint_label.add_theme_color_override("font_color", Color(1, 0.85, 0.1))
+	paint_label.add_theme_color_override("font_color", color)
 	paint_label.text = "Paint: %d / %d   (optimal: %d or less)" % [paint.splats_used, paint_limit(), optimal_paint()]
+	if hotfix:
+		paint_label.text = "HOTFIX MODE: new paint is a hotfix (free, but costs stars)   " + paint_label.text
 
 
 func _on_out_of_paint() -> void:
