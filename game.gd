@@ -5,7 +5,7 @@ extends Node3D
 ## Scoring: start at 5 stars, subtract paint, coin and hotfix penalties (minimum 1 star).
 ##   Paint (optimal = level minimum + optimal_margin):  <= optimal: 0 | 1-5 over: -1 | 6-10 over: -2 | more: -3
 ##   Coins:  all: 0 | more than half: -1 | half or fewer: -2 | none: -3
-##   Hotfixes (splats painted DURING the playtest):  0: 0 | 1-3: -1 | 4+: -2
+##   Hotfixes (splats painted DURING the playtest, outside the can, removed on R):  0: 0 | 1-3: -1 | 4+: -2
 ## The can holds optimal + limit_margin splats. Scraping refunds paint.
 
 const RUNNER_SCENE := preload("res://runner.tscn")
@@ -142,8 +142,7 @@ func _retry() -> void:
 	paint.scrape_locked = false
 	paint.hotfix_mode = false
 	hotfixes = 0
-	for mark in paint.get_marks():
-		mark.hotfix = false  # Kept splats are part of the level now; the next tester shouldn't call them out.
+	paint.remove_hotfixes()  # Back to the route as it was before the playtest.
 	message_label.text = ""
 	get_tree().call_group("resettable", "reset_state")  # Coins, doors, buttons, breakables.
 	coins_collected = 0

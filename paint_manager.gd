@@ -19,7 +19,8 @@ signal scrape_denied  ## Tried to scrape while scraping is locked (during a play
 ## While true, paint can still be added but not scraped or cleared (no refunds mid-playtest).
 var scrape_locked := false
 
-## True during a playtest: new splats are flagged as hotfixes.
+## True during a playtest: new splats are flagged as hotfixes. They ignore the paint limit, don't
+## count in splats_used (they're scored separately) and are removed on reset.
 var hotfix_mode := false
 
 ## Splats currently "spent". Scraping refunds; paint lost to smashed planks or opened doors doesn't.
@@ -34,10 +35,12 @@ func _ready() -> void:
 
 ## Spray a splat. `collider` is what was hit, so interactables can say what the paint means.
 func paint(hit_position: Vector3, hit_normal: Vector3, collider: Object = null) -> PaintMark:
-	if not can_paint():
-		paint_denied.emit()
-		return null
-	splats_used += 1
+	# Hotfixes (painted during a playtest) come from outside the can: no limit, not in splats_used.
+	if not hotfix_mode:
+		if not can_paint():
+			paint_denied.emit()
+			return null
+		splats_used += 1
 	var host := _find_interactable(collider)
 	var role: String
 	if host:
@@ -108,6 +111,18 @@ func scrape(hit_position: Vector3) -> int:
 		splats_used = maxi(splats_used - removed, 0)
 		paint_changed.emit()
 	return removed
+
+
+## Remove every hotfix splat (on reset). They were never in splats_used, so nothing is refunded.
+func remove_hotfixes() -> void:
+	var removed := false
+	for mark in get_marks():
+		if mark.hotfix:
+			mark.queue_free()
+			remove_child(mark)
+			removed = true
+	if removed:
+		paint_changed.emit()
 
 
 func clear_all() -> void:
