@@ -142,6 +142,8 @@ func _retry() -> void:
 	paint.scrape_locked = false
 	paint.hotfix_mode = false
 	hotfixes = 0
+	for mark in paint.get_marks():
+		mark.hotfix = false  # Kept splats are part of the level now; the next tester shouldn't call them out.
 	message_label.text = ""
 	get_tree().call_group("resettable", "reset_state")  # Coins, doors, buttons, breakables.
 	coins_collected = 0
