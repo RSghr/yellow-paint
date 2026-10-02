@@ -19,7 +19,7 @@ The template starts with `_`, so it's ignored. To reorder levels, rename the fil
 
 | Node | What it is |
 |---|---|
-| Root (`level.gd`) | Settings in the Inspector: `level_name` (menu/HUD), `intro_text` (shown at start), `minimum_paint`, `death_height`. |
+| Root (`level.gd`) | Settings in the Inspector: `level_name` (menu/HUD), `intro_text` (shown at start), `death_height`, and **Round 1-3**: a tester (dropdown) and that round's `minimum`. |
 | `RunnerSpawn` (Marker3D) | Where the playtester starts. Put it **0.9 above the floor** (its origin is at its middle). |
 | `OperatorSpawn` (Marker3D) | Where you start. **1.05 above the floor**. Rotate it to choose the starting view. |
 | `Geometry` | Static blocks: instances of `debug_block.tscn`. |
@@ -84,17 +84,35 @@ Everything resets when the player presses R (doors close, crates come back, coin
   planned route (white walk / orange jump), interactables it plans to use (magenta), coins it has seen (gold).
 - Press **A** (AZERTY; the key left of Z) to follow the playtester with the spectator camera.
 
-## 7. Set `minimum_paint`
+## 7. Pick the 3 testers
 
-`minimum_paint` is the fewest splats that **reliably** get the playtester to the flag, ignoring coins.
-Optimal (5★ territory) is `minimum_paint + 5`, and the can holds `minimum_paint + 15`.
+Every level is played by 3 focus testers in a row; the player's paint carries over from one to the next.
+Pick them in the root's **Round 1/2/3** groups (dropdown of `FocusGroup.ROSTER`). Each tester has three traits,
+shown to the player only as stars (★☆☆ / ★★☆ / ★★★):
 
-1. Play the level painting only what's strictly needed. Count the splats.
+| Trait | ★☆☆ | ★★☆ (default) | ★★★ |
+|---|---|---|---|
+| Jump precision (unpainted jumps) | Incapable: tries, always falls short | Hit or miss: ~65% | Precise: ~95% |
+| Trust | Needs a whole bucket: **2 splats** on a landing before jumping there, slow to decide | Thoughtful | Blind trust: one splat = full confidence, fast |
+| Patience (before improvising) | No paint, no way: **never** jumps unpainted (no leaps of faith either) | Lost fast: ~8 s | Explorer: ~3 s |
+
+A tester has at most one ★☆☆ trait. Ideas for a lineup: start with someone easy-going, end with the one whose
+weak trait the level punishes (a "bucket" tester on a level of long jumps, a "no paint, no way" one where the
+default tester would leap to the flag). The numbers behind the stars are in runner.gd, "Traits" export group.
+
+## 8. Set each round's `minimum`
+
+A round's `minimum` is the fewest splats that **reliably** get **that tester** to the flag, ignoring coins.
+Optimal (5★ territory) is `minimum + 5`, and the can holds `minimum + 15`. The level score is the 3 rounds added up (out of 15).
+
+1. Play the round painting only what's strictly needed. Count the splats.
 2. Try it a few times: the AI is a bit random. If it only works sometimes, it's not the minimum yet.
 3. Make sure **all coins plus the minimum** fit within optimal (+5). If coins need more than 5 extra
    splats, a 5★ run is impossible; move coins or raise the minimum.
+4. Remember the paint carries over: the round-2 minimum counts all the paint on the level, including what was
+   left from round 1 (a "bucket" round usually means doubling the landings that matter).
 
-## 8. Checklist
+## 9. Checklist
 
 - [ ] `level_name` and `intro_text` set; no ⚠ on the root
 - [ ] RunnerSpawn 0.9 above floor, OperatorSpawn 1.05 above floor
@@ -103,4 +121,4 @@ Optimal (5★ territory) is `minimum_paint + 5`, and the can holds `minimum_pain
 - [ ] Side ledges have room for a painted way back
 - [ ] Buttons have their `target` set and face where the playtester will stand
 - [ ] Flag visibility is intentional (leaps of faith)
-- [ ] `minimum_paint` measured; all coins reachable within optimal
+- [ ] 3 different testers picked; each round's `minimum` measured; all coins reachable within optimal

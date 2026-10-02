@@ -6,11 +6,16 @@
 [ext_resource type="PackedScene" path="res://coin.tscn" id="coin"]
 
 [node name="LevelTemplate" type="Node3D"]
-editor_description = "Level root. Set level_name, intro_text and minimum_paint in the Inspector. See docs/LEVEL_DESIGN.md."
+editor_description = "Level root. Set level_name, intro_text and the 3 rounds (tester + minimum) in the Inspector. See docs/LEVEL_DESIGN.md."
 script = ExtResource("lvl_script")
 level_name = "New level"
 intro_text = "Paint where the playtester should land, then press Enter."
-minimum_paint = 1
+tester_1 = "Rhea Spawn"
+minimum_1 = 1
+tester_2 = "Polly Gonn"
+minimum_2 = 1
+tester_3 = "Al Gorithm"
+minimum_3 = 1
 
 [node name="RunnerSpawn" type="Marker3D" parent="."]
 editor_description = "Where the playtester starts. Keep it 0.9 above the floor (its origin is at its middle)."

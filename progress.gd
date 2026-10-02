@@ -12,7 +12,7 @@ const MENU_SCENE := "res://level_select.tscn"
 var LEVELS: Array[Dictionary] = []  ## [{name, path}], filled by _discover_levels().
 var current := 0  ## Index into LEVELS.
 var level_override := ""  ## Set when a level scene is launched directly (F6) and isn't in LEVELS.
-var best_stars := {}  ## "level_01" -> best stars (0 = never finished)
+var best_stars := {}  ## "level_01" -> best total stars over the 3 rounds, out of 15 (0 = never finished)
 
 
 func _ready() -> void:
@@ -86,7 +86,7 @@ func best(path: String) -> int:
 	return best_stars.get(_key(path), 0)
 
 
-## Returns true if this is a new best.
+## `stars` = the level's total (3 rounds, out of 15). Returns true if this is a new best.
 func record(path: String, stars: int) -> bool:
 	if stars <= best(path):
 		return false
@@ -103,12 +103,13 @@ func _load() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(SAVE_PATH) != OK:
 		return
-	for key in cfg.get_section_keys("best_stars") if cfg.has_section("best_stars") else []:
-		best_stars[key] = cfg.get_value("best_stars", key, 0)
+	# "best_total" (out of 15, 3 testers per level). The old "best_stars" section (out of 5) is ignored.
+	for key in cfg.get_section_keys("best_total") if cfg.has_section("best_total") else []:
+		best_stars[key] = cfg.get_value("best_total", key, 0)
 
 
 func _save() -> void:
 	var cfg := ConfigFile.new()
 	for key in best_stars:
-		cfg.set_value("best_stars", key, best_stars[key])
+		cfg.set_value("best_total", key, best_stars[key])
 	cfg.save(SAVE_PATH)

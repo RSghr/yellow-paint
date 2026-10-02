@@ -15,7 +15,7 @@ func _ready() -> void:
 		var info: Dictionary = Progress.LEVELS[i]
 		var stars := Progress.best(info.path)
 		var button := _button("%d.  %s      %s" % [i + 1, info.name,
-			("★".repeat(stars) + "☆".repeat(5 - stars)) if stars > 0 else "not finished"])
+			("%d / 15★" % stars) if stars > 0 else "not finished"])
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.pressed.connect(func(): Sfx.play("ui_click"); Progress.play(i))
 		_list.add_child(button)

@@ -15,11 +15,40 @@ extends Node3D
 		level_name = v
 		update_configuration_warnings()
 @export_multiline var intro_text := "Paint a route, then press Enter to start the playtest."
-@export var minimum_paint := 5:  ## Fewest splats that reliably get the playtester to the flag (no coins). Set from playtesting.
-	set(v):
-		minimum_paint = v
-		update_configuration_warnings()
 @export var death_height := -2.5  ## The playtester is lost below this height. Keep it above the pit floor.
+
+## A level is played by 3 focus testers in a row (paint carries over between rounds).
+## Each round has its own minimum: the fewest splats that reliably get THAT tester to the flag (no coins).
+## Pick testers from FocusGroup.ROSTER (dropdown). Set the minimums from playtesting.
+@export_group("Round 1")
+@export var tester_1 := "Rhea Spawn":
+	set(v):
+		tester_1 = v
+		update_configuration_warnings()
+@export var minimum_1 := 5:
+	set(v):
+		minimum_1 = v
+		update_configuration_warnings()
+@export_group("Round 2")
+@export var tester_2 := "Polly Gonn":
+	set(v):
+		tester_2 = v
+		update_configuration_warnings()
+@export var minimum_2 := 5:
+	set(v):
+		minimum_2 = v
+		update_configuration_warnings()
+@export_group("Round 3")
+@export var tester_3 := "Al Gorithm":
+	set(v):
+		tester_3 = v
+		update_configuration_warnings()
+@export var minimum_3 := 5:
+	set(v):
+		minimum_3 = v
+		update_configuration_warnings()
+
+const ROUNDS := 3
 
 
 func _ready() -> void:
@@ -32,6 +61,22 @@ func _ready() -> void:
 		var progress := get_tree().root.get_node_or_null("Progress")  # Looked up at runtime: this is also a @tool script.
 		if progress:
 			progress.play_path.call_deferred(scene_file_path)
+
+
+## [{tester, minimum}] for the 3 rounds.
+func rounds() -> Array[Dictionary]:
+	return [
+		{tester = tester_1, minimum = minimum_1},
+		{tester = tester_2, minimum = minimum_2},
+		{tester = tester_3, minimum = minimum_3},
+	]
+
+
+## Tester fields show as a dropdown of the roster.
+func _validate_property(property: Dictionary) -> void:
+	if property.name in ["tester_1", "tester_2", "tester_3"]:
+		property.hint = PROPERTY_HINT_ENUM
+		property.hint_string = ",".join(PackedStringArray(FocusGroup.ROSTER.keys()))
 
 
 func runner_spawn() -> Transform3D:
@@ -52,8 +97,16 @@ func _get_configuration_warnings() -> PackedStringArray:
 		warnings.append("Add a Marker3D named \"OperatorSpawn\" where you (the operator) start.")
 	if not _has_goal(self):
 		warnings.append("No Goal: instance goal.tscn where the level ends.")
-	if minimum_paint <= 0:
-		warnings.append("minimum_paint must be at least 1 (the fewest splats that reliably finish the level).")
+	var used := {}
+	for i in ROUNDS:
+		var r: Dictionary = rounds()[i]
+		if not FocusGroup.ROSTER.has(r.tester):
+			warnings.append("Round %d: \"%s\" isn't in FocusGroup.ROSTER." % [i + 1, r.tester])
+		elif used.has(r.tester):
+			warnings.append("Round %d: %s already plays round %d. Pick a different tester." % [i + 1, r.tester, used[r.tester]])
+		used[r.tester] = i + 1
+		if r.minimum <= 0:
+			warnings.append("Round %d: minimum must be at least 1 (fewest splats that reliably get this tester to the flag)." % (i + 1))
 	if level_name.strip_edges() == "" or level_name == "Untitled level":
 		warnings.append("Give the level a level_name; it's shown in the menu and HUD.")
 	return warnings
