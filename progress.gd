@@ -11,7 +11,9 @@ const MENU_SCENE := "res://level_select.tscn"
 const MAIL_WRITER := preload("res://mail_writer.gd")
 
 const TUTORIAL_COUNT := 3  ## Levels 1-3 are always available.
-const UNLOCK_STARS := 10  ## A level after the tutorials appears once the previous one scored this much (out of 15).
+const UNLOCK_STARS := 10  ## A level after the tutorials appears once EVERY level before it scored this much (out of 15).
+## Testing: Project Settings > Yellow Paint > Debug > Unlock All Levels shows every level (debug builds only).
+const UNLOCK_ALL_SETTING := "yellow_paint/debug/unlock_all_levels"
 
 var LEVELS: Array[Dictionary] = []  ## [{name, path}], filled by _discover_levels().
 var current := 0  ## Index into LEVELS.
@@ -79,13 +81,32 @@ func has_next() -> bool:
 	return level_override == "" and current + 1 < LEVELS.size() and is_unlocked(current + 1)
 
 
-## Tutorials are always open; after that a level shows up once the previous one scored UNLOCK_STARS.
+## Tutorials are always open; a later level shows up once every level before it scored UNLOCK_STARS.
 func is_unlocked(index: int) -> bool:
+	if index < 0 or index >= LEVELS.size():
+		return false
+	return unlock_all() or earned(index)
+
+
+## Unlocked by playing (ignores the debug toggle). Used for the emails.
+func earned(index: int) -> bool:
 	if index < TUTORIAL_COUNT:
 		return true
-	if index <= 0 or index >= LEVELS.size():
-		return false
-	return best(LEVELS[index - 1].path) >= UNLOCK_STARS
+	return missing_for(index).is_empty()
+
+
+## Names of the earlier levels that still need UNLOCK_STARS before `index` opens.
+func missing_for(index: int) -> PackedStringArray:
+	var missing: PackedStringArray = []
+	for i in mini(index, LEVELS.size()):
+		if best(LEVELS[i].path) < UNLOCK_STARS:
+			missing.append(LEVELS[i].name)
+	return missing
+
+
+## The editor toggle to see every level while testing (never active in release exports).
+func unlock_all() -> bool:
+	return OS.is_debug_build() and bool(ProjectSettings.get_setting(UNLOCK_ALL_SETTING, false))
 
 
 ## Called by the game when the 3 rounds of the current level are done (after record()).
@@ -93,29 +114,29 @@ func is_unlocked(index: int) -> bool:
 func level_finished(total: int) -> String:
 	if level_override != "":
 		return ""
-	var next := current + 1
-	if next < TUTORIAL_COUNT or next >= LEVELS.size():
-		return ""
-	var next_info: Dictionary = LEVELS[next]
-	var unlock_id := "unlock_" + _key(next_info.path)
-	if is_unlocked(next):
+	# Did this result open a new level? (The first one earned whose mail hasn't been sent.)
+	for i in range(TUTORIAL_COUNT, LEVELS.size()):
+		var info: Dictionary = LEVELS[i]
+		var unlock_id := "unlock_" + _key(info.path)
+		if not earned(i):
+			break
 		if _has_mail(unlock_id):
-			return ""
-		var testers := level_testers(next_info.path)
-		var mail := MAIL_WRITER.announcement(next_info.name, total, testers)
-		_deliver(mail, unlock_id)
+			continue
+		var testers := level_testers(info.path)
+		_deliver(MAIL_WRITER.announcement(info.name, total, testers), unlock_id)
 		var used: Array = delivered_mails.map(func(m): return m.get("template", ""))
 		var flavors: Array = MAIL_WRITER.flavor_for(testers, used)
-		for i in flavors.size():
-			_deliver(flavors[i], "%s_flavor_%d" % [unlock_id, i])
+		for f in flavors.size():
+			_deliver(flavors[f], "%s_flavor_%d" % [unlock_id, f])
 		_save()
-		return next_info.name
-	# Not good enough yet: one review per score bracket.
-	var bracket := "15" if total >= 15 else ("10" if total >= 10 else ("5" if total >= 5 else "0"))
-	var perf_id := "perf_%s_%s" % [_key(LEVELS[current].path), bracket]
-	if not _has_mail(perf_id):
-		_deliver(MAIL_WRITER.performance(LEVELS[current].name, total, UNLOCK_STARS), perf_id)
-		_save()
+		return info.name
+	# This level is still holding things up: one review per score bracket.
+	if best(current_path()) < UNLOCK_STARS and current + 1 < LEVELS.size():
+		var bracket := "15" if total >= 15 else ("10" if total >= 10 else ("5" if total >= 5 else "0"))
+		var perf_id := "perf_%s_%s" % [_key(current_path()), bracket]
+		if not _has_mail(perf_id):
+			_deliver(MAIL_WRITER.performance(LEVELS[current].name, total, UNLOCK_STARS), perf_id)
+			_save()
 	return ""
 
 

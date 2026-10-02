@@ -322,7 +322,9 @@ func _on_goal() -> void:
 		var hint := ""
 		if unlocked == "" and not Progress.has_next() and Progress.current + 1 < Progress.LEVELS.size() \
 				and Progress.level_override == "":
-			hint = "The next playtest is on hold until this one scores %d/15 or better." % Progress.UNLOCK_STARS
+			var missing := Progress.missing_for(Progress.current + 1)
+			hint = "The next playtest is on hold until %s %s %d/15 or better." % [
+				" and ".join(missing), "scores" if missing.size() == 1 else "score", Progress.UNLOCK_STARS]
 		data.level = {rounds = rounds, total = total, max = Level.ROUNDS * 5, new_best = new_best,
 			unlocked = unlocked, locked_hint = hint}
 	data.nav = _nav_keys()

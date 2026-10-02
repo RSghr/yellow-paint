@@ -37,11 +37,14 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 | `paint_gauge.gd` | HUD paint bar with min/optimal ticks. |
 
 ## Progression (Progress + mail_writer.gd)
-- Levels 1-3 (`TUTORIAL_COUNT`) are always in Level Select. Level N (4+) is **invisible** until level N-1's best is
-  `UNLOCK_STARS` (10/15) or more (`Progress.is_unlocked`). N after the last round only goes to an unlocked level.
+- Levels 1-3 (`TUTORIAL_COUNT`) are always in Level Select. Level N (4+) is **invisible** until EVERY level before it
+  has a best of `UNLOCK_STARS` (10/15) or more (`Progress.earned` / `missing_for`). N after the last round only goes to
+  an unlocked level. **Testing bypass**: Project Settings > Yellow Paint > Debug > Unlock All Levels
+  (`yellow_paint/debug/unlock_all_levels`, debug builds only; turn on "Advanced Settings" to see it). It shows every
+  level but doesn't send the unlock emails.
 - `Progress.level_finished(total)` (called by game.gd after round 3): if the next level just became available, Chad's
-  announcement + 1-2 flavor mails are delivered (once, id `unlock_<level>`); if the score is under 10, Chad's review
-  (once per level and score bracket). Mails persist in `Progress.delivered_mails`; the desktop shows a "new email" toast
+  announcement + 1-2 flavor mails are delivered (once, id `unlock_<level>`); if this level's best is still under 10,
+  Chad's review (once per level and score bracket). Mails persist in `Progress.delivered_mails`; the desktop shows a "new email" toast
   (sound `mail`) and the red unread badge on Inlook.
 
 ## Focus testers and rounds

@@ -115,14 +115,14 @@ const HOTFIX_QUOTES := {
 	1: [
 		"The level changed while I was playing it. Is that a feature?",
 		"Day-one patch? More like mid-run patch.",
-		"I'm pretty sure that yellow wasn't there a second ago.",
+		"I'm pretty sure that splat wasn't there a second ago.",
 		"Fun level. Slightly haunted. Paint kept appearing.",
 	],
 	2: [
 		"The floor kept rewriting itself. I've played early access games more stable than this.",
 		"Was someone painting behind me the whole time?",
 		"I didn't play the level. The level played me.",
-		"Every time I got stuck, yellow appeared. I don't feel like I earned anything.",
+		"Every time I got stuck, a splat appeared. I don't feel like I earned anything.",
 	],
 }
 
