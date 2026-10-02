@@ -54,7 +54,8 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 Start at 5★. Paint penalty vs optimal (= level `minimum_paint` + 5): over by 1-5 → -1, 6-10 → -2, >10 → -3.
 Coins: all → 0, more than half → -1, half or fewer → -2, none → -3.
 Hotfixes (splats painted during a playtest): 0 → 0, 1-3 → -1, 4+ → -2. They come from outside the can (no limit,
-not in `splats_used`, no paint penalty) and are **removed on R**.
+not in `splats_used`, no paint penalty) and are **removed on R**. From Enter until R the can is in **Hotfix mode**:
+can, crosshair, HUD and new splats turn red (`PaintManager.hotfix_color`) so the player sees what they patched.
 Minimum 1★. Can size = optimal + 10. Hotfix quotes in `FocusGroup.HOTFIX_QUOTES`; the tester reacts when it notices one.
 Scraping refunds paint; paint destroyed with smashed/opened objects stays spent.
 Scraping (and Backspace clear) is **locked during a playtest**: from Enter until R (reset). Adding paint is still allowed

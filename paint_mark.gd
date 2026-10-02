@@ -8,13 +8,13 @@ var stand_point := Vector3.ZERO  ## Where the runner's feet should land (nudged 
 var role := "none"  ## "nav" (go here), "interact" (use this thing) or "none" (just paint on a wall).
 var host: Node = null  ## The interactable this paint is on, if any.
 var normal := Vector3.UP
-var interact_point := Vector3.ZERO
-var hotfix := false  ## Painted during a playtest (a "hotfix"): counted separately in the score.  ## For "interact" paint: where to stand to use the host.
+var interact_point := Vector3.ZERO  ## For "interact" paint: where to stand to use the host.
+var hotfix := false  ## Painted during a playtest (a "hotfix"): red, counted separately in the score, removed on reset.
 
 
 func build_visual(normal: Vector3, texture: Texture2D, color := Color(1.0, 0.82, 0.05)) -> void:
 	var decal := Decal.new()
-	decal.modulate = color  # The image is white; this makes it yellow.
+	decal.modulate = color  # The image is white; this makes it yellow (or red for a hotfix).
 	var s := randf_range(0.9, 1.3)
 	decal.size = Vector3(1.3 * s, 0.6, 1.3 * s)
 	decal.texture_albedo = texture

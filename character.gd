@@ -31,7 +31,22 @@ var _paint: PaintManager
 func _ready() -> void:
 	_spawn_transform = global_transform
 	_paint = get_tree().get_first_node_in_group("paint_manager")
+	if _paint:
+		_paint.hotfix_mode_changed.connect(_on_hotfix_mode_changed)
 	_set_mouse_locked(true)
+
+
+## In Hotfix mode (during a playtest) the can turns red, like the splats it makes.
+func _on_hotfix_mode_changed(on: bool) -> void:
+	var can := get_node_or_null("Head/Camera3D/PaintCan") as MeshInstance3D
+	if not can:
+		return
+	var mat := can.get_surface_override_material(0) as StandardMaterial3D
+	if mat:
+		mat = mat.duplicate()
+		mat.albedo_color = _paint.hotfix_color if on else _paint.paint_color
+		mat.emission = mat.albedo_color
+		can.set_surface_override_material(0, mat)
 
 
 func _unhandled_input(event: InputEvent) -> void:
