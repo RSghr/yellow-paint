@@ -2,9 +2,10 @@ extends Node3D
 ## The Game scene: loads the current Level (see Progress), then adds the playtester,
 ## the operator, paint, HUD and scoring around it.
 ##
-## Scoring: start at 5 stars, subtract a paint penalty and a coin penalty (minimum 1 star).
+## Scoring: start at 5 stars, subtract paint, coin and hotfix penalties (minimum 1 star).
 ##   Paint (optimal = level minimum + optimal_margin):  <= optimal: 0 | 1-5 over: -1 | 6-10 over: -2 | more: -3
 ##   Coins:  all: 0 | more than half: -1 | half or fewer: -2 | none: -3
+##   Hotfixes (splats painted DURING the playtest):  0: 0 | 1-3: -1 | 4+: -2
 ## The can holds optimal + limit_margin splats. Scraping refunds paint.
 
 const RUNNER_SCENE := preload("res://runner.tscn")
@@ -22,6 +23,7 @@ var operator: CharacterBody3D
 var coins_collected := 0
 var _finished := false
 var _playtest_running := false  ## From Enter until R: scraping is locked so paint can't be recycled mid-run.
+var hotfixes := 0  ## Splats painted during this playtest run.
 var _out_of_paint_timer := 0.0
 var spectator: Camera3D
 var spectating := false
@@ -45,6 +47,7 @@ func _ready() -> void:
 	paint.paint_changed.connect(_update_paint_label)
 	paint.paint_denied.connect(_on_out_of_paint)
 	paint.scrape_denied.connect(_on_scrape_denied)
+	paint.splat_added.connect(_on_splat_added)
 	for coin in get_tree().get_nodes_in_group("coin"):
 		coin.collected.connect(_on_coin_collected)
 	_update_paint_label()
@@ -117,6 +120,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		message_label.text = ""
 		_playtest_running = true
 		paint.scrape_locked = true
+		paint.hotfix_mode = true
 		runner.start()
 	elif event.is_action_pressed("reset_runner"):
 		_retry()
@@ -136,6 +140,8 @@ func _retry() -> void:
 	_finished = false
 	_playtest_running = false
 	paint.scrape_locked = false
+	paint.hotfix_mode = false
+	hotfixes = 0
 	message_label.text = ""
 	get_tree().call_group("resettable", "reset_state")  # Coins, doors, buttons, breakables.
 	coins_collected = 0
@@ -146,6 +152,8 @@ func _retry() -> void:
 
 func _update_paint_label() -> void:
 	paint_gauge.used = paint.splats_used
+	if _out_of_paint_timer > 0.0:
+		return  # A timed message (out of paint, hotfix...) is showing; _process restores the label after.
 	paint_label.remove_theme_color_override("font_color")
 	paint_label.add_theme_color_override("font_color", Color(1, 0.85, 0.1))
 	paint_label.text = "Paint: %d / %d   (optimal: %d or less)" % [paint.splats_used, paint_limit(), optimal_paint()]
@@ -181,10 +189,24 @@ func _coin_total() -> int:
 
 func _update_coin_label() -> void:
 	coin_label.text = "Coins: %d / %d" % [coins_collected, _coin_total()]
+	if hotfixes > 0:
+		coin_label.text += "      Hotfixes: %d" % hotfixes
 
 
-## Returns {stars, paint_penalty, coin_penalty}.
-static func score(paint_used: int, optimal: int, coins: int, coin_total: int) -> Dictionary:
+## Painting during a playtest is allowed, but it's a "hotfix": counted and called out.
+func _on_splat_added(mark: PaintMark) -> void:
+	if not mark.hotfix:
+		return
+	hotfixes += 1
+	_update_coin_label()
+	_out_of_paint_timer = 1.5  # Reuses the timed paint-label message.
+	paint_label.add_theme_color_override("font_color", Color(1, 0.55, 0.1))
+	paint_label.text = "HOTFIX #%d applied mid-playtest%s" % [hotfixes,
+		"" if hotfixes < 4 else "  (the focus group is starting to notice)"]
+
+
+## Returns {stars, paint_penalty, coin_penalty, hotfix_penalty}.
+static func score(paint_used: int, optimal: int, coins: int, coin_total: int, hotfix_count := 0) -> Dictionary:
 	var over := paint_used - optimal
 	var paint_penalty := 0
 	if over > 10:
@@ -201,10 +223,16 @@ static func score(paint_used: int, optimal: int, coins: int, coin_total: int) ->
 			coin_penalty = 2
 		else:
 			coin_penalty = 1
+	var hotfix_penalty := 0
+	if hotfix_count >= 4:
+		hotfix_penalty = 2
+	elif hotfix_count >= 1:
+		hotfix_penalty = 1
 	return {
-		stars = clampi(5 - paint_penalty - coin_penalty, 1, 5),
+		stars = clampi(5 - paint_penalty - coin_penalty - hotfix_penalty, 1, 5),
 		paint_penalty = paint_penalty,
 		coin_penalty = coin_penalty,
+		hotfix_penalty = hotfix_penalty,
 	}
 
 
@@ -214,18 +242,20 @@ func _nav_hint() -> String:
 
 func _on_goal() -> void:
 	_finished = true
-	var result := score(paint.splats_used, optimal_paint(), coins_collected, _coin_total())
+	var result := score(paint.splats_used, optimal_paint(), coins_collected, _coin_total(), hotfixes)
 	var stars: int = result.stars
 	var new_best := Progress.record(Progress.current_path(), stars)
 	var paint_line := "Paint: %d  (optimal: %d or less)   %s" % [
 		paint.splats_used, optimal_paint(), "✓" if result.paint_penalty == 0 else "-%d★ immersion broken" % result.paint_penalty]
 	var coin_line := "Coins: %d / %d   %s" % [
 		coins_collected, _coin_total(), "✓" if result.coin_penalty == 0 else "-%d★" % result.coin_penalty]
+	var hotfix_line := "Hotfixes: %d   %s" % [hotfixes,
+		"✓" if result.hotfix_penalty == 0 else "-%d★ patched mid-playtest" % result.hotfix_penalty]
 	var review := "\"%s\"\n— %s, focus tester" % [FocusGroup.quote_for(result), runner.tester_name]
 	Sfx.play("goal", 0.0)
-	message_label.text = "LEVEL COMPLETE   %s%s\n%s\n%s\n%s\n\n%s" % [
+	message_label.text = "LEVEL COMPLETE   %s%s\n%s\n%s\n%s\n%s\n\n%s" % [
 		"★".repeat(stars) + "☆".repeat(5 - stars), "   NEW BEST!" if new_best else "",
-		paint_line, coin_line, review, _nav_hint()]
+		paint_line, coin_line, hotfix_line, review, _nav_hint()]
 
 
 func _on_died() -> void:
