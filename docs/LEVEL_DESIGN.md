@@ -87,7 +87,7 @@ Behaviour that matters for layout:
   - It moves once (when the button is pressed) and stays there. R puts it back.
 - **Coin** (`coin.tscn`): visible to the playtester without paint. Count them: all coins = no star penalty.
 
-Everything resets when the player presses R (doors close, crates come back, coins return).
+Everything resets when the player holds R (retry) (doors close, crates come back, coins return).
 
 ## 6. Test it
 
