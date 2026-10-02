@@ -99,9 +99,8 @@ func _start_round(index: int) -> void:
 	paint_gauge.setup(r.minimum, optimal_paint(), paint_limit())
 	_reset_run()
 	level_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN  # Right-aligned in the corner: grow leftwards.
-	level_label.text = "%s%s\nRound %d/%d: %s\n%s" % [
-		"" if Progress.level_override != "" else "Level %d: " % (Progress.current + 1), level.level_name,
-		index + 1, Level.ROUNDS, r.tester, FocusGroup.trait_line(r.tester)]
+	level_label.text = "%s%s" % [
+		"" if Progress.level_override != "" else "Level %d: " % (Progress.current + 1), level.level_name]
 	status_label.text = "Focus tester: %s" % r.tester
 	message_label.text = ""
 	round_intro.play(level.intro_text if index == 0 else "", index, Level.ROUNDS, r.tester,
@@ -150,6 +149,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_retry()
 	elif event.is_action_pressed("clear_paint"):
 		paint.clear_all()
+	elif event.is_action_pressed("toggle_tester_card"):
+		round_intro.toggle()
 	elif event.is_action_pressed("toggle_ai_debug"):
 		runner.debug_view = not runner.debug_view
 	elif event.is_action_pressed("toggle_spectator"):

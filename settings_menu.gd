@@ -24,6 +24,7 @@ const CONTROLS := [
 	["start_test", "Start the playtest"],
 	["reset_runner", "Reset the level / retry this tester"],
 	["toggle_spectator", "Spectator camera (follow the playtester)"],
+	["toggle_tester_card", "Show / hide the focus tester card"],
 	["toggle_ai_debug", "Show what the AI knows"],
 	["next_level", "Next tester / next level (after finishing)"],
 	["back_to_menu", "Level select"],
