@@ -37,16 +37,19 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 | `paint_gauge.gd` | HUD paint bar with min/optimal ticks. |
 
 ## Progression (Progress + mail_writer.gd)
-- Levels 1-3 (`TUTORIAL_COUNT`) are always in Level Select. Level N (4+) is **invisible** until level N-1's best is
-  `UNLOCK_STARS` (10/15) or more (`Progress.is_unlocked`). N after the last round only goes to an unlocked level.
+- Levels 1-3 (`TUTORIAL_COUNT`) are always in Level Select. Level N (4+) is **invisible** until EVERY level before it
+  has a best of `UNLOCK_STARS` (10/15) or more (`Progress.earned` / `missing_for`). There's no "next level" key: levels are started from the desktop. **Testing bypass**: Project Settings > Yellow Paint > Debug > Unlock All Levels
+  (`yellow_paint/debug/unlock_all_levels`, debug builds only; turn on "Advanced Settings" to see it). It shows every
+  level but doesn't send the unlock emails.
 - `Progress.level_finished(total)` (called by game.gd after round 3): if the next level just became available, Chad's
-  announcement + 1-2 flavor mails are delivered (once, id `unlock_<level>`); if the score is under 10, Chad's review
-  (once per level and score bracket). Mails persist in `Progress.delivered_mails`; the desktop shows a "new email" toast
+  announcement + 1-2 flavor mails are delivered (once, id `unlock_<level>`); if this level's best is still under 10,
+  Chad's review (once per level and score bracket). Mails persist in `Progress.delivered_mails`; the desktop shows a "new email" toast
   (sound `mail`) and the red unread badge on Inlook.
 
 ## Focus testers and rounds
 - A level is played by **3 testers in a row** (`Level.rounds()`), set per level. **Paint carries over** between rounds;
-  R retries the current tester; N goes to the next tester (then next level). Hotfixes are per round.
+  **Hold R** (`retry_hold_time`, 2s, bar at the bottom) retries the current tester; N goes to the next tester. After the
+  3rd tester there is no N: only retry or Tab back to the desktop. Hotfixes are per round.
 - Each round has its own `minimum_N` (that tester's reliable minimum, set by the user from playtesting), so its own
   optimal (+5) and can size (+15). Level result = sum of the 3 round scores, **out of 15** (`Progress`, `best_total`).
 - Traits (0 lowest, 1 default, 2 highest), shown to the player only as 1-3 stars. A tester has at most ONE trait at 0:

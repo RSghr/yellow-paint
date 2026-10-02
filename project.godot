@@ -144,3 +144,7 @@ toggle_spectator={
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+
+[yellow_paint]
+
+debug/unlock_all_levels=false

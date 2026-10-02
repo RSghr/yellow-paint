@@ -87,7 +87,7 @@ Behaviour that matters for layout:
   - It moves once (when the button is pressed) and stays there. R puts it back.
 - **Coin** (`coin.tscn`): visible to the playtester without paint. Count them: all coins = no star penalty.
 
-Everything resets when the player presses R (doors close, crates come back, coins return).
+Everything resets when the player holds R (retry) (doors close, crates come back, coins return).
 
 ## 6. Test it
 
@@ -98,8 +98,11 @@ Everything resets when the player presses R (doors close, crates come back, coin
 
 ## 7. Where the level appears
 
-Levels 1-3 are the tutorials and are always in Level Select. Every level after that is **hidden** until the level
-before it scores at least **10/15**. Then Chad emails the player that a new playtest was scheduled (with the new
+Levels 1-3 are the tutorials and are always in Level Select. Every level after that is **hidden** until **every**
+level before it has scored at least **10/15**.
+
+**Testing:** turn on Project > Project Settings > (Advanced Settings) > **Yellow Paint > Debug > Unlock All Levels** to
+see every level in Level Select. It only works in the editor / debug builds, and it doesn't send the unlock emails. Then Chad emails the player that a new playtest was scheduled (with the new
 level's testers), plus one or two flavor emails, one of them about one of your testers. So the file order is also the
 unlock order: make sure each level is beatable at 10/15 by someone who just finished the previous one.
 

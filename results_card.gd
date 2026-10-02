@@ -13,6 +13,7 @@ const MUTED := Color(1, 1, 1, 0.55)
 const PANEL_BG := Color(0.07, 0.07, 0.09, 0.94)
 const WIDTH := 720.0
 const STAR_SIZE := 54
+const CARD_SCALE := 1.2  ## Overall size of the card on screen.
 
 var _center: CenterContainer
 var _card: PanelContainer
@@ -233,10 +234,10 @@ func _animate(stars: Array[Label], rows: Array) -> void:
 	if not is_instance_valid(_card):
 		return
 	_card.pivot_offset = _card.size / 2.0
-	_card.scale = Vector2(0.92, 0.92)
+	_card.scale = Vector2.ONE * CARD_SCALE * 0.92
 	_tween = create_tween()
 	_tween.tween_property(_card, "modulate:a", 1.0, 0.2)
-	_tween.parallel().tween_property(_card, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_tween.parallel().tween_property(_card, "scale", Vector2.ONE * CARD_SCALE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	for s in stars:
 		s.pivot_offset = s.size / 2.0
 		_tween.tween_property(s, "modulate:a", 1.0, 0.08)
