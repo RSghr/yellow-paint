@@ -12,7 +12,12 @@
 script = ExtResource("lvl_script")
 level_name = "The Gauntlet"
 intro_text = "Everything at once: gaps, planks, a locked door and a crate.\nPaint a route, then press Enter to start the playtest."
-minimum_paint = 10
+tester_1 = "Frank Rate"
+minimum_1 = 10
+tester_2 = "Dee Sync"
+minimum_2 = 10
+tester_3 = "Sven Tory"
+minimum_3 = 20
 
 [node name="RunnerSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 0)

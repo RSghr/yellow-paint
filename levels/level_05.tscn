@@ -9,11 +9,16 @@
 [ext_resource type="Script" uid="uid://d2xo6jturp86h" path="res://level.gd" id="lvl_script"]
 
 [node name="Level05" type="Node3D" unique_id=1747236043]
-editor_description = "Level root. Set level_name, intro_text and minimum_paint in the Inspector. See docs/LEVEL_DESIGN.md."
+editor_description = "Level root. Set level_name, intro_text and the 3 rounds (tester + minimum) in the Inspector. See docs/LEVEL_DESIGN.md."
 script = ExtResource("lvl_script")
 level_name = "The Tower"
 intro_text = "Manage to reach the the top and collect all the coins!"
-minimum_paint = 20
+tester_1 = "Hugh Dee"
+minimum_1 = 20
+tester_2 = "Mike Rotransaction"
+minimum_2 = 20
+tester_3 = "Rhea Spawn"
+minimum_3 = 20
 
 [node name="RunnerSpawn" type="Marker3D" parent="." unique_id=187521223]
 editor_description = "Where the playtester starts. Keep it 0.9 above the floor (its origin is at its middle)."

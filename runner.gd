@@ -56,6 +56,27 @@ const PERCEPTION_INTERVAL := 0.1
 @export var setback_drop := 1.5  ## Landing this far below the last trusted spot (by accident) counts as a fall: retrace.
 @export var coin_detour := 16.0  ## Will go out of its way this far (path cost) for a coin. A painted jump costs ~10.
 
+## Each focus tester (FocusGroup.ROSTER) has three traits from 0 (lowest) to 2; 1 is the default.
+## apply_profile() copies the values below into the fields above. Index = trait level [0, 1, 2].
+@export_group("Traits")
+@export_subgroup("Jump precision (Incapable / Hit or miss / Precise)")
+@export var jump_success_by_level: Array[float] = [0.0, 0.65, 0.95]  ## desperate_success_chance. 0 = always falls short (leaps of faith too).
+@export var leap_error_by_level: Array[float] = [0.7, 0.7, 0.25]  ## Leap-of-faith aim error in metres.
+@export_subgroup("Trust (Needs a whole bucket / Thoughtful / Blind trust)")
+@export var min_jump_splats_by_level: Array[int] = [2, 1, 1]  ## Splats needed on a landing before it will jump there.
+@export var trust_bonus_by_level: Array[int] = [0, 0, 2]  ## Added to every spot's trust (3+ = no hesitation, confident walk).
+@export var notice_rate_by_level: Array[float] = [1.2, 1.6, 2.4]
+@export var scan_time_by_level: Array[float] = [2.4, 1.8, 1.1]  ## How long its look-arounds take.
+@export var hesitation_by_level: Array[float] = [1.3, 0.9, 0.5]  ## hesitation_per_doubt.
+@export_subgroup("Patience (No paint, no way / Lost fast / Explorer)")
+@export var patience_by_level: Array[float] = [-1.0, 8.0, 3.0]  ## Seconds lost before improvising. -1 = never improvises (no desperate jumps, no leaps of faith).
+@export var wander_limit_by_level: Array[int] = [3, 3, 2]
+
+var min_jump_splats := 1
+var trust_bonus := 0
+var improvises := true  ## False = "No paint, no way": never jumps anywhere unpainted.
+var profile := {jump = 1, trust = 1, patience = 1}
+
 @export_group("Speech")
 @export var speech_pixel_size := 0.004  ## Text size up close (world units per font pixel).
 @export var speech_grow_distance := 6.0  ## Beyond this camera distance the text grows to stay readable...
@@ -69,7 +90,7 @@ const PERCEPTION_INTERVAL := 0.1
 			_debug_mesh.visible = value
 
 var state := State.WAITING
-var tester_name := "Playtester"  ## Set by the Game scene (a random focus tester per run).
+var tester_name := "Playtester"  ## Set by the Game scene via apply_profile().
 
 var _path: Array[Dictionary] = []  ## Steps: {pos, jump, trust, leap}
 var _spawn: Transform3D
@@ -178,6 +199,22 @@ func reset_to_spawn() -> void:
 	say("Ready when you are, boss.", true)
 
 
+## Become one of the focus testers: name + traits (see FocusGroup.ROSTER and the "Traits" exports).
+func apply_profile(tester: String, p: Dictionary) -> void:
+	tester_name = tester
+	profile = p
+	desperate_success_chance = jump_success_by_level[p.jump]
+	leap_error = leap_error_by_level[p.jump]
+	min_jump_splats = min_jump_splats_by_level[p.trust]
+	trust_bonus = trust_bonus_by_level[p.trust]
+	notice_rate = notice_rate_by_level[p.trust]
+	scan_time = scan_time_by_level[p.trust]
+	hesitation_per_doubt = hesitation_by_level[p.trust]
+	patience = patience_by_level[p.patience]
+	improvises = patience >= 0.0
+	wander_limit = wander_limit_by_level[p.patience]
+
+
 func celebrate() -> void:
 	if state == State.DEAD:
 		return
@@ -224,9 +261,12 @@ func known_spots() -> Array[Dictionary]:
 			if other.role == "nav" and other.global_position.distance_to(mark.global_position) <= trust_radius:
 				trust += 1
 				hot = hot or other.hotfix
+		var splats := trust
+		trust += trust_bonus
 		if hot:
 			trust = maxi(trust, hotfix_trust)  # The operator stepped in mid-run: that's an order.
-		spots.append({pos = mark.stand_point, trust = trust, host = mark.host, hotfix = hot})
+		spots.append({pos = mark.stand_point, trust = trust, host = mark.host, hotfix = hot,
+			jumpable = hot or splats >= min_jump_splats})
 	return spots
 
 
@@ -513,8 +553,12 @@ func _advance() -> void:
 		if step.get("desperate", false):
 			doubt = 1.6
 			Sfx.play("desperate", 0.0)
-			say(["Fine. I'll do it myself.", "No yellow anywhere. Improvising!", "Nobody's painting? I'm jumping.",
-				"This is what happens when you don't paint, boss."].pick_random(), true)
+			if desperate_success_chance <= 0.0:
+				say(["I've never made a jump in my life. Here goes!", "How hard can jumping be?",
+					"I don't really do jumps. But okay!"].pick_random(), true)
+			else:
+				say(["Fine. I'll do it myself.", "No yellow anywhere. Improvising!", "Nobody's painting? I'm jumping.",
+					"This is what happens when you don't paint, boss."].pick_random(), true)
 		elif step.leap:
 			doubt = 1.6
 			say(["No yellow... but the flag is RIGHT THERE.", "Unpainted jump. Here goes nothing.", "If I die, put that in the report."].pick_random(), true)
@@ -561,7 +605,10 @@ func _jump_to(step: Dictionary) -> void:
 		else:
 			target += flat.normalized() * randf_range(-0.2, 0.3)
 	elif step.leap and flat.length() > 0.01:
-		target += flat.normalized() * randf_range(-leap_error, leap_error * 0.6)
+		if desperate_success_chance <= 0.0:
+			target = from.lerp(target, randf_range(0.45, 0.65))  # Incapable: never makes an unpainted jump.
+		else:
+			target += flat.normalized() * randf_range(-leap_error, leap_error * 0.6)
 	var d := target - from
 	var h := d.y
 	flat = Vector3(d.x, 0, d.z)
@@ -701,6 +748,11 @@ func _on_noticed(mark: PaintMark, blob: int) -> void:
 			say(["That's a LOT of yellow. Must be important.", "So. Much. Yellow."].pick_random())
 		elif blob == 2:
 			say(["Yellow! Over there!", "Ooh, yellow."].pick_random())
+		elif min_jump_splats > 1:
+			say(["One splat? I'll need more than that.", "That's barely yellow. Not jumping on that.",
+				"One drop. Call me when there's a bucket."].pick_random())
+		elif trust_bonus > 0:
+			say(["Yellow! Say no more.", "Paint! I'm in.", "If it's yellow, it's right."].pick_random())
 		else:
 			say(["Hm? Was that yellow?", "A tiny bit of yellow..."].pick_random())
 	else:
@@ -717,30 +769,35 @@ func _decide() -> void:
 	var kinds: Array[String] = ["me"]
 	var payload: Array = [null]
 	var hot: Array[bool] = [false]  ## Hotfix paint: goes to the front of the queue.
+	var jumpable: Array[bool] = [false]  ## Enough paint there for this tester to jump onto it.
 	for s in known_spots():
 		nodes.append(s.pos)
 		trust.append(s.trust)
 		kinds.append("paint")
 		payload.append(null)
 		hot.append(s.hotfix)
+		jumpable.append(s.jumpable)
 	if _goal_known:
 		nodes.append(_goal.global_position)
 		trust.append(5)
 		kinds.append("goal")
 		payload.append(null)
 		hot.append(false)
+		jumpable.append(true)
 	for t in known_tasks():
 		nodes.append(t.pos)
 		trust.append(t.trust)
 		kinds.append("task")
 		payload.append(t.host)
 		hot.append(t.hotfix)
+		jumpable.append(false)
 	for c in known_coins():
 		nodes.append(c.global_position)
 		trust.append(5)
 		kinds.append("coin")
 		payload.append(c)
 		hot.append(false)
+		jumpable.append(false)
 
 	# Dijkstra. Jumps only land on paint or the flag. Low-trust spots cost extra.
 	var n := nodes.size()
@@ -767,7 +824,7 @@ func _decide() -> void:
 		for v in n:
 			if done[v]:
 				continue
-			var link := _link(nodes[u], nodes[v], kinds[v] in ["paint", "goal"])
+			var link := _link(nodes[u], nodes[v], jumpable[v])
 			if link.is_empty():
 				continue
 			var nd: float = dist[u] + link.cost + (4.0 / trust[v] if kinds[v] == "paint" else 0.0)
@@ -805,11 +862,11 @@ func _decide() -> void:
 		_advance()
 		return
 
-	if _goal_known and _try_leap_of_faith():
+	if improvises and _goal_known and _try_leap_of_faith():
 		return
 	# Out of ideas for `patience` seconds AND it has finished a full round of looking around
 	# (that's usually when it spots paint it missed): gamble on a jump instead of sulking.
-	if _lost_time >= patience and _wanders >= wander_limit and _try_desperate_jump():
+	if improvises and _lost_time >= patience and _wanders >= wander_limit and _try_desperate_jump():
 		_lost_time = 0.0  # One gamble, then it gets another patience period.
 		return
 	if _wanders < wander_limit:
@@ -818,6 +875,9 @@ func _decide() -> void:
 
 	state = State.CONFUSED
 	_timer = 0.0
+	if not improvises and randf() < 0.5:
+		say(["No paint, no way.", "I'm not jumping anywhere unpainted. I'll wait.", "I'll stand here until it's yellow."].pick_random(), true)
+		return
 	say(["...where do I go?", "I can't see any yellow.", "Is that a ledge? It's not yellow, so no.",
 		"I need yellow to understand things.", "Hello? Level designer?"].pick_random(), true)
 

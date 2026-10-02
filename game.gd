@@ -2,8 +2,12 @@ extends Node3D
 ## The Game scene: loads the current Level (see Progress), then adds the playtester,
 ## the operator, paint, HUD and scoring around it.
 ##
-## Scoring: start at 5 stars, subtract paint, coin and hotfix penalties (minimum 1 star).
-##   Paint (optimal = level minimum + optimal_margin):  <= optimal: 0 | 1-5 over: -1 | 6-10 over: -2 | more: -3
+## A level is 3 rounds, one focus tester each (Level.rounds()). Paint carries over between rounds;
+## each round has its own minimum (that tester's), so its own optimal and can size.
+## The level result is the 3 round scores added up, out of 15.
+##
+## Round scoring: start at 5 stars, subtract paint, coin and hotfix penalties (minimum 1 star).
+##   Paint (optimal = round minimum + optimal_margin):  <= optimal: 0 | 1-5 over: -1 | 6-10 over: -2 | more: -3
 ##   Coins:  all: 0 | more than half: -1 | half or fewer: -2 | none: -3
 ##   Hotfixes (splats painted DURING the playtest, outside the can, removed on R):  0: 0 | 1-3: -1 | 4+: -2
 ## The can holds optimal + limit_margin splats. Scraping refunds paint.
@@ -14,7 +18,7 @@ const PAUSE_MENU := preload("res://pause_menu.gd")
 const SPECTATOR_CAMERA := preload("res://spectator_camera.gd")
 
 @export_group("Scoring")
-@export var optimal_margin := 5  ## Optimal = level minimum + this. Enough slack to also grab the coins.
+@export var optimal_margin := 5  ## Optimal = round minimum + this. Enough slack to also grab the coins.
 @export var limit_margin := 10  ## Can size = optimal + this.
 
 var level: Level
@@ -27,6 +31,8 @@ var hotfixes := 0  ## Splats painted during this playtest run.
 var _out_of_paint_timer := 0.0
 var spectator: Camera3D
 var spectating := false
+var round_index := 0  ## 0-2: which focus tester is playing.
+var round_stars: Array[int] = [0, 0, 0]  ## Stars per round (0 = not finished yet).
 
 @onready var paint: PaintManager = $PaintManager
 @onready var paint_label: Label = $HUD/PaintLabel
@@ -40,8 +46,6 @@ var spectating := false
 
 func _ready() -> void:
 	_load_level()
-	paint.paint_limit = paint_limit()
-	paint_gauge.setup(level.minimum_paint, optimal_paint(), paint_limit())
 	runner.said.connect(func(text): status_label.text = "%s: \"%s\"" % [runner.tester_name, text])
 	runner.reached_goal.connect(_on_goal)
 	runner.died.connect(_on_died)
@@ -52,11 +56,8 @@ func _ready() -> void:
 	paint.hotfix_mode_changed.connect(func(_on): _update_paint_label())
 	for coin in get_tree().get_nodes_in_group("coin"):
 		coin.collected.connect(_on_coin_collected)
-	_update_paint_label()
-	_update_coin_label()
-	level_label.text = "%s%s" % ["" if Progress.level_override != "" else "Level %d: " % (Progress.current + 1), level.level_name]
-	_new_tester()
-	message_label.text = "%s\nToday's focus tester: %s" % [level.intro_text, runner.tester_name]
+	_start_round(0)
+	message_label.text = "%s\n\n%s" % [level.intro_text, message_label.text]
 	add_child(PAUSE_MENU.new())
 
 
@@ -82,9 +83,26 @@ func _load_level() -> void:
 	add_child(spectator)
 
 
-func _new_tester() -> void:
-	runner.tester_name = FocusGroup.random_tester()
-	status_label.text = "Focus tester: %s" % runner.tester_name
+func current_round() -> Dictionary:
+	return level.rounds()[round_index]
+
+
+## Bring in the next focus tester. The level resets, the paint stays.
+func _start_round(index: int) -> void:
+	round_index = index
+	var r := current_round()
+	runner.apply_profile(r.tester, FocusGroup.profile(r.tester))
+	paint.paint_limit = paint_limit()
+	paint_gauge.setup(r.minimum, optimal_paint(), paint_limit())
+	_reset_run()
+	level_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN  # Right-aligned in the corner: grow leftwards.
+	level_label.text = "%s%s\nRound %d/%d: %s\n%s" % [
+		"" if Progress.level_override != "" else "Level %d: " % (Progress.current + 1), level.level_name,
+		index + 1, Level.ROUNDS, r.tester, FocusGroup.trait_line(r.tester)]
+	status_label.text = "Focus tester: %s" % r.tester
+	message_label.text = "ROUND %d/%d   Today's focus tester: %s\n%s%s" % [index + 1, Level.ROUNDS, r.tester,
+		FocusGroup.trait_line(r.tester),
+		"\nYour paint from the last round is still there. Adapt it, then press Enter." if index > 0 else ""]
 
 
 ## Swap between the operator's eyes and a camera following the playtester.
@@ -103,7 +121,7 @@ func _toggle_spectator() -> void:
 
 
 func optimal_paint() -> int:
-	return level.minimum_paint + optimal_margin
+	return current_round().minimum + optimal_margin
 
 
 func paint_limit() -> int:
@@ -133,12 +151,21 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("toggle_spectator"):
 		_toggle_spectator()
 	elif event.is_action_pressed("next_level") and _finished:
-		Progress.play_next()
+		if round_index + 1 < Level.ROUNDS:
+			_start_round(round_index + 1)
+		else:
+			Progress.play_next()
 	elif event.is_action_pressed("back_to_menu"):
 		Progress.to_menu()
 
 
+## R: same tester, same round, try again (hotfixes are removed, your paint stays).
 func _retry() -> void:
+	_reset_run()
+	status_label.text = "Focus tester: %s" % runner.tester_name
+
+
+func _reset_run() -> void:
 	_out_of_paint_timer = 0.0  # Drop any timed HUD message (e.g. "HOTFIX #n").
 	_finished = false
 	_playtest_running = false
@@ -151,7 +178,7 @@ func _retry() -> void:
 	coins_collected = 0
 	_update_coin_label()
 	runner.reset_to_spawn()
-	_new_tester()  # The last one quit. A fresh focus tester walks in.
+	_update_paint_label()
 
 
 func _update_paint_label() -> void:
@@ -246,14 +273,16 @@ static func score(paint_used: int, optimal: int, coins: int, coin_total: int, ho
 
 
 func _nav_hint() -> String:
-	return "%sR: retry   Tab: level select" % ("N: next level   " if Progress.has_next() else "")
+	if round_index + 1 < Level.ROUNDS:
+		return "N: next tester   R: retry this tester   Tab: level select"
+	return "%sR: retry this tester   Tab: level select" % ("N: next level   " if Progress.has_next() else "")
 
 
 func _on_goal() -> void:
 	_finished = true
 	var result := score(paint.splats_used, optimal_paint(), coins_collected, _coin_total(), hotfixes)
 	var stars: int = result.stars
-	var new_best := Progress.record(Progress.current_path(), stars)
+	round_stars[round_index] = stars
 	var paint_line := "Paint: %d  (optimal: %d or less)   %s" % [
 		paint.splats_used, optimal_paint(), "✓" if result.paint_penalty == 0 else "-%d★ immersion broken" % result.paint_penalty]
 	var coin_line := "Coins: %d / %d   %s" % [
@@ -262,10 +291,19 @@ func _on_goal() -> void:
 		"✓" if result.hotfix_penalty == 0 else "-%d★ patched mid-playtest" % result.hotfix_penalty]
 	var review := "\"%s\"\n— %s, focus tester" % [FocusGroup.quote_for(result), runner.tester_name]
 	Sfx.play("goal", 0.0)
-	message_label.text = "LEVEL COMPLETE   %s%s\n%s\n%s\n%s\n%s\n\n%s" % [
-		"★".repeat(stars) + "☆".repeat(5 - stars), "   NEW BEST!" if new_best else "",
-		paint_line, coin_line, hotfix_line, review, _nav_hint()]
+	var header := "ROUND %d/%d COMPLETE   %s" % [round_index + 1, Level.ROUNDS, "★".repeat(stars) + "☆".repeat(5 - stars)]
+	var footer := ""
+	if round_index + 1 == Level.ROUNDS:
+		var total := 0
+		var parts: PackedStringArray = []
+		for i in Level.ROUNDS:
+			total += round_stars[i]
+			parts.append("%s %d★" % [level.rounds()[i].tester, round_stars[i]])
+		var new_best := Progress.record(Progress.current_path(), total)
+		footer = "\nLEVEL COMPLETE   %d / %d★%s\n%s\n" % [total, Level.ROUNDS * 5, "   NEW BEST!" if new_best else "",
+			"   ".join(parts)]
+	message_label.text = "%s\n%s\n%s\n%s\n%s\n%s\n%s" % [header, paint_line, coin_line, hotfix_line, review, footer, _nav_hint()]
 
 
 func _on_died() -> void:
-	message_label.text = "%s is no longer with the focus group. Scores plummeting.\nR: retry with a new tester   Tab: level select" % runner.tester_name
+	message_label.text = "%s is no longer with the focus group. Scores plummeting.\nR: retry   Tab: level select" % runner.tester_name

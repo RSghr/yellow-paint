@@ -16,11 +16,11 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 | `settings_menu.gd` | Settings overlay (options + controls list read from the Input Map). Used by main menu and pause menu. |
 | `pause_menu.gd` | Esc in game: Resume / Settings / Level select / Quit. Added by `game.gd`. |
 | `spectator_camera.gd` | Orbit camera following the playtester (A on AZERTY = physical Q). Operator is frozen (`active = false`) while spectating. |
-| `focus_group.gd` | `FocusGroup`: pun-named testers (random each run/retry) and results quotes by stars. |
+| `focus_group.gd` | `FocusGroup`: the tester `ROSTER` (pun names + jump/trust/patience traits 0-2), star display, results quotes. |
 | `art/paint_splat.png` | Splat image (white placeholder), tinted by `PaintManager.paint_color`. |
 | `levels/_template.tscn`, `tools/new_level.gd` | Level template + EditorScript (File > Run) that creates the next `level_XX.tscn`. Guide: `docs/LEVEL_DESIGN.md`. |
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
-| `level.gd` | `@tool` root script of every level: `level_name`, `intro_text`, `minimum_paint`, `death_height`; editor warnings for missing spawns/goal. F6 on a level scene launches it inside `game.tscn`. |
+| `level.gd` | `@tool` root script of every level: `level_name`, `intro_text`, `death_height`, 3 rounds (`tester_N` dropdown + `minimum_N`); editor warnings for missing spawns/goal/bad lineup. F6 on a level scene launches it inside `game.tscn`. |
 | `levels/` | Level scenes: world only (Geometry, Interactables/Coins, Goal, `RunnerSpawn`/`OperatorSpawn` Marker3Ds). |
 | `runner.gd/.tscn` | The AI playtester (perception, trust, planning, speech). |
 | `character.gd/.tscn` | The operator: FPS movement, jetpack (hold Space), fly mode (F), paint (LMB), scrape (RMB). |
@@ -28,6 +28,20 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 | `breakable.gd`, `door.gd`, `wall_button.gd`, `coin.gd` | Interactables. Group `interactable` objects implement `paint_role(normal)`, `interact_point()`, `interact()`, `is_used()`, `kind`, `state_changed`. Group `resettable` implements `reset_state()`. |
 | `block.gd` + `debug_block.tscn` | Static level block, resized via `size` (never scale physics bodies). Grid shader for readable distances. |
 | `paint_gauge.gd` | HUD paint bar with min/optimal ticks. |
+
+## Focus testers and rounds
+- A level is played by **3 testers in a row** (`Level.rounds()`), set per level. **Paint carries over** between rounds;
+  R retries the current tester; N goes to the next tester (then next level). Hotfixes are per round.
+- Each round has its own `minimum_N` (that tester's reliable minimum, set by the user from playtesting), so its own
+  optimal (+5) and can size (+15). Level result = sum of the 3 round scores, **out of 15** (`Progress`, `best_total`).
+- Traits (0 lowest, 1 default, 2 highest), shown to the player only as 1-3 stars. A tester has at most ONE trait at 0:
+  - **Jump precision**: Incapable / Hit or miss / Precise → `desperate_success_chance` 0 / 0.65 / 0.95, `leap_error`.
+    Incapable still improvises but always falls short (leaps of faith too).
+  - **Trust**: Needs a whole bucket / Thoughtful / Blind trust → splats needed on a landing to jump there 2/1/1,
+    trust bonus 0/0/+2 (no hesitation), notice rate, scan and hesitation times.
+  - **Patience**: No paint, no way / Lost fast / Explorer → improvises after never / 8s / 3s. "No paint, no way" never
+    makes an unpainted jump (no desperate jumps, no leaps of faith).
+  - Values live in runner.gd's "Traits" export arrays (index = trait level); `Runner.apply_profile()` applies them.
 
 ## AI rules (runner.gd), keep these intact
 - Only knows paint it has **seen** (vision cone, line of sight, attention builds up; blobs are noticed faster).
@@ -54,7 +68,7 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 - Priorities: unused hotfix > nearby coin > flag > painted interactable > unvisited paint > leap of faith > wander > desperate jump.
 
 ## Scoring (game.gd `score()`)
-Start at 5★. Paint penalty vs optimal (= level `minimum_paint` + 5): over by 1-5 → -1, 6-10 → -2, >10 → -3.
+Per round: start at 5★. Paint penalty vs optimal (= round `minimum_N` + 5): over by 1-5 → -1, 6-10 → -2, >10 → -3.
 Coins: all → 0, more than half → -1, half or fewer → -2, none → -3.
 Hotfixes (splats painted during a playtest): 0 → 0, 1-3 → -1, 4+ → -2. They come from outside the can (no limit,
 not in `splats_used`, no paint penalty) and are **removed on R**. From Enter until R the can is in **Hotfix mode**:
@@ -65,11 +79,13 @@ Scraping (and Backspace clear) is **locked during a playtest**: from Enter until
 but each splat is a **hotfix** (`PaintMark.hotfix`, counted in `game.gd` `hotfixes`; R deletes them via `remove_hotfixes()`).
 
 ## Levels (in `Progress.LEVELS` order)
-1. `level_01` Onboarding: paint landings (min 3).
-2. `level_02` Breakables: planks side = smash, crate top = climb; coin on a crate (min 3).
-3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back (min 6).
-4. `level_04` The Gauntlet: everything combined (min 10, set by the user from playtesting).
-5. `level_05` The Tower: the user's vertical spiral level.
+Lineups are a first pass; per-round minimums are placeholders (bucket rounds doubled) until the user playtests them.
+1. `level_01` Onboarding: paint landings. Rhea Spawn (default), Polly Gonn (blind trust), Al Gorithm (bucket).
+2. `level_02` Breakables: planks side = smash, crate top = climb; coin on a crate. Bea Tah, Moe Cap, Liv Elup.
+   (The standard 3-splat route ends with a leap of faith to the flag: Liv Elup, "No paint, no way", needs it painted.)
+3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back. Cass Cene, Lou Tbox, Max Levell.
+4. `level_04` The Gauntlet: everything combined. Frank Rate, Dee Sync, Sven Tory.
+5. `level_05` The Tower: the user's vertical spiral level. Hugh Dee, Mike Rotransaction, Rhea Spawn.
 
 ## Adding a level
 Run `tools/new_level.gd` (Script editor > File > Run) or duplicate `levels/_template.tscn` as `levels/level_XX.tscn`.

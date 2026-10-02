@@ -8,8 +8,13 @@
 [node name="Level01" type="Node3D"]
 script = ExtResource("lvl_script")
 level_name = "Onboarding"
-intro_text = "The playtester only jumps to ledges painted yellow.\nPaint where it should LAND (one splat per ledge is enough), then press Enter."
-minimum_paint = 3
+intro_text = "The playtester only jumps to ledges painted yellow.\nPaint where it should LAND (one splat per ledge is usually enough), then press Enter.\nThree testers will play it, one after the other. Some need more paint than others."
+tester_1 = "Rhea Spawn"
+minimum_1 = 3
+tester_2 = "Polly Gonn"
+minimum_2 = 3
+tester_3 = "Al Gorithm"
+minimum_3 = 6
 
 [node name="RunnerSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 0)
