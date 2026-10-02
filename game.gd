@@ -23,6 +23,7 @@ const RESULTS_CARD := preload("res://results_card.gd")
 @export_group("Scoring")
 @export var optimal_margin := 5  ## Optimal = round minimum + this. Enough slack to also grab the coins.
 @export var limit_margin := 10  ## Can size = optimal + this.
+@export var retry_hold_time := 2.0  ## Seconds R must be held to retry (avoids accidental resets).
 
 var level: Level
 var runner: Runner
@@ -36,6 +37,10 @@ var spectator: Camera3D
 var spectating := false
 var round_index := 0  ## 0-2: which focus tester is playing.
 var round_stars: Array[int] = [0, 0, 0]  ## Stars per round (0 = not finished yet).
+var _retry_hold := 0.0
+var _retry_lock := false  ## R must be released before another retry can start.
+var _retry_bar: Control  ## "Hold R to retry" progress, bottom centre.
+var _retry_fill: ColorRect
 var round_intro: Control  ## Level intro banner + sliding tester card (round_intro.gd).
 var speech_feed: Control  ## The tester's last 3 lines, top right (speech_feed.gd).
 var results_card: Control  ## End-of-round results / tester lost (results_card.gd).
@@ -68,6 +73,7 @@ func _ready() -> void:
 	$HUD.add_child(round_intro)
 	results_card = RESULTS_CARD.new()
 	$HUD.add_child(results_card)
+	_build_retry_bar()
 	_start_round(0)
 	add_child(PAUSE_MENU.new())
 
@@ -141,6 +147,7 @@ func paint_limit() -> int:
 
 
 func _process(delta: float) -> void:
+	_process_retry_hold(delta)
 	if _out_of_paint_timer > 0.0:
 		_out_of_paint_timer -= delta
 		if _out_of_paint_timer <= 0.0:
@@ -155,8 +162,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		paint.scrape_locked = true
 		paint.hotfix_mode = true
 		runner.start()
-	elif event.is_action_pressed("reset_runner"):
-		_retry()
 	elif event.is_action_pressed("clear_paint"):
 		paint.clear_all()
 	elif event.is_action_pressed("toggle_tester_card"):
@@ -165,16 +170,67 @@ func _unhandled_input(event: InputEvent) -> void:
 		runner.debug_view = not runner.debug_view
 	elif event.is_action_pressed("toggle_spectator"):
 		_toggle_spectator()
-	elif event.is_action_pressed("next_level") and _finished:
-		if round_index + 1 < Level.ROUNDS:
-			_start_round(round_index + 1)
-		else:
-			Progress.play_next()
+	elif event.is_action_pressed("next_level") and _finished and round_index + 1 < Level.ROUNDS:
+		_start_round(round_index + 1)  # After the 3rd tester it's back to the computer (Tab).
 	elif event.is_action_pressed("back_to_menu"):
 		Progress.to_menu()
 
 
-## R: same tester, same round, try again (hotfixes are removed, your paint stays).
+## Hold R for `retry_hold_time` seconds to retry; a bar fills at the bottom of the screen.
+func _process_retry_hold(delta: float) -> void:
+	if not Input.is_action_pressed("reset_runner"):
+		_retry_lock = false
+		if _retry_hold > 0.0:
+			_retry_hold = 0.0
+			_retry_bar.visible = false
+		return
+	if _retry_lock:
+		return
+	_retry_hold += delta
+	_retry_bar.visible = true
+	_retry_fill.size.x = _retry_bar.size.x * clampf(_retry_hold / retry_hold_time, 0.0, 1.0)
+	if _retry_hold >= retry_hold_time:
+		_retry_hold = 0.0
+		_retry_lock = true
+		_retry_bar.visible = false
+		_retry()
+
+
+func _build_retry_bar() -> void:
+	_retry_bar = Panel.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.07, 0.07, 0.09, 0.85)
+	style.set_corner_radius_all(6)
+	_retry_bar.add_theme_stylebox_override("panel", style)
+	_retry_bar.anchor_left = 0.5
+	_retry_bar.anchor_right = 0.5
+	_retry_bar.anchor_top = 1.0
+	_retry_bar.anchor_bottom = 1.0
+	_retry_bar.offset_left = -180
+	_retry_bar.offset_right = 180
+	_retry_bar.offset_top = -120
+	_retry_bar.offset_bottom = -84
+	_retry_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_retry_bar.visible = false
+	_retry_fill = ColorRect.new()
+	_retry_fill.color = Color(1, 0.82, 0.05, 0.85)
+	_retry_fill.size = Vector2(0, 36)
+	_retry_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_retry_bar.add_child(_retry_fill)
+	var label := Label.new()
+	label.text = "Hold R to retry this tester"
+	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	label.add_theme_constant_override("outline_size", 6)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_retry_bar.add_child(label)
+	$HUD.add_child(_retry_bar)
+
+
+## Hold R: same tester, same round, try again (hotfixes are removed, your paint stays).
 func _retry() -> void:
 	_reset_run()
 	status_label.text = "Focus tester: %s" % runner.tester_name
@@ -228,7 +284,7 @@ func _on_scrape_denied() -> void:
 	_out_of_paint_timer = 1.5
 	Sfx.play("out_of_paint", 0.0)
 	paint_label.add_theme_color_override("font_color", Color(1, 0.25, 0.2))
-	paint_label.text = "Can't scrape during a playtest. Press R to reset the playtester first."
+	paint_label.text = "Can't scrape during a playtest. Hold R to reset the playtester first."
 
 
 func _on_coin_collected(_coin: Coin) -> void:
@@ -294,10 +350,8 @@ func _nav_keys() -> Array:
 	var keys := []
 	if round_index + 1 < Level.ROUNDS:
 		keys.append(["N", "next tester"])
-	elif Progress.has_next():
-		keys.append(["N", "next level"])
-	keys.append(["R", "retry this tester"])
-	keys.append(["Tab", "level select"])
+	keys.append(["Hold R", "retry this tester"])
+	keys.append(["Tab", "back to your desk" if round_index + 1 == Level.ROUNDS else "level select"])
 	return keys
 
 
@@ -333,4 +387,4 @@ func _on_goal() -> void:
 
 
 func _on_died() -> void:
-	results_card.show_death(runner.tester_name, [["R", "retry"], ["Tab", "level select"]])
+	results_card.show_death(runner.tester_name, [["Hold R", "retry"], ["Tab", "level select"]])
