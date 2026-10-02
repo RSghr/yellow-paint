@@ -87,8 +87,18 @@ Everything resets when the player presses R (doors close, crates come back, coin
 ## 7. Pick the 3 testers
 
 Every level is played by 3 focus testers in a row; the player's paint carries over from one to the next.
-Pick them in the root's **Round 1/2/3** groups (dropdown of `FocusGroup.ROSTER`). Each tester has three traits,
-shown to the player only as stars (★☆☆ / ★★☆ / ★★★):
+
+**To set a level's testers:** select the level's root node, and in the Inspector open **Round 1**, **Round 2** and
+**Round 3**. Each has:
+- `Tester N`: a dropdown of everyone in the roster below.
+- `Minimum N`: the fewest splats that reliably get **that tester** to the flag (see section 8). Optimal = minimum + 5.
+
+The root shows a ⚠ if a tester is used twice in the level, isn't in the roster, has more than one ★☆☆ trait,
+or a minimum is 0.
+
+### What the stars mean
+
+Each tester has three traits, shown to the player only as stars (never the names below):
 
 | Trait | ★☆☆ | ★★☆ (default) | ★★★ |
 |---|---|---|---|
@@ -96,9 +106,58 @@ shown to the player only as stars (★☆☆ / ★★☆ / ★★★):
 | Trust | Needs a whole bucket: **2 splats** on a landing before jumping there, slow to decide | Thoughtful | Blind trust: one splat = full confidence, fast |
 | Patience (before improvising) | No paint, no way: **never** jumps unpainted (no leaps of faith either) | Lost fast: ~8 s | Explorer: ~3 s |
 
-A tester has at most one ★☆☆ trait. Ideas for a lineup: start with someone easy-going, end with the one whose
-weak trait the level punishes (a "bucket" tester on a level of long jumps, a "no paint, no way" one where the
-default tester would leap to the flag). The numbers behind the stars are in runner.gd, "Traits" export group.
+The numbers behind the stars are in `runner.gd`, export group "Traits" (one value per star level).
+
+### The roster
+
+| Tester | Jump precision | Trust | Patience |
+|---|---|---|---|
+| Rhea Spawn | ★★☆ Hit or miss | ★★☆ Thoughtful | ★★☆ Lost fast |
+| Polly Gonn | ★★☆ Hit or miss | ★★★ Blind trust | ★★☆ Lost fast |
+| Al Gorithm | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★☆ Lost fast |
+| Bea Tah | ★★☆ Hit or miss | ★★☆ Thoughtful | ★★★ Explorer |
+| Moe Cap | ★☆☆ Incapable | ★★☆ Thoughtful | ★★☆ Lost fast |
+| Liv Elup | ★★★ Precise | ★★☆ Thoughtful | ★☆☆ No paint, no way |
+| Cass Cene | ★★☆ Hit or miss | ★★☆ Thoughtful | ★☆☆ No paint, no way |
+| Lou Tbox | ★★★ Precise | ★★☆ Thoughtful | ★★★ Explorer |
+| Max Levell | ★★★ Precise | ★☆☆ Needs a whole bucket | ★★☆ Lost fast |
+| Frank Rate | ★★★ Precise | ★★★ Blind trust | ★★★ Explorer |
+| Dee Sync | ★☆☆ Incapable | ★★★ Blind trust | ★★☆ Lost fast |
+| Sven Tory | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★★ Explorer |
+| Hugh Dee | ★★☆ Hit or miss | ★★★ Blind trust | ★☆☆ No paint, no way |
+| Mike Rotransaction | ★☆☆ Incapable | ★★☆ Thoughtful | ★★★ Explorer |
+
+### Current lineups
+
+The minimums are placeholders until measured in playtesting.
+
+| Level | Round 1 | Round 2 | Round 3 |
+|---|---|---|---|
+| `level_01` Onboarding | Rhea Spawn (min 3) | Polly Gonn (min 3) | Al Gorithm (min 6) |
+| `level_02` Breakables | Bea Tah (min 3) | Moe Cap (min 3) | Liv Elup (min 3) |
+| `level_03` Buttons | Cass Cene (min 6) | Lou Tbox (min 6) | Max Levell (min 12) |
+| `level_04` The Gauntlet | Frank Rate (min 10) | Dee Sync (min 10) | Sven Tory (min 20) |
+| `level_05` The Tower | Hugh Dee (min 20) | Mike Rotransaction (min 20) | Rhea Spawn (min 20) |
+
+### Add a new tester
+
+Open `focus_group.gd` and add a line to `ROSTER`:
+
+```gdscript
+"Jen Erik": {jump = 1, trust = 2, patience = 0},
+```
+
+Traits go from 0 (★☆☆) to 2 (★★★), 1 is the default. **Rule: at most one trait at 0.**
+Save, and the name appears in every level's tester dropdown (click another node and back if the Inspector doesn't
+refresh). Add the tester to the roster table above too.
+
+### Picking a lineup
+
+Ideas: start with someone easy-going, end with the one whose weak trait the level punishes:
+- **Needs a whole bucket** on a level of long jumps: every landing needs 2 splats.
+- **No paint, no way** where the default tester would leap to the flag or gamble on a short hop: those need paint now.
+- **Incapable** combined with **Explorer**: it improvises fast and always fails, so the paint has to be there before it gets bored.
+- **Blind trust** or **Precise + Explorer**: generous rounds, where a low minimum rewards a player who paints little.
 
 ## 8. Set each round's `minimum`
 
@@ -122,3 +181,4 @@ Optimal (5★ territory) is `minimum + 5`, and the can holds `minimum + 15`. The
 - [ ] Buttons have their `target` set and face where the playtester will stand
 - [ ] Flag visibility is intentional (leaps of faith)
 - [ ] 3 different testers picked; each round's `minimum` measured; all coins reachable within optimal
+- [ ] Lineup table in this guide updated

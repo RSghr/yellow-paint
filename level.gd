@@ -102,6 +102,8 @@ func _get_configuration_warnings() -> PackedStringArray:
 		var r: Dictionary = rounds()[i]
 		if not FocusGroup.ROSTER.has(r.tester):
 			warnings.append("Round %d: \"%s\" isn't in FocusGroup.ROSTER." % [i + 1, r.tester])
+		elif FocusGroup.ROSTER[r.tester].values().count(0) > 1:
+			warnings.append("Round %d: %s has more than one ★☆☆ trait (max one). Fix it in FocusGroup.ROSTER." % [i + 1, r.tester])
 		elif used.has(r.tester):
 			warnings.append("Round %d: %s already plays round %d. Pick a different tester." % [i + 1, r.tester, used[r.tester]])
 		used[r.tester] = i + 1

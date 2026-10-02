@@ -18,7 +18,7 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 | `spectator_camera.gd` | Orbit camera following the playtester (A on AZERTY = physical Q). Operator is frozen (`active = false`) while spectating. |
 | `focus_group.gd` | `FocusGroup`: the tester `ROSTER` (pun names + jump/trust/patience traits 0-2), star display, results quotes. |
 | `art/paint_splat.png` | Splat image (white placeholder), tinted by `PaintManager.paint_color`. |
-| `levels/_template.tscn`, `tools/new_level.gd` | Level template + EditorScript (File > Run) that creates the next `level_XX.tscn`. Guide: `docs/LEVEL_DESIGN.md`. |
+| `levels/_template.tscn`, `tools/new_level.gd` | Level template + EditorScript (File > Run) that creates the next `level_XX.tscn`. Guide: `docs/LEVEL_DESIGN.md` (also has the roster with stars and the current lineups; keep them in sync). |
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
 | `level.gd` | `@tool` root script of every level: `level_name`, `intro_text`, `death_height`, 3 rounds (`tester_N` dropdown + `minimum_N`); editor warnings for missing spawns/goal/bad lineup. F6 on a level scene launches it inside `game.tscn`. |
 | `levels/` | Level scenes: world only (Geometry, Interactables/Coins, Goal, `RunnerSpawn`/`OperatorSpawn` Marker3Ds). |
