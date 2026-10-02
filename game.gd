@@ -17,6 +17,7 @@ const OPERATOR_SCENE := preload("res://character.tscn")
 const PAUSE_MENU := preload("res://pause_menu.gd")
 const SPECTATOR_CAMERA := preload("res://spectator_camera.gd")
 const ROUND_INTRO := preload("res://round_intro.gd")
+const SPEECH_FEED := preload("res://speech_feed.gd")
 
 @export_group("Scoring")
 @export var optimal_margin := 5  ## Optimal = round minimum + this. Enough slack to also grab the coins.
@@ -35,6 +36,7 @@ var spectating := false
 var round_index := 0  ## 0-2: which focus tester is playing.
 var round_stars: Array[int] = [0, 0, 0]  ## Stars per round (0 = not finished yet).
 var round_intro: Control  ## Level intro banner + sliding tester card (round_intro.gd).
+var speech_feed: Control  ## The tester's last 3 lines, top right (speech_feed.gd).
 
 @onready var paint: PaintManager = $PaintManager
 @onready var paint_label: Label = $HUD/PaintLabel
@@ -48,7 +50,9 @@ var round_intro: Control  ## Level intro banner + sliding tester card (round_int
 
 func _ready() -> void:
 	_load_level()
-	runner.said.connect(func(text): status_label.text = "%s: \"%s\"" % [runner.tester_name, text])
+	speech_feed = SPEECH_FEED.new()
+	$HUD.add_child(speech_feed)
+	runner.said.connect(func(text): speech_feed.push(text))
 	runner.reached_goal.connect(_on_goal)
 	runner.died.connect(_on_died)
 	paint.paint_changed.connect(_update_paint_label)
@@ -99,10 +103,10 @@ func _start_round(index: int) -> void:
 	paint_gauge.setup(r.minimum, optimal_paint(), paint_limit())
 	_reset_run()
 	level_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN  # Right-aligned in the corner: grow leftwards.
-	level_label.text = "%s%s\nRound %d/%d: %s\n%s" % [
-		"" if Progress.level_override != "" else "Level %d: " % (Progress.current + 1), level.level_name,
-		index + 1, Level.ROUNDS, r.tester, FocusGroup.trait_line(r.tester)]
+	level_label.text = "%s%s" % [
+		"" if Progress.level_override != "" else "Level %d: " % (Progress.current + 1), level.level_name]
 	status_label.text = "Focus tester: %s" % r.tester
+	speech_feed.clear()
 	message_label.text = ""
 	round_intro.play(level.intro_text if index == 0 else "", index, Level.ROUNDS, r.tester,
 		"Your paint from the last round is still there. Adapt it, then press Enter." if index > 0 else "")
@@ -120,6 +124,7 @@ func _toggle_spectator() -> void:
 		operator.camera.current = true
 	$HUD/Crosshair.visible = not spectating
 	$HUD/SpectatorLabel.visible = spectating
+	speech_feed.visible = not spectating  # The bubble above the tester says it all while watching.
 	$HUD/SpectatorLabel.text = "Watching %s  (A to go back, mouse to orbit, wheel to zoom)" % runner.tester_name
 
 
@@ -150,6 +155,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_retry()
 	elif event.is_action_pressed("clear_paint"):
 		paint.clear_all()
+	elif event.is_action_pressed("toggle_tester_card"):
+		round_intro.toggle()
 	elif event.is_action_pressed("toggle_ai_debug"):
 		runner.debug_view = not runner.debug_view
 	elif event.is_action_pressed("toggle_spectator"):
@@ -167,6 +174,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _retry() -> void:
 	_reset_run()
 	status_label.text = "Focus tester: %s" % runner.tester_name
+	speech_feed.clear()
 
 
 func _reset_run() -> void:

@@ -4,6 +4,7 @@ extends Control
 ##   - the focus tester's card sliding in from the bottom left: round, name, outlet, intro line,
 ##     then the three trait stars popping in one by one.
 ## Both fade out after `hold_time` seconds, or right away when the playtest starts (dismiss()).
+## C (toggle_tester_card) brings the card back at any time and keeps it up until C is pressed again.
 
 const YELLOW := Color(1, 0.82, 0.05)
 
@@ -13,6 +14,7 @@ var _banner: Label
 var _card: PanelContainer
 var _stat_rows: Array[Control] = []
 var _tween: Tween
+var _showing := false  ## The card is on screen (or sliding in).
 
 
 func _ready() -> void:
@@ -48,12 +50,30 @@ func play(intro: String, round_index: int, round_count: int, tester: String, not
 	add_child(_card)
 	_card.modulate.a = 1.0
 	_card.position.x = -_card.size.x - 40  # Off screen to the left; slides in once laid out.
-	_animate.call_deferred()
+	_animate.call_deferred(true)
+
+
+## C: show the card again (it stays until C is pressed again), or hide it.
+func toggle() -> void:
+	if not _card:
+		return
+	if _showing:
+		dismiss()
+		return
+	if _tween:
+		_tween.kill()
+	_banner.modulate.a = 0.0
+	_banner.text = ""  # Only the card comes back; the level intro was a one-time thing.
+	_card.modulate.a = 1.0
+	for row in _stat_rows:
+		row.modulate.a = 0.0
+	_animate(false)
 
 
 func dismiss() -> void:
-	if not _card or _card.modulate.a <= 0.0:
+	if not _card or not _showing:
 		return
+	_showing = false
 	if _tween:
 		_tween.kill()
 	_tween = create_tween().set_parallel()
@@ -61,9 +81,10 @@ func dismiss() -> void:
 	_tween.tween_property(_banner, "modulate:a", 0.0, 0.3)
 
 
-func _animate() -> void:
+func _animate(auto_fade: bool) -> void:
 	if not _card:
 		return
+	_showing = true
 	_card.position.x = -_card.size.x - 40
 	_tween = create_tween()
 	if _banner.text != "":
@@ -73,7 +94,10 @@ func _animate() -> void:
 		_tween.tween_property(row, "modulate:a", 1.0, 0.18)
 		_tween.parallel().tween_property(row, "position:x", 0.0, 0.18).from(-30.0)
 		_tween.tween_interval(0.08)
+	if not auto_fade:
+		return
 	_tween.tween_interval(hold_time)
+	_tween.tween_callback(func(): _showing = false)
 	_tween.tween_property(_card, "modulate:a", 0.0, 0.8)
 	_tween.parallel().tween_property(_banner, "modulate:a", 0.0, 0.8)
 

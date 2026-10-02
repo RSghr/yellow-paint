@@ -12,7 +12,8 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 | `level_select.tscn/.gd` | Main scene = the operator's company **desktop** (built in code): icons Inlook / Level Select / Company Settings / Recycle Bin, taskbar with Start menu and clock. Quit = Start > Shut down ("...may result in your ~~contract~~ termination"). First launch opens Inlook on the welcome mail; returning from a level reopens Level Select (`Progress.open_levels_on_menu`). |
 | `desk_window.gd` | Draggable desktop window (title bar, close) used by the desktop. |
 | `inbox.gd` | Inlook's emails (`MAILS`, BBCode bodies). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, "early build" grey boxes). Read state in `Progress.read_mails`/`seen_intro`. |
-| `round_intro.gd` | Start of each round: level intro banner at the top (round 1 only) + tester card sliding in bottom-left (name, outlet, intro, stars popping in). Fades after `hold_time` (7s) or when the playtest starts. |
+| `round_intro.gd` | Start of each round: level intro banner at the top (round 1 only) + tester card sliding in bottom-left (name, outlet, intro, stars popping in). Fades after `hold_time` (7s) or when the playtest starts. **C** (`toggle_tester_card`) brings the card back / hides it (it stays until C again). The top-right HUD shows the level name and "Focus tester: name" (StatusLabel). |
+| `speech_feed.gd` | Tester speech on the HUD, under the tester name: newest line on top, older ones slide down, shrink and dim (max 3); old lines fade after 4s without new speech. Hidden while spectating. |
 | `progress.gd` | Autoload `Progress`: **auto-discovers** `levels/level_*.tscn` (file-name order, names from `level_name`), current level, best stars in `user://progress.cfg`. |
 | `settings.gd` | Autoload `Settings`: mouse sensitivity, volume, fullscreen (`user://settings.cfg`). |
 | `sfx.gd` | Autoload `Sfx`: `Sfx.play("name")`. Plays `audio/<name>.ogg/.wav/.mp3` if present, silent otherwise. List in `SOUNDS` and `audio/README.md`. |
@@ -106,6 +107,7 @@ using raycasts, call `game.runner.start()`, and step `physics_frame`. The AI is 
 ## Workflow
 - Changes go on branches (`claude/...`) and pull requests to `master`. The user pulls with Godot closed or reloads when prompted.
 - Godot's open editor can overwrite files changed on disk (script editor buffers). Never assume a write landed, verify.
+- Fly down is Ctrl only (C is the tester card).
 - Input actions use **physical** keycodes (the user is on AZERTY) except menu keys (N, Tab, Esc) which use logical keycodes.
 - Controls are listed in the Settings menu (`settings_menu.gd` `CONTROLS`), not on the HUD. Add new actions there too.
 - Test scripts can live outside the project (e.g. a scratchpad) and be run with `--script /abs/path.gd`; don't reference
