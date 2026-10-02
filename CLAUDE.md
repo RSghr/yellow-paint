@@ -13,7 +13,7 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 | `desk_window.gd` | Draggable desktop window (title bar, close) used by the desktop. |
 | `inbox.gd` | Inlook's emails (`MAILS`, BBCode bodies). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, "early build" grey boxes). Read state in `Progress.read_mails`/`seen_intro`. |
 | `round_intro.gd` | Start of each round: level intro banner at the top (round 1 only) + tester card sliding in bottom-left (name, outlet, intro, stars popping in). Fades after `hold_time` (7s) or when the playtest starts. **C** (`toggle_tester_card`) brings the card back / hides it (it stays until C again). The top-right HUD shows the level name and "Focus tester: name" (StatusLabel). |
-| `speech_feed.gd` | Tester speech on the HUD, under the tester name: newest line on top, older ones slide down, shrink and dim (max 3); old lines fade after 4s without new speech. Hidden while spectating. |
+| `speech_feed.gd` | Tester speech on the HUD as a chat log under the tester name: "Name: message", oldest on top, newest at the bottom, max 3 lines, each fades `line_life` (6s) after it was said. Hidden while spectating. |
 | `progress.gd` | Autoload `Progress`: **auto-discovers** `levels/level_*.tscn` (file-name order, names from `level_name`), current level, best stars in `user://progress.cfg`. |
 | `settings.gd` | Autoload `Settings`: mouse sensitivity, volume, fullscreen (`user://settings.cfg`). |
 | `sfx.gd` | Autoload `Sfx`: `Sfx.play("name")`. Plays `audio/<name>.ogg/.wav/.mp3` if present, silent otherwise. List in `SOUNDS` and `audio/README.md`. |

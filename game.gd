@@ -52,7 +52,7 @@ func _ready() -> void:
 	_load_level()
 	speech_feed = SPEECH_FEED.new()
 	$HUD.add_child(speech_feed)
-	runner.said.connect(func(text): speech_feed.push(text))
+	runner.said.connect(func(text): speech_feed.push(runner.tester_name, text))
 	runner.reached_goal.connect(_on_goal)
 	runner.died.connect(_on_died)
 	paint.paint_changed.connect(_update_paint_label)
