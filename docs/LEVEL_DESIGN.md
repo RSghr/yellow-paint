@@ -74,14 +74,14 @@ Behaviour that matters for layout:
   the blue Z gizmo arrow. The playtester stands 0.9 m in front of the face. Only **painted** buttons get pressed.
   Painting a door does nothing (that's the joke).
   - **`move_direction`** / **`move_distance`**: which way and how far it slides (any axis, e.g. `(0, 0, 1)` to slide
-    sideways). **`open_time`**: how long it takes. The editor shows a **cyan ghost** where it ends up.
+	sideways). **`open_time`**: how long it takes. The editor shows a **cyan ghost** where it ends up.
 - **Moving platform**: a `door.tscn` with **`is_platform`** on. Paint on its **top** is a landing like any other,
   and the paint **rides along** when it moves. The playtester stands still while the floor moves under it, and
   won't jump onto a platform that's still moving (it waits for it to stop). Two setups that work:
   - **Elevator**: platform flush with the floor, button standing on it (the tester stands on the platform to press
-    it), and paint on the platform top. The tester walks on, presses, rides up, then looks around from the top.
+	it), and paint on the platform top. The tester walks on, presses, rides up, then looks around from the top.
   - **Bridge**: platform off to the side, slides into a gap when the button is pressed. Paint its top where it rests;
-    the paint comes along, and the tester jumps onto it once it has arrived.
+	the paint comes along, and the tester jumps onto it once it has arrived.
   - Make the platform's top a hair **higher** than any block around it (e.g. +0.01), otherwise your paint can land on
     the block instead and stay behind when the platform leaves.
   - It moves once (when the button is pressed) and stays there. R puts it back.

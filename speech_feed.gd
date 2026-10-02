@@ -11,7 +11,7 @@ const YELLOW := Color(1, 0.82, 0.05)
 @export var line_life := 6.0  ## Seconds a line stays before fading out.
 @export var width := 620.0
 @export var font_size := 19
-@export var newest_scale := 1.2  ## Size of the latest line relative to the others.
+@export var newest_scale := 1.5  ## Size of the latest line relative to the others.
 
 var _box: VBoxContainer
 
