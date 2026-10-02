@@ -9,12 +9,14 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 
 | File | What it is |
 |---|---|
-| `level_select.tscn/.gd` | Main scene. Level list with best stars, Inbox, Settings, Quit. Opens the intro mail on first launch. |
-| `intro_mail.gd` | The story intro: corporate email from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, "early build" grey boxes). `Progress.seen_intro`. |
+| `level_select.tscn/.gd` | Main scene = the operator's company **desktop** (built in code): icons Inlook / Level Select / Company Settings / Recycle Bin, taskbar with Start menu and clock. Quit = Start > Shut down ("...may result in your ~~contract~~ termination"). First launch opens Inlook on the welcome mail; returning from a level reopens Level Select (`Progress.open_levels_on_menu`). |
+| `desk_window.gd` | Draggable desktop window (title bar, close) used by the desktop. |
+| `inbox.gd` | Inlook's emails (`MAILS`, BBCode bodies). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, "early build" grey boxes). Read state in `Progress.read_mails`/`seen_intro`. |
+| `round_intro.gd` | Start of each round: level intro banner at the top (round 1 only) + tester card sliding in bottom-left (name, outlet, intro, stars popping in). Fades after `hold_time` (7s) or when the playtest starts. |
 | `progress.gd` | Autoload `Progress`: **auto-discovers** `levels/level_*.tscn` (file-name order, names from `level_name`), current level, best stars in `user://progress.cfg`. |
 | `settings.gd` | Autoload `Settings`: mouse sensitivity, volume, fullscreen (`user://settings.cfg`). |
 | `sfx.gd` | Autoload `Sfx`: `Sfx.play("name")`. Plays `audio/<name>.ogg/.wav/.mp3` if present, silent otherwise. List in `SOUNDS` and `audio/README.md`. |
-| `settings_menu.gd` | Settings overlay (options + controls list read from the Input Map). Used by main menu and pause menu. |
+| `settings_menu.gd` | Settings overlay (options + controls list read from the Input Map). Used by the desktop (titled "COMPANY SETTINGS") and the pause menu. |
 | `pause_menu.gd` | Esc in game: Resume / Settings / Level select / Quit. Added by `game.gd`. |
 | `spectator_camera.gd` | Orbit camera following the playtester (A on AZERTY = physical Q). Operator is frozen (`active = false`) while spectating. |
 | `focus_group.gd` | `FocusGroup`: the tester `ROSTER` (pun names, parody `outlet` (IBN, Polygone...), archetype `intro`, jump/trust/patience traits 0-2), star display, results quotes. |

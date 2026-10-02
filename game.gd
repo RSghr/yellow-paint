@@ -16,6 +16,7 @@ const RUNNER_SCENE := preload("res://runner.tscn")
 const OPERATOR_SCENE := preload("res://character.tscn")
 const PAUSE_MENU := preload("res://pause_menu.gd")
 const SPECTATOR_CAMERA := preload("res://spectator_camera.gd")
+const ROUND_INTRO := preload("res://round_intro.gd")
 
 @export_group("Scoring")
 @export var optimal_margin := 5  ## Optimal = round minimum + this. Enough slack to also grab the coins.
@@ -33,6 +34,7 @@ var spectator: Camera3D
 var spectating := false
 var round_index := 0  ## 0-2: which focus tester is playing.
 var round_stars: Array[int] = [0, 0, 0]  ## Stars per round (0 = not finished yet).
+var round_intro: Control  ## Level intro banner + sliding tester card (round_intro.gd).
 
 @onready var paint: PaintManager = $PaintManager
 @onready var paint_label: Label = $HUD/PaintLabel
@@ -56,8 +58,9 @@ func _ready() -> void:
 	paint.hotfix_mode_changed.connect(func(_on): _update_paint_label())
 	for coin in get_tree().get_nodes_in_group("coin"):
 		coin.collected.connect(_on_coin_collected)
+	round_intro = ROUND_INTRO.new()
+	$HUD.add_child(round_intro)
 	_start_round(0)
-	message_label.text = "%s\n\n%s" % [level.intro_text, message_label.text]
 	add_child(PAUSE_MENU.new())
 
 
@@ -100,9 +103,9 @@ func _start_round(index: int) -> void:
 		"" if Progress.level_override != "" else "Level %d: " % (Progress.current + 1), level.level_name,
 		index + 1, Level.ROUNDS, r.tester, FocusGroup.trait_line(r.tester)]
 	status_label.text = "Focus tester: %s" % r.tester
-	message_label.text = "ROUND %d/%d   Today's focus tester: %s\n\"%s\"\n%s%s" % [index + 1, Level.ROUNDS,
-		FocusGroup.byline(r.tester), FocusGroup.intro(r.tester), FocusGroup.trait_line(r.tester),
-		"\nYour paint from the last round is still there. Adapt it, then press Enter." if index > 0 else ""]
+	message_label.text = ""
+	round_intro.play(level.intro_text if index == 0 else "", index, Level.ROUNDS, r.tester,
+		"Your paint from the last round is still there. Adapt it, then press Enter." if index > 0 else "")
 
 
 ## Swap between the operator's eyes and a camera following the playtester.
@@ -138,6 +141,7 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("start_test"):
 		message_label.text = ""
+		round_intro.dismiss()
 		_playtest_running = true
 		paint.scrape_locked = true
 		paint.hotfix_mode = true

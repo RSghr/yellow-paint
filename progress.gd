@@ -12,7 +12,9 @@ const MENU_SCENE := "res://level_select.tscn"
 var LEVELS: Array[Dictionary] = []  ## [{name, path}], filled by _discover_levels().
 var current := 0  ## Index into LEVELS.
 var level_override := ""  ## Set when a level scene is launched directly (F6) and isn't in LEVELS.
-var seen_intro := false  ## The boss's welcome email has been read (shown on first launch).
+var seen_intro := false  ## The boss's welcome email has been read (Inlook opens on it at first launch).
+var read_mails: Array = []  ## Ids of Inlook emails already opened (see inbox.gd).
+var open_levels_on_menu := false  ## Coming back from a level: the desktop reopens the Level Select window.
 var best_stars := {}  ## "level_01" -> best total stars over the 3 rounds, out of 15 (0 = never finished)
 
 
@@ -80,6 +82,7 @@ func play_next() -> void:
 
 func to_menu() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	open_levels_on_menu = true
 	get_tree().change_scene_to_file(MENU_SCENE)
 
 
@@ -102,6 +105,27 @@ func mark_intro_seen() -> void:
 		_save()
 
 
+func mark_mail_read(id: String) -> void:
+	if id not in read_mails:
+		read_mails.append(id)
+		if id == "welcome":
+			seen_intro = true
+		_save()
+
+
+## The 3 testers of a level (read from the scene file without instancing it).
+static func level_testers(path: String) -> PackedStringArray:
+	var names: PackedStringArray = []
+	var packed := load(path) as PackedScene
+	if packed:
+		var state := packed.get_state()
+		for key in ["tester_1", "tester_2", "tester_3"]:
+			for i in state.get_node_property_count(0):
+				if state.get_node_property_name(0, i) == key:
+					names.append(state.get_node_property_value(0, i))
+	return names
+
+
 func _key(path: String) -> String:
 	return path.get_file().get_basename()  # "level_01"
 
@@ -112,6 +136,7 @@ func _load() -> void:
 		return
 	# "best_total" (out of 15, 3 testers per level). The old "best_stars" section (out of 5) is ignored.
 	seen_intro = cfg.get_value("story", "seen_intro", false)
+	read_mails = cfg.get_value("story", "read_mails", [])
 	for key in cfg.get_section_keys("best_total") if cfg.has_section("best_total") else []:
 		best_stars[key] = cfg.get_value("best_total", key, 0)
 
@@ -119,6 +144,7 @@ func _load() -> void:
 func _save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("story", "seen_intro", seen_intro)
+	cfg.set_value("story", "read_mails", read_mails)
 	for key in best_stars:
 		cfg.set_value("best_total", key, best_stars[key])
 	cfg.save(SAVE_PATH)

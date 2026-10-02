@@ -4,6 +4,8 @@ extends Control
 
 signal closed
 
+var title := "SETTINGS"  ## The desktop calls it "COMPANY SETTINGS".
+
 const YELLOW := Color(1, 0.82, 0.05)
 
 ## [action, description]. Keys are read from the Input Map, so they always match the real bindings.
@@ -48,7 +50,7 @@ func _ready() -> void:
 	root.custom_minimum_size = Vector2(760, 0)
 	center.add_child(root)
 
-	root.add_child(_label("SETTINGS", 48, YELLOW))
+	root.add_child(_label(title, 48, YELLOW))
 
 	# --- Options
 	var options := GridContainer.new()
