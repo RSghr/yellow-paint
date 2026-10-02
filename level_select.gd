@@ -3,6 +3,7 @@ extends Control
 ## The level list comes from Progress (every levels/level_*.tscn).
 
 const SETTINGS_MENU := preload("res://settings_menu.gd")
+const INTRO_MAIL := preload("res://intro_mail.gd")
 
 @onready var _list: VBoxContainer = $Center/VBox/Levels
 @onready var _center: Control = $Center
@@ -23,6 +24,9 @@ func _ready() -> void:
 	var spacer := Control.new()
 	spacer.custom_minimum_size = Vector2(0, 12)
 	_list.add_child(spacer)
+	var inbox := _button("Inbox" if Progress.seen_intro else "Inbox (1 unread)")
+	inbox.pressed.connect(func(): Sfx.play("ui_click"); _open_mail())
+	_list.add_child(inbox)
 	var settings := _button("Settings")
 	settings.pressed.connect(_open_settings)
 	_list.add_child(settings)
@@ -32,6 +36,8 @@ func _ready() -> void:
 
 	if _list.get_child_count() > 0:
 		(_list.get_child(0) as Button).grab_focus()
+	if not Progress.seen_intro:
+		_open_mail.call_deferred()  # First launch: the boss has a few words.
 
 
 func _button(text: String) -> Button:
@@ -40,6 +46,19 @@ func _button(text: String) -> Button:
 	b.custom_minimum_size = Vector2(560, 56)
 	b.add_theme_font_size_override("font_size", 26)
 	return b
+
+
+func _open_mail() -> void:
+	_center.visible = false
+	var mail: Control = INTRO_MAIL.new()
+	add_child(mail)
+	var first_time := not Progress.seen_intro
+	mail.closed.connect(func():
+		Progress.mark_intro_seen()
+		if first_time:
+			get_tree().reload_current_scene()  # Refreshes the "unread" label.
+		else:
+			_center.visible = true)
 
 
 func _open_settings() -> void:

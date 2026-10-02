@@ -12,6 +12,7 @@ const MENU_SCENE := "res://level_select.tscn"
 var LEVELS: Array[Dictionary] = []  ## [{name, path}], filled by _discover_levels().
 var current := 0  ## Index into LEVELS.
 var level_override := ""  ## Set when a level scene is launched directly (F6) and isn't in LEVELS.
+var seen_intro := false  ## The boss's welcome email has been read (shown on first launch).
 var best_stars := {}  ## "level_01" -> best total stars over the 3 rounds, out of 15 (0 = never finished)
 
 
@@ -95,6 +96,12 @@ func record(path: String, stars: int) -> bool:
 	return true
 
 
+func mark_intro_seen() -> void:
+	if not seen_intro:
+		seen_intro = true
+		_save()
+
+
 func _key(path: String) -> String:
 	return path.get_file().get_basename()  # "level_01"
 
@@ -104,12 +111,14 @@ func _load() -> void:
 	if cfg.load(SAVE_PATH) != OK:
 		return
 	# "best_total" (out of 15, 3 testers per level). The old "best_stars" section (out of 5) is ignored.
+	seen_intro = cfg.get_value("story", "seen_intro", false)
 	for key in cfg.get_section_keys("best_total") if cfg.has_section("best_total") else []:
 		best_stars[key] = cfg.get_value("best_total", key, 0)
 
 
 func _save() -> void:
 	var cfg := ConfigFile.new()
+	cfg.set_value("story", "seen_intro", seen_intro)
 	for key in best_stars:
 		cfg.set_value("best_total", key, best_stars[key])
 	cfg.save(SAVE_PATH)

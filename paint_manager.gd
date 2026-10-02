@@ -54,7 +54,7 @@ func paint(hit_position: Vector3, hit_normal: Vector3, collider: Object = null) 
 		role = host.paint_role(hit_normal)  # e.g. side of a crate = "interact", top = "nav"
 	else:
 		role = "nav" if hit_normal.y >= floor_min_normal_y else "none"
-	var is_nav := role == "nav" and _nearest_nav(hit_position, nav_merge_radius) == null
+	var is_nav := role == "nav" and _nearest_nav(hit_position, nav_merge_radius, host) == null
 
 	var mark := PaintMark.new()
 	add_child(mark)
@@ -68,6 +68,8 @@ func paint(hit_position: Vector3, hit_normal: Vector3, collider: Object = null) 
 	if role == "interact":
 		mark.interact_point = host.interact_point(hit_position, hit_normal)
 	mark.hotfix = hotfix_mode
+	if host and host.has_method("carries_paint") and host.carries_paint():
+		mark.attach_to(host)  # Moving platform: the paint rides along.
 	mark.build_visual(hit_normal, splat_texture if splat_texture else _get_splat_texture(),
 		hotfix_color if hotfix_mode else paint_color)
 	splat_added.emit(mark)
@@ -161,11 +163,14 @@ func nav_points() -> Array[Vector3]:
 	return result
 
 
-func _nearest_nav(pos: Vector3, max_dist: float) -> PaintMark:
+## `host`: paint on a moving platform only merges with paint on the same platform (and vice versa).
+func _nearest_nav(pos: Vector3, max_dist: float, host: Node = null) -> PaintMark:
 	var best: PaintMark = null
 	var best_d := max_dist
 	for mark in get_marks():
 		if not mark.is_nav:
+			continue
+		if mark.host != host and (mark.follows() or (host and host.has_method("carries_paint") and host.carries_paint())):
 			continue
 		var d := mark.global_position.distance_to(pos)
 		if d <= best_d:

@@ -9,14 +9,15 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 
 | File | What it is |
 |---|---|
-| `level_select.tscn/.gd` | Main scene. Level list with best stars, Settings, Quit. |
+| `level_select.tscn/.gd` | Main scene. Level list with best stars, Inbox, Settings, Quit. Opens the intro mail on first launch. |
+| `intro_mail.gd` | The story intro: corporate email from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, "early build" grey boxes). `Progress.seen_intro`. |
 | `progress.gd` | Autoload `Progress`: **auto-discovers** `levels/level_*.tscn` (file-name order, names from `level_name`), current level, best stars in `user://progress.cfg`. |
 | `settings.gd` | Autoload `Settings`: mouse sensitivity, volume, fullscreen (`user://settings.cfg`). |
 | `sfx.gd` | Autoload `Sfx`: `Sfx.play("name")`. Plays `audio/<name>.ogg/.wav/.mp3` if present, silent otherwise. List in `SOUNDS` and `audio/README.md`. |
 | `settings_menu.gd` | Settings overlay (options + controls list read from the Input Map). Used by main menu and pause menu. |
 | `pause_menu.gd` | Esc in game: Resume / Settings / Level select / Quit. Added by `game.gd`. |
 | `spectator_camera.gd` | Orbit camera following the playtester (A on AZERTY = physical Q). Operator is frozen (`active = false`) while spectating. |
-| `focus_group.gd` | `FocusGroup`: the tester `ROSTER` (pun names + jump/trust/patience traits 0-2), star display, results quotes. |
+| `focus_group.gd` | `FocusGroup`: the tester `ROSTER` (pun names, parody `outlet` (IBN, Polygone...), archetype `intro`, jump/trust/patience traits 0-2), star display, results quotes. |
 | `art/paint_splat.png` | Splat image (white placeholder), tinted by `PaintManager.paint_color`. |
 | `levels/_template.tscn`, `tools/new_level.gd` | Level template + EditorScript (File > Run) that creates the next `level_XX.tscn`. Guide: `docs/LEVEL_DESIGN.md` (also has the roster with stars and the current lineups; keep them in sync). |
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
@@ -25,6 +26,7 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 | `runner.gd/.tscn` | The AI playtester (perception, trust, planning, speech). |
 | `character.gd/.tscn` | The operator: FPS movement, jetpack (hold Space), fly mode (F), paint (LMB), scrape (RMB). |
 | `paint_manager.gd`, `paint_mark.gd` | Splats (Decals). Each mark has a `role`: `nav` (stand here), `interact` (use this), `none`. Paint limit + refunds. |
+| `door.gd` | Door / moving platform (AnimatableBody3D): slides `move_distance` along `move_direction` when opened (editor shows a cyan ghost at the end position). `is_platform`: top paint = nav and rides along (`PaintMark.attach_to`), group `mover`, `moving` while sliding. |
 | `breakable.gd`, `door.gd`, `wall_button.gd`, `coin.gd` | Interactables. Group `interactable` objects implement `paint_role(normal)`, `interact_point()`, `interact()`, `is_used()`, `kind`, `state_changed`. Group `resettable` implements `reset_state()`. |
 | `block.gd` + `debug_block.tscn` | Static level block, resized via `size` (never scale physics bodies). Grid shader for readable distances. |
 | `paint_gauge.gd` | HUD paint bar with min/optimal ticks. |
@@ -65,6 +67,8 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 - **Hotfixes** (red splats painted mid-playtest) are an order: noticed instantly with line of sight in any direction
   (no view cone, no attention build-up), trusted at `hotfix_trust` (5), top priority, and the whole route to one is
   walked without hesitation or look-arounds. It replans on the spot (`_urgent`). Hotfix paint on a breakable decides it.
+- **Moving platforms**: while the floor under it is moving it stands still (`RIDING`), then looks around. Spots on a
+  platform that is still moving are ignored until it stops (its `state_changed` triggers a rethink).
 - Priorities: unused hotfix > nearby coin > flag > painted interactable > unvisited paint > leap of faith > wander > desperate jump.
 
 ## Scoring (game.gd `score()`)
@@ -85,7 +89,7 @@ Lineups are a first pass; per-round minimums are placeholders (bucket rounds dou
    (The standard 3-splat route ends with a leap of faith to the flag: Liv Elup, "No paint, no way", needs it painted.)
 3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back. Cass Cene, Lou Tbox, Max Levell.
 4. `level_04` The Gauntlet: everything combined. Frank Rate, Dee Sync, Sven Tory.
-5. `level_05` The Tower: the user's vertical spiral level. Hugh Dee, Mike Rotransaction, Rhea Spawn.
+5. `level_05` The Tower: the user's vertical spiral level. Door2 is an elevator platform (button on it, rises 10m). Hugh Dee, Mike Rotransaction, Rhea Spawn.
 
 ## Adding a level
 Run `tools/new_level.gd` (Script editor > File > Run) or duplicate `levels/_template.tscn` as `levels/level_XX.tscn`.

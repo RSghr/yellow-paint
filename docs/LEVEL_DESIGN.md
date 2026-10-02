@@ -73,6 +73,18 @@ Behaviour that matters for layout:
   Set the button's **`target`** to the door (`../Door`). The button's face points along its **-Z**, i.e. opposite
   the blue Z gizmo arrow. The playtester stands 0.9 m in front of the face. Only **painted** buttons get pressed.
   Painting a door does nothing (that's the joke).
+  - **`move_direction`** / **`move_distance`**: which way and how far it slides (any axis, e.g. `(0, 0, 1)` to slide
+    sideways). **`open_time`**: how long it takes. The editor shows a **cyan ghost** where it ends up.
+- **Moving platform**: a `door.tscn` with **`is_platform`** on. Paint on its **top** is a landing like any other,
+  and the paint **rides along** when it moves. The playtester stands still while the floor moves under it, and
+  won't jump onto a platform that's still moving (it waits for it to stop). Two setups that work:
+  - **Elevator**: platform flush with the floor, button standing on it (the tester stands on the platform to press
+    it), and paint on the platform top. The tester walks on, presses, rides up, then looks around from the top.
+  - **Bridge**: platform off to the side, slides into a gap when the button is pressed. Paint its top where it rests;
+    the paint comes along, and the tester jumps onto it once it has arrived.
+  - Make the platform's top a hair **higher** than any block around it (e.g. +0.01), otherwise your paint can land on
+    the block instead and stay behind when the platform leaves.
+  - It moves once (when the button is pressed) and stays there. R puts it back.
 - **Coin** (`coin.tscn`): visible to the playtester without paint. Count them: all coins = no star penalty.
 
 Everything resets when the player presses R (doors close, crates come back, coins return).
@@ -110,22 +122,22 @@ The numbers behind the stars are in `runner.gd`, export group "Traits" (one valu
 
 ### The roster
 
-| Tester | Jump precision | Trust | Patience |
-|---|---|---|---|
-| Rhea Spawn | ★★☆ Hit or miss | ★★☆ Thoughtful | ★★☆ Lost fast |
-| Polly Gonn | ★★☆ Hit or miss | ★★★ Blind trust | ★★☆ Lost fast |
-| Al Gorithm | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★☆ Lost fast |
-| Bea Tah | ★★☆ Hit or miss | ★★☆ Thoughtful | ★★★ Explorer |
-| Moe Cap | ★☆☆ Incapable | ★★☆ Thoughtful | ★★☆ Lost fast |
-| Liv Elup | ★★★ Precise | ★★☆ Thoughtful | ★☆☆ No paint, no way |
-| Cass Cene | ★★☆ Hit or miss | ★★☆ Thoughtful | ★☆☆ No paint, no way |
-| Lou Tbox | ★★★ Precise | ★★☆ Thoughtful | ★★★ Explorer |
-| Max Levell | ★★★ Precise | ★☆☆ Needs a whole bucket | ★★☆ Lost fast |
-| Frank Rate | ★★★ Precise | ★★★ Blind trust | ★★★ Explorer |
-| Dee Sync | ★☆☆ Incapable | ★★★ Blind trust | ★★☆ Lost fast |
-| Sven Tory | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★★ Explorer |
-| Hugh Dee | ★★☆ Hit or miss | ★★★ Blind trust | ★☆☆ No paint, no way |
-| Mike Rotransaction | ★☆☆ Incapable | ★★☆ Thoughtful | ★★★ Explorer |
+| Tester | Outlet | Jump precision | Trust | Patience |
+|---|---|---|---|---|
+| Rhea Spawn | IBN | ★★☆ Hit or miss | ★★☆ Thoughtful | ★★☆ Lost fast |
+| Polly Gonn | Polygone | ★★☆ Hit or miss | ★★★ Blind trust | ★★☆ Lost fast |
+| Al Gorithm | GameFAKs | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★☆ Lost fast |
+| Bea Tah | Early Axess Weekly | ★★☆ Hit or miss | ★★☆ Thoughtful | ★★★ Explorer |
+| Moe Cap | Game Misinformer | ★☆☆ Incapable | ★★☆ Thoughtful | ★★☆ Lost fast |
+| Liv Elup | Rock Paper Shortcut | ★★★ Precise | ★★☆ Thoughtful | ★☆☆ No paint, no way |
+| Cass Cene | Cinematic Universe Digest | ★★☆ Hit or miss | ★★☆ Thoughtful | ★☆☆ No paint, no way |
+| Lou Tbox | Kotakoo | ★★★ Precise | ★★☆ Thoughtful | ★★★ Explorer |
+| Max Levell | Eurogamble | ★★★ Precise | ★☆☆ Needs a whole bucket | ★★☆ Lost fast |
+| Frank Rate | PC Gamerish (240 FPS edition) | ★★★ Precise | ★★★ Blind trust | ★★★ Explorer |
+| Dee Sync | Twitchy (streamer, 14 viewers) | ★☆☆ Incapable | ★★★ Blind trust | ★★☆ Lost fast |
+| Sven Tory | Destructoad | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★★ Explorer |
+| Hugh Dee | The Casual Observer | ★★☆ Hit or miss | ★★★ Blind trust | ★☆☆ No paint, no way |
+| Mike Rotransaction | Freemium Times | ★☆☆ Incapable | ★★☆ Thoughtful | ★★★ Explorer |
 
 ### Current lineups
 
@@ -144,10 +156,14 @@ The minimums are placeholders until measured in playtesting.
 Open `focus_group.gd` and add a line to `ROSTER`:
 
 ```gdscript
-"Jen Erik": {jump = 1, trust = 2, patience = 0},
+"Jen Erik": {jump = 1, trust = 2, patience = 0,
+	outlet = "Gamespotty",
+	intro = "A line hinting at how they play, shown on the round card."},
 ```
 
 Traits go from 0 (★☆☆) to 2 (★★★), 1 is the default. **Rule: at most one trait at 0.**
+`outlet` is the (parody) games site or magazine they write for; `intro` is shown on the round card and should hint
+at their archetype without giving numbers.
 Save, and the name appears in every level's tester dropdown (click another node and back if the Inspector doesn't
 refresh). Add the tester to the roster table above too.
 
