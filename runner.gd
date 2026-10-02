@@ -83,6 +83,7 @@ var _visited: Array[Vector3] = []  ## Paint spots it has stood on.
 var _explored: Array[Vector3] = []  ## Places it wandered to (for picking new directions).
 var _furthest := Vector3.INF  ## The most recent NEW paint spot it reached: its best progress so far.
 var _retrace_to := Vector3.INF  ## After a fall: head back to this spot before exploring again.
+var _detoured := false  ## Went off its route for a coin or to use something: may need to return to _furthest.
 var _wanders := 0
 var _home_y := 0.0  ## Height of the last trusted ground; wandering stays near it.
 var _rethink := false  ## Something new was noticed; reconsider the plan at the next chance.
@@ -155,6 +156,7 @@ func reset_to_spawn() -> void:
 	_explored.clear()
 	_furthest = Vector3.INF
 	_retrace_to = Vector3.INF
+	_detoured = false
 	_coin_attention.clear()
 	_seen_coins.clear()
 	_choices.clear()
@@ -445,6 +447,7 @@ func _process_interact() -> void:
 
 func _start_interacting(step: Dictionary) -> void:
 	_task = step
+	_detoured = true
 	state = State.INTERACTING
 	_timer = 0.0
 	_scan_duration = step.host.interact_duration()
@@ -471,6 +474,7 @@ func _arrive(step: Dictionary) -> void:
 		_start_interacting(step)
 		return
 	if step.get("kind", "") == "coin":
+		_detoured = true
 		say(["Shiny!", "Ooh, a coin!", "Coin get."].pick_random(), true)
 	if step.get("paint", false):
 		_record_visit(step.pos)
@@ -652,6 +656,9 @@ func _on_noticed(mark: PaintMark, blob: int) -> void:
 		return
 	if mark.role in ["interact", "nav"]:
 		_lost_time = 0.0
+	if mark.hotfix and state not in [State.WAITING, State.CELEBRATING]:
+		say(["Was that there a second ago?", "Hey! The level just changed!", "Is someone patching this live?",
+			"New yellow? Did I miss a patch note?", "Okay, who's painting behind my back?"].pick_random(), true)
 	if mark.role == "interact":
 		_rethink = true
 		_look_at(mark.global_position, 0.8)
@@ -828,7 +835,19 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 		if score > best_score:
 			best_score = score
 			best = i
-	return best
+	if best != -1:
+		return best
+
+	# Nothing new to try, but it left its route for a coin or to use something:
+	# go back to the furthest spot it had reached and look again from there.
+	# (Ordinary wandering doesn't count, or it would keep walking back instead of exploring.)
+	if _detoured and _furthest != Vector3.INF and feet().distance_to(_furthest) > 1.5:
+		for i in nodes.size():
+			if kinds[i] == "paint" and dist[i] < INF and nodes[i].distance_to(_furthest) < 1.0:
+				say(["Now, where was I?", "Back to where I left off.", "Detour done. Back on track."].pick_random(), true)
+				_detoured = false  # One trip back; if that doesn't help, it explores as usual.
+				return i
+	return -1
 
 
 ## Any paint spot it's standing on counts as visited, even if it got there by accident.
@@ -844,6 +863,9 @@ func _record_visit(pos: Vector3) -> void:
 	if not _is_visited(pos):
 		_visited.append(pos)
 		_furthest = pos
+		_detoured = false  # New progress: whatever detour it took is behind it.
+	elif pos.distance_to(_furthest) < 1.0:
+		_detoured = false  # Back where it left off.
 	if _retrace_to != Vector3.INF and pos.distance_to(_retrace_to) < 1.0:
 		_retrace_to = Vector3.INF
 		say(["Back where I was. Now, onwards.", "Right, I remember this bit."].pick_random())

@@ -43,6 +43,8 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 - **Retrace after a fall**: landing by accident more than `setback_drop` (1.5m) below its last trusted spot = setback.
   It heads back to `_furthest` (the most recent NEW paint spot it reached) using known spots as stepping stones,
   then explores normally. If no painted way back exists, it clears `_visited` and explores anything reachable.
+- **Return after a detour**: after going for a coin or using a button/breakable (`_detoured`), if it has nothing new to
+  try it walks back once to `_furthest` and looks again from there. Plain wandering does NOT count as a detour.
 - It only plans **straight-line walks** between points (no navmesh): it can't plan a walk around a pillar or corner.
 - Coins are seen without paint but only walked to (`coin_detour` path cost).
 - Breakables: side paint = smash, top paint = climb; more paint wins, ties are a remembered guess.
@@ -50,15 +52,19 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 
 ## Scoring (game.gd `score()`)
 Start at 5★. Paint penalty vs optimal (= level `minimum_paint` + 5): over by 1-5 → -1, 6-10 → -2, >10 → -3.
-Coins: all → 0, more than half → -1, half or fewer → -2, none → -3. Minimum 1★. Can size = optimal + 10.
+Coins: all → 0, more than half → -1, half or fewer → -2, none → -3.
+Hotfixes (splats painted during a playtest, cost 1 like normal paint): 0 → 0, 1-3 → -1, 4+ → -2.
+Minimum 1★. Can size = optimal + 10. Hotfix quotes in `FocusGroup.HOTFIX_QUOTES`; the tester reacts when it notices one.
 Scraping refunds paint; paint destroyed with smashed/opened objects stays spent.
-Scraping (and Backspace clear) is **locked during a playtest**: from Enter until R (reset). Adding paint is still allowed.
+Scraping (and Backspace clear) is **locked during a playtest**: from Enter until R (reset). Adding paint is still allowed
+but each splat is a **hotfix** (`PaintMark.hotfix`, counted in `game.gd` `hotfixes`, reset on R).
 
 ## Levels (in `Progress.LEVELS` order)
 1. `level_01` Onboarding: paint landings (min 3).
 2. `level_02` Breakables: planks side = smash, crate top = climb; coin on a crate (min 3).
 3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back (min 6).
 4. `level_04` The Gauntlet: everything combined (min 10, set by the user from playtesting).
+5. `level_05` The Tower: the user's vertical spiral level.
 
 ## Adding a level
 Run `tools/new_level.gd` (Script editor > File > Run) or duplicate `levels/_template.tscn` as `levels/level_XX.tscn`.

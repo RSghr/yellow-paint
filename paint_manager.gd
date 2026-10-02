@@ -4,6 +4,7 @@ extends Node3D
 ## Splats on upward-facing surfaces become navigation points the AI runner will trust blindly.
 
 signal paint_changed
+signal splat_added(mark: PaintMark)
 signal paint_denied  ## Tried to paint with an empty can.
 signal scrape_denied  ## Tried to scrape while scraping is locked (during a playtest).
 
@@ -17,6 +18,9 @@ signal scrape_denied  ## Tried to scrape while scraping is locked (during a play
 
 ## While true, paint can still be added but not scraped or cleared (no refunds mid-playtest).
 var scrape_locked := false
+
+## True during a playtest: new splats are flagged as hotfixes.
+var hotfix_mode := false
 
 ## Splats currently "spent". Scraping refunds; paint lost to smashed planks or opened doors doesn't.
 var splats_used := 0
@@ -53,7 +57,9 @@ func paint(hit_position: Vector3, hit_normal: Vector3, collider: Object = null) 
 	mark.stand_point = _safe_stand_point(hit_position) if is_nav else hit_position
 	if role == "interact":
 		mark.interact_point = host.interact_point(hit_position, hit_normal)
+	mark.hotfix = hotfix_mode
 	mark.build_visual(hit_normal, splat_texture if splat_texture else _get_splat_texture(), paint_color)
+	splat_added.emit(mark)
 	paint_changed.emit()
 	return mark
 

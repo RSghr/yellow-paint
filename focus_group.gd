@@ -66,12 +66,33 @@ const QUOTES := {
 }
 
 
+## Said at the end when hotfixes (painting during the playtest) cost the most stars.
+## Key 1 = 1-3 hotfixes, 2 = 4 or more.
+const HOTFIX_QUOTES := {
+	1: [
+		"The level changed while I was playing it. Is that a feature?",
+		"Day-one patch? More like mid-run patch.",
+		"I'm pretty sure that yellow wasn't there a second ago.",
+		"Fun level. Slightly haunted. Paint kept appearing.",
+	],
+	2: [
+		"The floor kept rewriting itself. I've played early access games more stable than this.",
+		"Was someone painting behind me the whole time?",
+		"I didn't play the level. The level played me.",
+		"Every time I got stuck, yellow appeared. I don't feel like I earned anything.",
+	],
+}
+
+
 static func random_tester() -> String:
 	return TESTERS.pick_random()
 
 
 ## Pick a quote for a result from game.gd's score() (stars, paint_penalty, coin_penalty).
 static func quote_for(result: Dictionary) -> String:
+	var hotfix_penalty: int = result.get("hotfix_penalty", 0)
+	if hotfix_penalty > 0 and hotfix_penalty >= result.paint_penalty and hotfix_penalty >= result.coin_penalty:
+		return HOTFIX_QUOTES[hotfix_penalty].pick_random()
 	var lines = QUOTES[result.stars]
 	if lines is Dictionary:
 		lines = lines.paint if result.paint_penalty >= result.coin_penalty else lines.coins
