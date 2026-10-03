@@ -56,18 +56,48 @@ const OFFICE_STORIES := [
 ]
 
 
-static func announcement(level_name: String, total: int, testers: PackedStringArray) -> Dictionary:
+## Chad's remark when a tester spent half the session (or more) lost. "" if nobody did.
+## rounds: [{tester, session, lost}]
+static func lost_note(rounds: Array) -> String:
+	var worst := {}
+	var worst_ratio := 0.0
+	for r in rounds:
+		if r.session <= 0.0:
+			continue
+		var ratio: float = r.lost / r.session
+		if ratio >= 0.5 and ratio > worst_ratio:
+			worst_ratio = ratio
+			worst = r
+	if worst.is_empty():
+		return ""
+	var lost := "%d:%02d" % [roundi(worst.lost) / 60, roundi(worst.lost) % 60]
+	var session := "%d:%02d" % [roundi(worst.session) / 60, roundi(worst.session) % 60]
+	var lines := [
+		"PS: {name} spent [b]{lost}[/b] of a {session} session wandering around, lost. The investors timed it. One of them used a sundial.",
+		"PS: I'm told {name} was lost for [b]{lost}[/b] out of {session}. That's {pct}% of the session spent admiring our grey boxes. Please paint with intent.",
+		"PS: {name} was lost for [b]{lost}[/b] (out of {session}). Marketing wants to call it \"open world\". Legal says we can't.",
+	]
+	return lines.pick_random().replace("{name}", worst.tester).replace("{lost}", lost) \
+		.replace("{session}", session).replace("{pct}", str(roundi(worst_ratio * 100)))
+
+
+static func lost_mail(level_name: String, note: String) -> Dictionary:
+	var body := "Hi,\n\nQuick one about [b]%s[/b].\n\n%s\n\nChad" % [level_name, note.trim_prefix("PS: ")]
+	return _mail(CHAD[0], CHAD[1], "RE: %s (time sheet)" % level_name, body, false)
+
+
+static func announcement(level_name: String, total: int, testers: PackedStringArray, note := "") -> Dictionary:
 	var names: PackedStringArray = []
 	for t in testers:
 		names.append("[b]%s[/b] from %s" % [t, FocusGroup.profile(t).get("outlet", "freelance")])
-	var body := "Hi,\n\n%s\n\nBecause of your results, a new playtest has been added to your scheduler: [b]%s[/b].\n\nYour focus testers for this one: %s. Look out for it in Level Select, and read their profiles. Some of them are... a lot.\n\nAs always: as little yellow as possible.\n\nChad" % [
-		bracket_text(total), level_name, ", ".join(names)]
+	var body := "Hi,\n\n%s\n\nBecause of your results, a new playtest has been added to your scheduler: [b]%s[/b].\n\nYour focus testers for this one: %s. Look out for it in Level Select, and read their profiles. Some of them are... a lot.\n\nAs always: as little yellow as possible.\n\nChad%s" % [
+		bracket_text(total), level_name, ", ".join(names), ("\n\n" + note) if note != "" else ""]
 	return _mail(CHAD[0], CHAD[1], "New playtest scheduled: %s" % level_name, body, true)
 
 
-static func performance(level_name: String, total: int, needed: int) -> Dictionary:
-	var body := "Hi,\n\nAbout [b]%s[/b].\n\n%s\n\nThe next playtest stays [b]on hold[/b] until this session scores at least [b]%d/15[/b]. Please run it again.\n\nChad" % [
-		level_name, bracket_text(total), needed]
+static func performance(level_name: String, total: int, needed: int, note := "") -> Dictionary:
+	var body := "Hi,\n\nAbout [b]%s[/b].\n\n%s\n\nThe next playtest stays [b]on hold[/b] until this session scores at least [b]%d/15[/b]. Please run it again.\n\nChad%s" % [
+		level_name, bracket_text(total), needed, ("\n\n" + note) if note != "" else ""]
 	return _mail(CHAD[0], CHAD[1], "RE: %s results" % level_name, body, true)
 
 

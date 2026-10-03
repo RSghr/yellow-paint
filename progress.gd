@@ -23,6 +23,7 @@ var read_mails: Array = []  ## Ids of Inlook emails already opened (see inbox.gd
 var delivered_mails: Array = []  ## Emails received during play (mail_writer.gd), oldest first.
 var new_mail_ping := false  ## New mail since the desktop was last shown (it plays a sound).
 var open_levels_on_menu := false  ## Coming back from a level: the desktop reopens the Level Select window.
+var best_times := {}  ## "level_01" -> [round 0..2] = {session, lost} of the fastest finish (logged, not scored).
 var best_stars := {}  ## "level_01" -> best total stars over the 3 rounds, out of 15 (0 = never finished)
 
 
@@ -111,9 +112,11 @@ func unlock_all() -> bool:
 
 ## Called by the game when the 3 rounds of the current level are done (after record()).
 ## Sends Chad's mails and returns the name of a level that just got unlocked ("" if none).
-func level_finished(total: int) -> String:
+## `rounds`: [{tester, session, lost}] of this run, for Chad's comments about lost testers.
+func level_finished(total: int, rounds: Array = []) -> String:
 	if level_override != "":
 		return ""
+	var lost_note := MAIL_WRITER.lost_note(rounds)
 	# Did this result open a new level? (The first one earned whose mail hasn't been sent.)
 	for i in range(TUTORIAL_COUNT, LEVELS.size()):
 		var info: Dictionary = LEVELS[i]
@@ -123,7 +126,7 @@ func level_finished(total: int) -> String:
 		if _has_mail(unlock_id):
 			continue
 		var testers := level_testers(info.path)
-		_deliver(MAIL_WRITER.announcement(info.name, total, testers), unlock_id)
+		_deliver(MAIL_WRITER.announcement(info.name, total, testers, lost_note), unlock_id)
 		var used: Array = delivered_mails.map(func(m): return m.get("template", ""))
 		var flavors: Array = MAIL_WRITER.flavor_for(testers, used)
 		for f in flavors.size():
@@ -135,7 +138,14 @@ func level_finished(total: int) -> String:
 		var bracket := "15" if total >= 15 else ("10" if total >= 10 else ("5" if total >= 5 else "0"))
 		var perf_id := "perf_%s_%s" % [_key(current_path()), bracket]
 		if not _has_mail(perf_id):
-			_deliver(MAIL_WRITER.performance(LEVELS[current].name, total, UNLOCK_STARS), perf_id)
+			_deliver(MAIL_WRITER.performance(LEVELS[current].name, total, UNLOCK_STARS, lost_note), perf_id)
+			_save()
+			return ""
+	# Nothing else to say, but a tester was lost for half the session or more: Chad noticed (once per level).
+	if lost_note != "":
+		var lost_id := "lost_" + _key(current_path())
+		if not _has_mail(lost_id):
+			_deliver(MAIL_WRITER.lost_mail(LEVELS[current].name, lost_note), lost_id)
 			_save()
 	return ""
 
@@ -179,6 +189,38 @@ func record(path: String, stars: int) -> bool:
 	return true
 
 
+## Log a finished round's time. Returns the previous best session time (-1 if none).
+func record_time(path: String, round_index: int, session: float, lost: float) -> float:
+	var key := _key(path)
+	var rounds: Array = best_times.get(key, [null, null, null])
+	while rounds.size() <= round_index:
+		rounds.append(null)
+	var prev: float = rounds[round_index].session if rounds[round_index] != null else -1.0
+	if prev < 0.0 or session < prev:
+		rounds[round_index] = {session = session, lost = lost}
+		best_times[key] = rounds
+		_save()
+	return prev
+
+
+## Sum of the best session times of all 3 rounds (-1 until every round has been finished).
+func best_total_time(path: String) -> float:
+	var rounds: Array = best_times.get(_key(path), [])
+	if rounds.size() < 3:
+		return -1.0
+	var total := 0.0
+	for r in rounds:
+		if r == null:
+			return -1.0
+		total += r.session
+	return total
+
+
+static func format_time(seconds: float) -> String:
+	var s := roundi(seconds)
+	return "%d:%02d" % [s / 60, s % 60]
+
+
 func mark_intro_seen() -> void:
 	if not seen_intro:
 		seen_intro = true
@@ -218,6 +260,7 @@ func _load() -> void:
 	seen_intro = cfg.get_value("story", "seen_intro", false)
 	read_mails = cfg.get_value("story", "read_mails", [])
 	delivered_mails = cfg.get_value("story", "delivered_mails", [])
+	best_times = cfg.get_value("times", "best", {})
 	for key in cfg.get_section_keys("best_total") if cfg.has_section("best_total") else []:
 		best_stars[key] = cfg.get_value("best_total", key, 0)
 
@@ -227,6 +270,7 @@ func _save() -> void:
 	cfg.set_value("story", "seen_intro", seen_intro)
 	cfg.set_value("story", "read_mails", read_mails)
 	cfg.set_value("story", "delivered_mails", delivered_mails)
+	cfg.set_value("times", "best", best_times)
 	for key in best_stars:
 		cfg.set_value("best_total", key, best_stars[key])
 	cfg.save(SAVE_PATH)

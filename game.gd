@@ -37,6 +37,7 @@ var spectator: Camera3D
 var spectating := false
 var round_index := 0  ## 0-2: which focus tester is playing.
 var round_stars: Array[int] = [0, 0, 0]  ## Stars per round (0 = not finished yet).
+var round_times: Array = [null, null, null]  ## {tester, session, lost} per finished round (logged, not scored).
 var _retry_hold := 0.0
 var _retry_lock := false  ## R must be released before another retry can start.
 var _retry_bar: Control  ## "Hold R to retry" progress, bottom centre.
@@ -360,19 +361,28 @@ func _on_goal() -> void:
 	var result := score(paint.splats_used, optimal_paint(), coins_collected, _coin_total(), hotfixes)
 	round_stars[round_index] = result.stars
 	Sfx.play("goal", 0.0)
+	# Times are logged (best per round, to beat later) but never affect the stars.
+	var session := runner.session_time
+	var lost := runner.time_lost
+	round_times[round_index] = {tester = runner.tester_name, session = session, lost = lost}
+	var prev_best := Progress.record_time(Progress.current_path(), round_index, session, lost) \
+		if Progress.level_override == "" else -1.0
 	var data := {
 		round_index = round_index, round_count = Level.ROUNDS, tester = runner.tester_name, result = result,
 		paint_used = paint.splats_used, optimal = optimal_paint(), coins = coins_collected,
-		coin_total = _coin_total(), hotfixes = hotfixes, quote = FocusGroup.quote_for(result),
+		coin_total = _coin_total(), hotfixes = hotfixes,
+		quote = FocusGroup.quote_for(result, lost / session if session > 0.0 else 0.0),
+		session = session, lost = lost, prev_best = prev_best,
 	}
 	if round_index + 1 == Level.ROUNDS:
 		var total := 0
 		var rounds := []
 		for i in Level.ROUNDS:
 			total += round_stars[i]
-			rounds.append({tester = level.rounds()[i].tester, stars = round_stars[i]})
+			rounds.append({tester = level.rounds()[i].tester, stars = round_stars[i],
+				session = round_times[i].session if round_times[i] != null else -1.0})
 		var new_best := Progress.record(Progress.current_path(), total)
-		var unlocked := Progress.level_finished(total)
+		var unlocked := Progress.level_finished(total, round_times.filter(func(r): return r != null))
 		var hint := ""
 		if unlocked == "" and not Progress.has_next() and Progress.current + 1 < Progress.LEVELS.size() \
 				and Progress.level_override == "":

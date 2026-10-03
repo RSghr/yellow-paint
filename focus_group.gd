@@ -110,6 +110,16 @@ const QUOTES := {
 }
 
 
+## Said at the end when the tester spent half the session or more lost (and hotfixes didn't cost more).
+const LOST_QUOTES := [
+	"I spent half the session staring at a wall. Great wall, though.",
+	"Was I supposed to be lost that long? Is that the 'exploration' part?",
+	"I've seen more of this level's corners than its paint.",
+	"At some point I just started living there. Lovely neighbourhood.",
+	"Lovely level. I would know, I walked around it for ages.",
+]
+
+
 ## Said at the end when hotfixes (painting during the playtest) cost the most stars.
 ## Key 1 = 1-3 hotfixes, 2 = 4 or more.
 const HOTFIX_QUOTES := {
@@ -156,10 +166,13 @@ static func trait_line(tester: String) -> String:
 
 
 ## Pick a quote for a result from game.gd's score() (stars, paint_penalty, coin_penalty).
-static func quote_for(result: Dictionary) -> String:
+## `lost_ratio` = time lost / session time (logged, not scored): at 0.5+ the tester talks about being lost.
+static func quote_for(result: Dictionary, lost_ratio := 0.0) -> String:
 	var hotfix_penalty: int = result.get("hotfix_penalty", 0)
 	if hotfix_penalty > 0 and hotfix_penalty >= result.paint_penalty and hotfix_penalty >= result.coin_penalty:
 		return HOTFIX_QUOTES[hotfix_penalty].pick_random()
+	if lost_ratio >= 0.5:
+		return LOST_QUOTES.pick_random()
 	var lines = QUOTES[result.stars]
 	if lines is Dictionary:
 		lines = lines.paint if result.paint_penalty >= result.coin_penalty else lines.coins

@@ -94,6 +94,8 @@ var profile := {jump = 1, trust = 1, patience = 1}
 			_debug_mesh.visible = value
 
 var state := State.WAITING
+var session_time := 0.0  ## Seconds since the playtest started (stops at the flag). Logged, not scored.
+var time_lost := 0.0  ## Part of it spent lost: confused, wandering, or winding up an unpainted gamble.
 var tester_name := "Playtester"  ## Set by the Game scene via apply_profile().
 
 var _path: Array[Dictionary] = []  ## Steps: {pos, jump, trust, leap}
@@ -165,6 +167,21 @@ func _process(_delta: float) -> void:
 
 # --- Public API ------------------------------------------------------------
 
+## Counts toward time_lost: no idea where to go (confused, wandering, looking around between wanders,
+## or psyching itself up for an unpainted gamble).
+func _is_lost() -> bool:
+	match state:
+		State.CONFUSED:
+			return true
+		State.WALKING:
+			return not _path.is_empty() and _path[0].get("kind", "") == "wander"
+		State.SCANNING:
+			return _wanders > 0
+		State.HESITATING:
+			return not _path.is_empty() and (_path[0].get("desperate", false) or _path[0].get("leap", false))
+	return false
+
+
 func start() -> void:
 	if state in [State.WAITING, State.CONFUSED]:
 		_wanders = 0
@@ -174,6 +191,8 @@ func start() -> void:
 
 
 func reset_to_spawn() -> void:
+	session_time = 0.0
+	time_lost = 0.0
 	global_transform = _spawn
 	velocity = Vector3.ZERO
 	_path.clear()
@@ -339,6 +358,9 @@ func _physics_process(delta: float) -> void:
 	_timer += delta
 	if state not in [State.WAITING, State.CELEBRATING, State.DEAD]:
 		_lost_time += delta  # Reset whenever it makes progress; wandering doesn't count.
+		session_time += delta
+		if _is_lost():
+			time_lost += delta
 
 	if state != State.DEAD:
 		_perceive_timer += delta
@@ -1166,7 +1188,7 @@ func _wander() -> void:
 		_decide()
 		return
 	_path.clear()
-	_path.append({pos = best, jump = false, trust = 1, leap = false, paint = false, kind = "walk"})
+	_path.append({pos = best, jump = false, trust = 1, leap = false, paint = false, kind = "wander"})
 	_explored.append(best)
 	say(["Just... looking around.", "Nothing yellow here.", "Maybe over here?"].pick_random())
 	_advance()
