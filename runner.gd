@@ -62,7 +62,9 @@ const PERCEPTION_INTERVAL := 0.1
 ## Each focus tester (FocusGroup.ROSTER) has three traits from 0 (lowest) to 2; 1 is the default.
 ## apply_profile() copies the values below into the fields above. Index = trait level [0, 1, 2].
 @export_group("Traits")
-@export_subgroup("Jump precision (Incapable / Hit or miss / Precise)")
+@export_subgroup("Jumping (Short legs / Average / Parkour)")
+@export var reach_by_level: Array[float] = [4.5, 5.5, 7.0]  ## max_jump_distance: how far ANY jump goes (painted ones too).
+@export var reach_up_by_level: Array[float] = [2.1, 2.5, 3.2]  ## max_jump_up: how high a ledge it can jump onto.
 @export var jump_success_by_level: Array[float] = [0.0, 0.65, 0.95]  ## desperate_success_chance. 0 = always falls short (leaps of faith too).
 @export var leap_error_by_level: Array[float] = [0.7, 0.7, 0.25]  ## Leap-of-faith aim error in metres.
 @export_subgroup("Trust (Needs a whole bucket / Thoughtful / Blind trust)")
@@ -120,6 +122,7 @@ var _rethink := false  ## Something new was noticed; reconsider the plan at the 
 var _urgent := false  ## A hotfix appeared: drop whatever it's standing around doing and replan now.
 var _lost_time := 0.0  ## Seconds since it last made progress (reached paint/coin/button/flag, saw new paint, a door opened).
 var _last_jump_desperate := false
+var _too_far_said := {}  ## Spots it already complained were out of reach (cleared on reset).
 var _coin_attention := {}  ## coin instance id -> attention
 var _seen_coins := {}
 var _choices := {}  ## breakable id -> {i, t, choice}: remembered break-or-climb guesses
@@ -219,6 +222,7 @@ func reset_to_spawn() -> void:
 	_urgent = false
 	_lost_time = 0.0
 	_last_jump_desperate = false
+	_too_far_said.clear()
 	_home_y = _spawn.origin.y - FEET_OFFSET
 	_head.rotation = Vector3.ZERO
 	_body.rotation = Vector3.ZERO
@@ -231,6 +235,8 @@ func reset_to_spawn() -> void:
 func apply_profile(tester: String, p: Dictionary) -> void:
 	tester_name = tester
 	profile = p
+	max_jump_distance = reach_by_level[p.jump]
+	max_jump_up = reach_up_by_level[p.jump]
 	desperate_success_chance = jump_success_by_level[p.jump]
 	leap_error = leap_error_by_level[p.jump]
 	min_jump_splats = min_jump_splats_by_level[p.trust]
@@ -691,7 +697,7 @@ func _jump_to(step: Dictionary) -> void:
 			target += flat.normalized() * randf_range(-0.2, 0.3)
 	elif step.leap and flat.length() > 0.01:
 		if desperate_success_chance <= 0.0:
-			target = from.lerp(target, randf_range(0.45, 0.65))  # Incapable: never makes an unpainted jump.
+			target = from.lerp(target, randf_range(0.45, 0.65))  # Short legs: never makes an unpainted jump.
 		else:
 			target += flat.normalized() * randf_range(-leap_error, leap_error * 0.6)
 	var d := target - from
@@ -962,6 +968,8 @@ func _decide() -> void:
 		return
 
 	state = State.CONFUSED
+	if _say_too_far():
+		return
 	_timer = 0.0
 	if not improvises and randf() < 0.5:
 		say(["No paint, no way.", "I'm not jumping anywhere unpainted. I'll wait.", "I'll stand here until it's yellow."].pick_random(), true)
@@ -1065,6 +1073,33 @@ func _record_visit(pos: Vector3) -> void:
 	if _retrace_to != Vector3.INF and pos.distance_to(_retrace_to) < 1.0:
 		_retrace_to = Vector3.INF
 		say(["Back where I was. Now, onwards.", "Right, I remember this bit."].pick_random())
+
+
+## It can see paint it would follow, but the jump is beyond its reach: say so (once per spot),
+## so the operator knows to paint a closer landing instead of wondering why it stopped.
+func _say_too_far() -> bool:
+	var me := feet()
+	for s in known_spots():
+		var pos: Vector3 = s.pos
+		if _is_visited(pos) or _too_far_said.has(pos.snapped(Vector3.ONE * 0.5)):
+			continue
+		var d := pos - me
+		var flat := Vector2(d.x, d.z).length()
+		var beyond := flat > max_jump_distance or d.y > max_jump_up
+		if not beyond or flat > max_jump_distance + 4.0 or d.y > max_jump_up + 2.5:
+			continue
+		if not _link(me, pos).is_empty():
+			continue
+		_too_far_said[pos.snapped(Vector3.ONE * 0.5)] = true
+		_look_at(pos, 1.0)
+		if d.y > max_jump_up and flat <= max_jump_distance:
+			say(["That ledge is too high for me.", "I can't jump THAT high. Paint something lower?",
+				"Up there? With these legs?"].pick_random(), true)
+		else:
+			say(["That yellow is too far for my little legs.", "Too far! Paint me something closer.",
+				"I can see the paint. I can't reach the paint."].pick_random(), true)
+		return true
+	return false
 
 
 func _is_visited(p: Vector3) -> bool:
