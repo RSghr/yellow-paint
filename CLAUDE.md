@@ -154,6 +154,14 @@ Write a throwaway `extends SceneTree` script in the project root (delete it afte
 `root.get_node("Progress").current`, instance `game.tscn`, paint via `PaintManager.paint(pos, normal, collider)`
 using raycasts, call `game.runner.start()`, and step `physics_frame`. The AI is random, so run each scenario several times.
 
+## Release (Windows)
+- `export_presets.cfg`: "Windows Desktop", single .exe (PCK embedded, no console), icon `art/Logo.ico` (multi-size,
+  made from `art/Logo.png`), output `build/windows/YellowPaint.exe` (`/build/` is git-ignored). Excludes `docs/`, `tools/`, `*.md`.
+- Boot splash = `art/boot_splash.png` (the desktop wallpaper rendered without icons, bg `#0C1528`): it fades into an
+  identical desktop. Re-render it if the wallpaper or `paint_splat.png` changes.
+- Before exporting: `yellow_paint/debug/unlock_all_levels` must be false (it only works in debug builds anyway).
+- Web (Compatibility renderer) doesn't draw the paint Decals: a web build needs a fallback first.
+
 ## Workflow
 - Changes go on branches (`claude/...`) and pull requests to `master`. The user pulls with Godot closed or reloads when prompted.
 - Godot's open editor can overwrite files changed on disk (script editor buffers). Never assume a write landed, verify.
