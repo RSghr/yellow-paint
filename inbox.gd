@@ -2,7 +2,7 @@ extends RefCounted
 ## The emails in Inlook (the desktop's mail app). Newest first. Bodies are BBCode (RichTextLabel).
 ## Add a starting mail: append a dictionary to MAILS with a unique `id`. Read state is saved in Progress.read_mails.
 ## Mails that arrive during play (new levels, flavor) are written by mail_writer.gd and stored in Progress.
-## The "welcome" mail is the story intro: Inlook opens on it at first launch.
+## The "welcome" mail is the story intro (unread at first launch). "hr_exit" offers the save reset (level_select.gd).
 
 const MAILS := [
 	{
@@ -104,6 +104,31 @@ Attendance is optional but will be reflected in your yearly review.
 Stay synergized!
 People & Culture""",
 	},
+	{
+		id = "hr_exit",
+		from = "People & Culture",
+		address = "happiness@synergex-interactive.biz",
+		cc = "",
+		subject = "Your mandatory exit interview (optional)",
+		date = "Fri 5:59 PM",
+		flag = false,
+		body = """Hi [FIRST_NAME]!
+
+As part of our commitment to employee wellbeing, every contractor is entitled to one (1) mandatory optional [b]exit interview[/b].
+
+During this meeting you will:
+[ul]sign your resignation letter
+return your paint can (please rinse it)
+forfeit all your stars, session times and emails
+be replaced by a new contractor within the hour[/ul]
+
+As a gesture of goodwill, your settings (mouse sensitivity, volume) will be kept for your replacement.
+
+To book the meeting, use the button below. Slots are available 24/7, because we never sleep.
+
+People & Culture
+[i]"Your exit is our entrance."[/i]""",
+	},
 ]
 
 
@@ -111,7 +136,15 @@ People & Culture""",
 static func all_mails() -> Array:
 	var mails: Array = Progress.delivered_mails.duplicate()
 	mails.reverse()
-	mails.append_array(MAILS)
+	for m in MAILS:
+		if Progress.resignations > 0 and m.id in ["welcome", "hr_exit"]:
+			m = m.duplicate()
+			if m.id == "welcome":
+				m.body += "\n\n[b]P.S.[/b] Your predecessor (Contractor #%d) left some yellow paint in the drawer. Please do not use it." % (Progress.contractor_id() - 1)
+			else:
+				m.body += "\n\n[i]Our records show %d resignation%s from your desk so far. Keep up the great work![/i]" % [
+					Progress.resignations, "" if Progress.resignations == 1 else "s"]
+		mails.append(m)
 	return mails
 
 

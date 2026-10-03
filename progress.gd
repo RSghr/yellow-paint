@@ -18,6 +18,7 @@ const UNLOCK_ALL_SETTING := "yellow_paint/debug/unlock_all_levels"
 var LEVELS: Array[Dictionary] = []  ## [{name, path}], filled by _discover_levels().
 var current := 0  ## Index into LEVELS.
 var level_override := ""  ## Set when a level scene is launched directly (F6) and isn't in LEVELS.
+var resignations := 0  ## Times the player resigned (save reset via HR). Survives the reset: the new hire's number.
 var seen_intro := false  ## The boss's welcome email has been read (Inlook opens on it at first launch).
 var read_mails: Array = []  ## Ids of Inlook emails already opened (see inbox.gd).
 var delivered_mails: Array = []  ## Emails received during play (mail_writer.gd), oldest first.
@@ -221,6 +222,25 @@ static func format_time(seconds: float) -> String:
 	return "%d:%02d" % [s / 60, s % 60]
 
 
+## The player's contractor number (#4471, then #4472 after a resignation...).
+func contractor_id() -> int:
+	return 4471 + resignations
+
+
+## HR exit interview: wipe all progress (stars, times, mails, read state). Settings live in their own file and stay.
+func resign() -> void:
+	resignations += 1
+	seen_intro = false
+	read_mails = []
+	delivered_mails = []
+	best_stars = {}
+	best_times = {}
+	new_mail_ping = false
+	open_levels_on_menu = false
+	current = 0
+	_save()
+
+
 func mark_intro_seen() -> void:
 	if not seen_intro:
 		seen_intro = true
@@ -256,6 +276,7 @@ func _load() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(SAVE_PATH) != OK:
 		return
+	resignations = cfg.get_value("employee", "resignations", 0)
 	# "best_total" (out of 15, 3 testers per level). The old "best_stars" section (out of 5) is ignored.
 	seen_intro = cfg.get_value("story", "seen_intro", false)
 	read_mails = cfg.get_value("story", "read_mails", [])
@@ -267,6 +288,7 @@ func _load() -> void:
 
 func _save() -> void:
 	var cfg := ConfigFile.new()
+	cfg.set_value("employee", "resignations", resignations)
 	cfg.set_value("story", "seen_intro", seen_intro)
 	cfg.set_value("story", "read_mails", read_mails)
 	cfg.set_value("story", "delivered_mails", delivered_mails)
