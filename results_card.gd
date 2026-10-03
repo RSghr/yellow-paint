@@ -68,6 +68,8 @@ func show_round(data: Dictionary) -> void:
 		"immersion broken"))
 	rows.append(_row("Coins", "%d / %d" % [data.coins, data.coin_total], result.coin_penalty, "missed"))
 	rows.append(_row("Hotfixes", str(data.hotfixes), result.hotfix_penalty, "patched mid-playtest"))
+	if data.has("session"):
+		rows.append(_time_row(data.session, data.lost, data.get("prev_best", -1.0)))
 	for r in rows:
 		col.add_child(r)
 
@@ -103,7 +105,15 @@ func show_round(data: Dictionary) -> void:
 			var who := _label(r.tester, 18, Color.WHITE)
 			who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			line.add_child(who)
-			line.add_child(_label("★".repeat(r.stars) + "☆".repeat(5 - r.stars), 20, YELLOW))
+			if r.get("session", -1.0) >= 0.0:
+				var t := _label(Progress.format_time(r.session), 17, MUTED)
+				t.custom_minimum_size = Vector2(70, 0)
+				t.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+				line.add_child(t)
+			var stars_label := _label("★".repeat(r.stars) + "☆".repeat(5 - r.stars), 20, YELLOW)
+			stars_label.custom_minimum_size = Vector2(120, 0)
+			stars_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			line.add_child(stars_label)
 			section.add_child(line)
 		var total := _label("%d / %d ★" % [lv.total, lv.max], 40, YELLOW)
 		total.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -185,6 +195,27 @@ func _row(title: String, value: String, penalty: int, why: String) -> Control:
 		row.add_child(_label("✓", 22, GOOD))
 	else:
 		row.add_child(_label("-%d★ %s" % [penalty, why], 18, BAD))
+	return row
+
+
+## "Time   0:47 · lost 0:21        best 0:41" (or NEW RECORD). Not scored, just to beat.
+func _time_row(session: float, lost: float, prev_best: float) -> Control:
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var t := _label("Time", 20, Color.WHITE)
+	t.custom_minimum_size = Vector2(130, 0)
+	row.add_child(t)
+	var lost_pct := roundi(100.0 * lost / session) if session > 0.0 else 0
+	var v := _label("%s  ·  lost %s (%d%%)" % [Progress.format_time(session), Progress.format_time(lost), lost_pct],
+		20, BAD.lerp(Color.WHITE, 0.3) if lost_pct >= 50 else Color(1, 1, 1, 0.8))
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(v)
+	if prev_best < 0.0:
+		row.add_child(_label("first run", 17, MUTED))
+	elif session < prev_best:
+		row.add_child(_label("NEW RECORD (was %s)" % Progress.format_time(prev_best), 17, GOOD))
+	else:
+		row.add_child(_label("best %s" % Progress.format_time(prev_best), 17, MUTED))
 	return row
 
 

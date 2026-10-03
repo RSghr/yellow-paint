@@ -88,6 +88,14 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
   platform that is still moving are ignored until it stops (its `state_changed` triggers a rethink).
 - Priorities: unused hotfix > nearby coin > flag > painted interactable > unvisited paint > leap of faith > wander > desperate jump.
 
+## Times (logged, never scored)
+- `Runner.session_time` (playtest start → flag) and `time_lost` (`_is_lost()`: confused, wander walks, look-arounds
+  between wanders, winding up an unpainted gamble/leap). Reset on R.
+- Best session per round saved in `Progress.best_times` (`record_time`); results card shows "Time 0:52 · lost 0:09 (17%)"
+  + best / NEW RECORD; level summary shows each tester's time; Level Select shows the best total time.
+- Lost ≥ 50% of the session: the tester's quote comes from `FocusGroup.LOST_QUOTES` (hotfix quotes still win), and Chad
+  adds a PS to his next mail (`MailWriter.lost_note`) or, if he had nothing else to send, a "time sheet" mail (once per level).
+
 ## Scoring (game.gd `score()`)
 Per round: start at 5★. Paint penalty vs optimal (= round `minimum_N` + 5): over by 1-5 → -1, 6-10 → -2, >10 → -3.
 Coins: all → 0, more than half → -1, half or fewer → -2, none → -3.

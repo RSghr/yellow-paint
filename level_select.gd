@@ -426,7 +426,9 @@ func _level_row(i: int) -> Control:
 	text.custom_minimum_size = Vector2(430, 0)
 	row.add_child(text)
 	text.add_child(_label(info.name, 22, INK))
-	text.add_child(_label("Testers: " + ", ".join(Progress.level_testers(info.path)), 14, MUTED))
+	var best_time := Progress.best_total_time(info.path)
+	text.add_child(_label("Testers: " + ", ".join(Progress.level_testers(info.path))
+		+ (("   ·   best time " + Progress.format_time(best_time)) if best_time >= 0.0 else ""), 14, MUTED))
 	var score := _label(("%d / 15★" % best) if best > 0 else "not tested", 20, Color(0.75, 0.55, 0.0) if best > 0 else MUTED)
 	score.custom_minimum_size = Vector2(110, 0)
 	score.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
