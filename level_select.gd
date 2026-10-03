@@ -916,7 +916,7 @@ func _open_bin() -> void:
 		pad.add_theme_constant_override("margin_" + side, 18)
 	pad.add_child(col)
 	for f in ["art_direction_v1.psd", "art_direction_v2_colourful.psd", "art_direction_v3_less_colourful.psd",
-			"art_direction_v13_grey.psd", "yellow_paint_ban_petition.docx", "work_life_balance.pdf",
+			"workstation_upgrade_request_v7_DENIED.docx", "yellow_paint_ban_petition.docx", "work_life_balance.pdf",
 			"unpaid_overtime_policy_DRAFT.docx", "AAA_logo_old.png", "fun.exe"]:
 		col.add_child(_label(f, 17, INK))
 	col.add_child(HSeparator.new())

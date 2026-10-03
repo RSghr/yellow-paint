@@ -79,7 +79,7 @@ static func tester_quote(s: Dictionary) -> String:
 		"hotfixes_seen":
 			return "I saw %s red splats appear out of nowhere. Someone was watching me. Thank you? I think?" % n.call("hotfixes_seen")
 		"lost":
-			return "I spent %s staring at grey boxes. Honestly? Peaceful." % _time(s.get("lost", 0.0))
+			return "I spent %s just admiring the scenery. No idea where to go, but what a view." % _time(s.get("lost", 0.0))
 		"retries":
 			return "They reset me %s times. Every time I woke up at the start, and every time it was yellow." % n.call("retries")
 	return "Flawless run. Suspiciously flawless. Who painted all this?"

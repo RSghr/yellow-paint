@@ -5,7 +5,7 @@ extends RefCounted
 ##   performance(...)   - from Chad, when a level is finished under the unlock threshold.
 ##   greenlight(...)    - from Chad, once every level scored 10+: the last greenlight before shipping.
 ##   ending_mail(...)   - from Chad after the greenlight, depends on the ending (endings.gd).
-##   patch_notes(...)   - the day-one patch notes, built from every tester's record (Progress.tester_stats).
+##   patch_notes(...)   - the day-one patch notes: level changes because of how each tester did there (Progress.playtest_stats).
 ##   patch_mail(...)    - from Chad after the credits: early access went well, Patch 1.1.
 ##   flavor_for(...)    - "flavor" mails: a parody of a toxic workplace. One is about a tester of the
 ##                        new level (their traits decide what kind of trouble they got into), and
@@ -23,8 +23,8 @@ const BRACKETS := {
 	0: "[b]{total}/15[/b]. I have scheduled a meeting to discuss this meeting. Legal will attend. Legal brought snacks, which is never a good sign.",
 }
 
-## Flavor mails about a tester, keyed by "trait=value" (checked in this order). The first that
-## matches the tester is used; "any" always matches.
+## Flavor mails about a tester, keyed by "trait=value". One matching their traits is picked at random
+## (70%), otherwise one of the "any" stories.
 const TESTER_STORIES := [
 	["patience=2", "Corporate Security", "security@synergex-interactive.biz", "Security incident (resolved)",
 		"Team,\n\nDuring their last visit, {name} from {outlet} wandered into the server room \"looking for secrets\" and leaked the level to a competitor.\n\nThe leak was possible because the admin password was [b]admin123[/b]. Our security team made sure no one uses admin123 ever again. The new password is [b]admin1234[/b].\n\nPlease do not share it.\n\nCorporate Security"],
@@ -38,8 +38,14 @@ const TESTER_STORIES := [
 		"Hello,\n\n{name} from {outlet} followed a yellow \"Wet floor\" sign into the janitor's closet on Monday. They were found three hours later, waiting for the next sign.\n\nAll signs have been changed to beige.\n\nFacilities"],
 	["jump=2", "People & Culture", "happiness@synergex-interactive.biz", "Fire drill results",
 		"Hi team!\n\nCongratulations to visiting tester {name} from {outlet}, who completed Tuesday's fire drill in 14 seconds by jumping from the second floor balcony to the parking lot. Flawless landing.\n\nWe have been asked not to give out a prize.\n\nPeople & Culture"],
+	["patience=2", "Marketing", "marketing@synergex-interactive.biz", "Early review (please stop them)",
+		"Hi all,\n\n{name} from {outlet} published a 4,000-word essay titled \"The Emotional Weight of Moss\" about the next level. It has no spoilers, because they never found the exit.\n\nTheir only criticism: \"someone painted yellow on a 12K cliff texture. Why.\"\n\nMarketing"],
+	["trust=2", "Art Department", "art-direction@synergex-interactive.biz", "Finally, someone who gets it",
+		"Hi,\n\n{name} from {outlet} spent twenty minutes in photo mode taking pictures of a door handle. Their words: \"a masterpiece of handle-craft\".\n\nWe asked them about the yellow paint. They said \"what yellow paint? Oh. That. Yeah, I followed it.\"\n\nThe Art Department (both of us, emotional)"],
 	["any", "Marketing", "marketing@synergex-interactive.biz", "Leaked screenshots (exciting!)",
-		"Hi all,\n\nScreenshots of the next level appeared on {outlet} this morning, posted by {name}. They show grey boxes.\n\nMarketing is calling them \"an exciting early look at our bold minimalist art direction\". Legal is calling them something else.\n\nMarketing"],
+		"Hi all,\n\nScreenshots of the next level appeared on {outlet} this morning, posted by {name}. They are stunning. Two million likes.\n\nTop comment: \"why is there yellow paint on that gorgeous cliff?\" (41,000 likes)\n\nMarketing is handling it. Legal is also handling it, separately.\n\nMarketing"],
+	["any", "IT Helpdesk", "noreply-helpdesk@synergex-interactive.biz", "Incident: tester used the Level Readability workstation",
+		"Dear user,\n\n{name} from {outlet} sat down at your workstation by mistake and saw HYPERION LEGENDS rendered as grey boxes for thirty seconds. They had to lie down. They are now asking for hazard pay.\n\nPlease lock your screen when you leave your desk.\n\nIT Helpdesk"],
 ]
 
 ## Generic office flavor. Each is sent at most once.
@@ -56,6 +62,10 @@ const OFFICE_STORIES := [
 		"Dear user,\n\nPlease complete the 4-hour training [i]\"Never Click Links In Emails\"[/i] by Friday by clicking the link below.\n\n[u]https://totally-legit-training.biz/login[/u]\n\nIT Helpdesk"],
 	["yogurt", "Darren (Accounting)", "d.whitlock@synergex-interactive.biz", "RE: RE: RE: RE: Who took my yogurt",
 		"Reply all: please remove me from this thread.\n\n> Reply all: please remove me from this thread.\n>> Reply all: who is Darren\n>>> It was a strawberry yogurt. It had my NAME on it.\n\n[i]This thread has 214 replies.[/i]"],
+	["texture_tour", "People & Culture", "happiness@synergex-interactive.biz", "Texture tour this Thursday!",
+		"Hi team!\n\nJoin the Art Department this Thursday for a guided tour of the 12K textures of HYPERION LEGENDS. Highlights include the moss, the other moss, and a single brick they are very proud of.\n\nThe Level Readability Department is excused, as their workstations \"can't handle it\".\n\nThere will be cake (rendered).\n\nPeople & Culture"],
+	["fan", "Facilities", "facilities@synergex-interactive.biz", "Noise complaint: Level Readability workstation",
+		"Hello,\n\nThe fan of the Level Readability workstation has been measured at 87 dB and is now classified as a small aircraft.\n\nPlease do not open the case. The case is load-bearing.\n\nFacilities"],
 	["kudos", "People & Culture", "happiness@synergex-interactive.biz", "This month's Kudos Wall",
 		"Hi team!\n\nThis month's Kudos Wall winner is the coffee machine, for \"always being there\".\n\nHonorable mention: the Level Readability Department, for using slightly less yellow.\n\nPeople & Culture"],
 ]
@@ -79,7 +89,7 @@ static func lost_note(rounds: Array) -> String:
 	var session := "%d:%02d" % [roundi(worst.session) / 60, roundi(worst.session) % 60]
 	var lines := [
 		"PS: {name} spent [b]{lost}[/b] of a {session} session wandering around, lost. The investors timed it. One of them used a sundial.",
-		"PS: I'm told {name} was lost for [b]{lost}[/b] out of {session}. That's {pct}% of the session spent admiring our grey boxes. Please paint with intent.",
+		"PS: I'm told {name} was lost for [b]{lost}[/b] out of {session}. That's {pct}% of the session spent admiring the scenery. The art team is thrilled. I am not. Please paint with intent.",
 		"PS: {name} was lost for [b]{lost}[/b] (out of {session}). Marketing wants to call it \"open world\". Legal says we can't.",
 	]
 	return lines.pick_random().replace("{name}", worst.tester).replace("{lost}", lost) \
@@ -114,7 +124,7 @@ static func greenlight(note := "") -> Dictionary:
 
 Big day. Every playtest has been run and every department has signed off on [b]HYPERION LEGENDS: ETERNAL DAWN[/b]:
 
-[ul]Art: approved (grey)
+[ul]Art: approved (they cried)
 Legal: approved (with snacks)
 Marketing: approved (they announced the release date last week)
 The investors: approved (they did not read it)[/ul]
@@ -148,24 +158,31 @@ static func ending_mail(ending: String, scores: Array) -> Dictionary:
 	return _mail(CHAD[0], CHAD[1], subject, body % table, true)
 
 
-## The day-one patch notes: every focus tester's record, written as fixes. stats = Progress.tester_stats.
-static func patch_notes(ending: String, stats: Dictionary) -> Dictionary:
-	var names: Array = stats.keys()
-	names.sort_custom(func(a, b): return stats[a].get("tests", 0) > stats[b].get("tests", 0))
+## The day-one patch notes. The level changes are explained by the testers who struggled there.
+## totals = Progress.tester_totals() (telemetry table), levels = Progress.level_stats() ([{name, testers}]).
+static func patch_notes(ending: String, totals: Dictionary, levels: Array) -> Dictionary:
+	var names: Array = totals.keys()
+	names.sort_custom(func(a, b): return totals[a].get("tests", 0) > totals[b].get("tests", 0))
 	var total := {}
 	for n in names:
-		for k in stats[n]:
-			total[k] = total.get(k, 0) + stats[n][k]
+		for k in totals[n]:
+			total[k] = total.get(k, 0) + totals[n][k]
 
-	var fixes: PackedStringArray = []
-	for n in names:
-		fixes.append(_fix_line(n, stats[n]))
-	if fixes.is_empty():
-		fixes.append("No focus tester data was found. Shipping anyway.")
+	var changes := ""
+	for lv in levels:
+		var testers: Dictionary = lv.testers
+		var order: Array = testers.keys()
+		order.sort_custom(func(a, b): return testers[a].get("tests", 0) > testers[b].get("tests", 0))
+		var lines: PackedStringArray = []
+		for t in order:
+			lines.append(_level_change(t, testers[t]))
+		changes += "[b]%s[/b]\n[ul]%s[/ul]\n" % [lv.name if lv.name != "" else "All levels", "\n".join(lines)]
+	if changes == "":
+		changes = "[ul]No playtest data was found. We changed nothing and are shipping anyway.[/ul]\n"
 
 	var table := "[table=6][cell][b]Tester[/b]   [/cell][cell][b]Tests[/b]   [/cell][cell][b]Falls[/b]   [/cell][cell][b]Missed jumps[/b]   [/cell][cell][b]Time lost[/b]   [/cell][cell][b]Hotfixes seen[/b][/cell]"
 	for n in names:
-		var st: Dictionary = stats[n]
+		var st: Dictionary = totals[n]
 		table += "[cell]%s   [/cell][cell]%d[/cell][cell]%d[/cell][cell]%d[/cell][cell]%s[/cell][cell]%d[/cell]" % [
 			n, st.get("tests", 0), st.get("deaths", 0), st.get("failed_jumps", 0), _t(st.get("lost", 0.0)), st.get("hotfixes_seen", 0)]
 	table += "[/table]"
@@ -181,19 +198,19 @@ static func patch_notes(ending: String, stats: Dictionary) -> Dictionary:
 		_:
 			known.append("The game is fine.")
 			known.append("Some ledges are yellow and some are not. Nobody can explain the pattern, including us.")
-	known.append("The art is still grey boxes. This is our bold minimalist art direction.")
+	known.append("Yellow paint can be seen on top of the hand-sculpted moss. The Art Department has been informed. The Art Department is not okay.")
+	known.append("The Level Readability workstation still renders the game as grey boxes. IT says this is a feature.")
 
 	var body := """[b]HYPERION LEGENDS: ETERNAL DAWN - v1.0.0 Day-One Patch[/b]
-[font_size=15][color=#6b6e7a]Download size: 87 GB (86.9 GB of yellow textures)[/color][/font_size]
+[font_size=15][color=#6b6e7a]Download size: 87 GB (80 GB of 12K moss textures, 7 GB of yellow paint)[/color][/font_size]
 
 [b]GENERAL[/b]
 [ul]Shipped.
-Focus testers ran [b]%d[/b] playtests, spent a combined [b]%s[/b] lost, and fell [b]%d[/b] times.
+Focus testers ran [b]%d[/b] playtests, spent a combined [b]%s[/b] lost (\"admiring the scenery\"), and fell [b]%d[/b] times.
 %s[/ul]
 
-[b]FOCUS TESTER FIXES[/b]
-[ul]%s[/ul]
-
+[b]LEVEL CHANGES[/b] (based on focus group feedback)
+%s
 [b]TELEMETRY[/b] (Legal says we have to show this)
 %s
 
@@ -203,28 +220,52 @@ Focus testers ran [b]%d[/b] playtests, spent a combined [b]%s[/b] lost, and fell
 The HYPERION LEGENDS Live Team
 [i]"Patching it live since day one."[/i]""" % [
 		int(total.get("tests", 0)), _t(total.get("lost", 0.0)), int(total.get("deaths", 0)),
-		("Removed %d emergency red splats that were \"always there\". Legal would like to know who painted them." % int(total.get("hotfixes", 0)))
+		("The %d emergency red splats painted during playtests are now a permanent part of the art direction. Legal would like to know who painted them." % int(total.get("hotfixes", 0)))
 			if total.get("hotfixes", 0) > 0 else "Zero hotfixes were applied during playtests. Legal is suspicious.",
-		"\n".join(fixes), table, "\n".join(known)]
+		changes, table, "\n".join(known)]
 	var m := _mail("HYPERION LEGENDS Live Team", "liveops@synergex-interactive.biz",
 		"HYPERION LEGENDS v1.0.0 - Day-One Patch Notes", body, false)
 	m.date = "Launch day"
 	return m
 
 
-static func _fix_line(name: String, s: Dictionary) -> String:
-	match ENDINGS.notable_stat(s):
-		"deaths":
-			return "Fixed an issue where [b]%s[/b] could fall out of the world (reported %d times)." % [name, s.deaths]
-		"failed_jumps":
-			return "[b]%s[/b] now lands %d fewer jumps short. (They do not. We just stopped counting.)" % [name, s.failed_jumps]
-		"hotfixes_seen":
-			return "[b]%s[/b] will no longer notice the %d red splats that appeared behind their back." % [name, s.hotfixes_seen]
-		"lost":
-			return "Reduced the time [b]%s[/b] spends staring at grey boxes (was %s)." % [name, _t(s.lost)]
-		"retries":
-			return "[b]%s[/b] was reset %d times. Their memory was wiped each time. Working as intended." % [name, s.retries]
-	return "[b]%s[/b]: no changes. Suspiciously competent. Under investigation." % name
+## What was changed in a level because of how a tester did there. {name} {n} {time} are filled in.
+const LEVEL_CHANGES := {
+	deaths = [
+		"Added invisible walls along the edges after [b]{name}[/b] fell off {n} times.",
+		"Added a safety net under the jumps. [b]{name}[/b] requested it in writing, after falling {n} times.",
+		"Made the pit 2 metres shallower so falling feels less final ([b]{name}[/b] fell in {n} times).",
+	],
+	failed_jumps = [
+		"Moved some ledges 30 cm closer together after [b]{name}[/b] missed {n} jumps.",
+		"Gaps are now slightly less gappy, after [b]{name}[/b] came up short {n} times.",
+		"Ledges are now 10% stickier, after [b]{name}[/b] missed {n} landings.",
+	],
+	hotfixes_seen = [
+		"The {n} red splats [b]{name}[/b] saw appear mid-session are now officially part of the level design.",
+		"Added permanent paint where [b]{name}[/b] needed {n} emergency hotfixes. They were always there.",
+	],
+	lost = [
+		"Added a giant yellow arrow at the start, after [b]{name}[/b] spent {time} admiring the scenery instead of finding the exit.",
+		"Turned the waterfall down a little: [b]{name}[/b] spent {time} staring at it instead of the path.",
+		"Removed a very pretty sunset that distracted [b]{name}[/b] for {time}.",
+	],
+	retries = [
+		"Added a checkpoint after [b]{name}[/b] had to be restarted {n} times.",
+		"Shortened the walk from the start, which [b]{name}[/b] had to repeat {n} times.",
+	],
+	clean = [
+		"No changes needed for [b]{name}[/b]. We added more yellow paint anyway, just in case.",
+		"[b]{name}[/b] finished without trouble. We are investigating what went wrong.",
+	],
+}
+
+
+static func _level_change(name: String, s: Dictionary) -> String:
+	var stat := ENDINGS.notable_stat(s)
+	var n: int = int(s.get(stat, 0)) if stat != "clean" else 0
+	return (LEVEL_CHANGES[stat].pick_random() as String).replace("{name}", name) \
+		.replace("{n}", str(n)).replace("{time}", _t(s.get("lost", 0.0)))
 
 
 ## After the credits. `extra_level` = the post-launch level's name ("" if the game has none).
@@ -268,12 +309,13 @@ static func flavor_for(testers: PackedStringArray, used: Array) -> Array[Diction
 	if not testers.is_empty():
 		var tester: String = testers[randi() % testers.size()]
 		var p := FocusGroup.profile(tester)
-		for story in TESTER_STORIES:
-			if _matches(story[0], p):
-				var m := _mail(story[1], story[2], story[3],
-					story[4].replace("{name}", tester).replace("{outlet}", p.get("outlet", "freelance")), false)
-				mails.append(m)
-				break
+		# A story about one of their traits if there is one (sometimes a generic one anyway, for variety).
+		var specific := TESTER_STORIES.filter(func(st): return st[0] != "any" and _matches(st[0], p))
+		var generic := TESTER_STORIES.filter(func(st): return st[0] == "any")
+		var pool: Array = specific if not specific.is_empty() and randf() < 0.7 else generic
+		var story: Array = pool.pick_random()
+		mails.append(_mail(story[1], story[2], story[3],
+			story[4].replace("{name}", tester).replace("{outlet}", p.get("outlet", "freelance")), false))
 	var fresh := OFFICE_STORIES.filter(func(s): return "office_" + s[0] not in used)
 	if not fresh.is_empty() and (mails.is_empty() or randf() < 0.6):
 		var s: Array = fresh.pick_random()

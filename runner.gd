@@ -188,7 +188,8 @@ func start() -> void:
 	if state in [State.WAITING, State.CONFUSED]:
 		_wanders = 0
 		_lost_time = 0.0
-		say(["Okay! Let's see...", "Playtest starting. Where's the yellow?", "Right. Looking for yellow."].pick_random(), true)
+		say(["Okay! Let's see...", "Playtest starting. Where's the yellow?", "Right. Looking for yellow.",
+			"Wow, look at these textures. Okay, focus. Yellow.", "Gorgeous. Now, where's the yellow?"].pick_random(), true)
 		_start_scan(scan_time)
 
 
@@ -248,12 +249,36 @@ func celebrate() -> void:
 		return
 	state = State.CELEBRATING
 	_path.clear()
-	say("I did it! All by myself!", true)
+	say(["I did it! All by myself!", "I did it! And the sunset behind the flag... I'm tearing up.",
+		"Made it! Can I go back and look at the scenery?"].pick_random(), true)
 	reached_goal.emit()
 
 
 func feet() -> Vector3:
 	return global_position - Vector3.UP * FEET_OFFSET
+
+
+## The testers see the real HYPERION LEGENDS (full textures, ray tracing...); only the operator's
+## workstation renders grey boxes. They comment on it now and then.
+const ADMIRE := [
+	"Look at the moss on this ledge. You can see every strand.",
+	"Is that real-time ray tracing on the puddles?",
+	"The lighting in here... I need a minute.",
+	"Someone hand-sculpted every brick. I can tell.",
+	"The skybox alone is worth the price.",
+	"These textures are so crisp I can read the graffiti.",
+	"Is that a waterfall? It's GORGEOUS.",
+	"I can see my reflection in the marble. Wow.",
+	"The volumetric fog! The god rays!",
+	"Every leaf is moving. Every single leaf.",
+]
+@export_range(0.0, 1.0) var admire_chance := 0.12  ## Chance to comment on the (real) graphics after a look-around.
+
+
+## A remark about how beautiful the game looks (from the tester's point of view).
+func admire(chance := 1.0) -> void:
+	if randf() < chance:
+		say(ADMIRE.pick_random())
 
 
 func say(text: String, force := false) -> void:
@@ -639,6 +664,8 @@ func _start_scan(duration: float) -> void:
 	state = State.SCANNING
 	_timer = 0.0
 	_scan_duration = duration
+	if duration >= scan_time * 0.6:
+		admire(admire_chance)  # Not a forced line: only when it has nothing more urgent to say.
 	# On a proper look-around it sometimes turns to check behind itself too.
 	if duration >= scan_time * 0.6 and randf() < 0.5:
 		_body_turn = deg_to_rad(randf_range(100, 180)) * (1 if randf() < 0.5 else -1)
@@ -940,7 +967,8 @@ func _decide() -> void:
 		say(["No paint, no way.", "I'm not jumping anywhere unpainted. I'll wait.", "I'll stand here until it's yellow."].pick_random(), true)
 		return
 	say(["...where do I go?", "I can't see any yellow.", "Is that a ledge? It's not yellow, so no.",
-		"I need yellow to understand things.", "Hello? Level designer?"].pick_random(), true)
+		"I need yellow to understand things.", "Hello? Level designer?",
+		"So beautiful. So unpainted.", "Stunning level. No idea where to go."].pick_random(), true)
 
 
 ## Priorities: hotfixes > a nearby coin > the flag > painted things to use > unvisited paint.
@@ -1199,7 +1227,10 @@ func _wander() -> void:
 	_path.clear()
 	_path.append({pos = best, jump = false, trust = 1, leap = false, paint = false, kind = "wander"})
 	_explored.append(best)
-	say(["Just... looking around.", "Nothing yellow here.", "Maybe over here?"].pick_random())
+	if randf() < 0.3:
+		admire()
+	else:
+		say(["Just... looking around.", "Nothing yellow here.", "Maybe over here?", "Sightseeing. Not lost. Sightseeing."].pick_random())
 	_advance()
 
 

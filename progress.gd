@@ -27,9 +27,10 @@ var open_levels_on_menu := false  ## Coming back from a level: the desktop reope
 var desktop_fade_in := false  ## Back from the credits: the desktop fades in from black.
 var best_times := {}  ## "level_01" -> [round 0..2] = {session, lost} of the fastest finish (logged, not scored).
 var best_stars := {}  ## "level_01" -> best total stars over the 3 rounds, out of 15 (0 = never finished)
-## Every focus tester's record across all their playtests (for the day-one patch notes).
-## "Rhea Spawn" -> {tests, finishes, deaths, retries, failed_jumps, lost, played, hotfixes_seen, hotfixes}
-var tester_stats := {}
+## Every focus tester's record, per level, across all their playtests (for the day-one patch notes).
+## "level_04" -> {"Rhea Spawn" -> {tests, finishes, deaths, retries, failed_jumps, lost, played, hotfixes_seen, hotfixes}}
+## (key "" = stats from before they were split per level). tester_totals() adds the levels up per tester.
+var playtest_stats := {}
 ## Release: "" = in development, "credits" = greenlit (ending + patch notes mails sent, credits not seen yet),
 ## "shipped" = Patch 1.1 (replay everything, no stakes, post-launch levels open).
 var ship_state := ""
@@ -251,7 +252,7 @@ func greenlight() -> void:
 	ending = compute_ending()
 	ship_state = "credits"
 	_deliver(MAIL_WRITER.ending_mail(ending, _ending_scores()), "ending")
-	_deliver(MAIL_WRITER.patch_notes(ending, tester_stats), "patch_notes")
+	_deliver(MAIL_WRITER.patch_notes(ending, tester_totals(), level_stats()), "patch_notes")
 	_save()
 
 
@@ -278,11 +279,38 @@ func _ending_scores() -> Array:
 func log_tester(tester: String, data: Dictionary) -> void:
 	if level_override != "" or tester == "":
 		return  # F6 test runs don't count.
-	var s: Dictionary = tester_stats.get(tester, {})
+	var key := _key(current_path())
+	var level: Dictionary = playtest_stats.get(key, {})
+	var s: Dictionary = level.get(tester, {})
 	for k in STAT_KEYS:
 		s[k] = s.get(k, 0) + data.get(k, 0)
-	tester_stats[tester] = s
+	level[tester] = s
+	playtest_stats[key] = level
 	_save()
+
+
+## Each tester's record, all levels added up: {"Rhea Spawn": {tests, deaths...}}.
+func tester_totals() -> Dictionary:
+	var out := {}
+	for key in playtest_stats:
+		for tester in playtest_stats[key]:
+			var t: Dictionary = out.get(tester, {})
+			for k in STAT_KEYS:
+				t[k] = t.get(k, 0) + playtest_stats[key][tester].get(k, 0)
+			out[tester] = t
+	return out
+
+
+## [{name, testers: {tester: stats}}] in level order (stats with no level last, named "").
+func level_stats() -> Array:
+	var out := []
+	for info in LEVELS:
+		var key := _key(info.path)
+		if playtest_stats.has(key):
+			out.append({name = info.name, testers = playtest_stats[key]})
+	if playtest_stats.has(""):
+		out.append({name = "", testers = playtest_stats[""]})
+	return out
 
 
 func best(path: String) -> int:
@@ -343,7 +371,7 @@ func resign() -> void:
 	delivered_mails = []
 	best_stars = {}
 	best_times = {}
-	tester_stats = {}
+	playtest_stats = {}
 	ship_state = ""
 	ending = ""
 	new_mail_ping = false
@@ -393,7 +421,9 @@ func _load() -> void:
 	read_mails = cfg.get_value("story", "read_mails", [])
 	delivered_mails = cfg.get_value("story", "delivered_mails", [])
 	best_times = cfg.get_value("times", "best", {})
-	tester_stats = cfg.get_value("stats", "testers", {})
+	playtest_stats = cfg.get_value("stats", "per_level", {})
+	if playtest_stats.is_empty() and cfg.has_section_key("stats", "testers"):
+		playtest_stats = {"": cfg.get_value("stats", "testers", {})}  # Older save: no level info.
 	ship_state = cfg.get_value("release", "state", "")
 	ending = cfg.get_value("release", "ending", "")
 	for key in cfg.get_section_keys("best_total") if cfg.has_section("best_total") else []:
@@ -407,7 +437,7 @@ func _save() -> void:
 	cfg.set_value("story", "read_mails", read_mails)
 	cfg.set_value("story", "delivered_mails", delivered_mails)
 	cfg.set_value("times", "best", best_times)
-	cfg.set_value("stats", "testers", tester_stats)
+	cfg.set_value("stats", "per_level", playtest_stats)
 	cfg.set_value("release", "state", ship_state)
 	cfg.set_value("release", "ending", ending)
 	for key in best_stars:
