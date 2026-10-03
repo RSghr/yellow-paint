@@ -23,8 +23,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `round_intro.gd` | Start of each round: level intro banner at the top (round 1 only) + tester card sliding in bottom-left (name, outlet, intro, stars popping in). Fades after `hold_time` (7s) or when the playtest starts. **C** (`toggle_tester_card`) brings the card back / hides it (it stays until C again). The top-right HUD shows the level name and "Focus tester: name" (StatusLabel). |
 | `speech_feed.gd` | Tester speech on the HUD as a chat log under the tester name: "Name: message", oldest on top, newest at the bottom, max 3 lines, each fades `line_life` (6s) after it was said. The newest line is `newest_scale` (1.2x) bigger until the next one. Hidden while spectating. |
 | `progress.gd` | Autoload `Progress`: **auto-discovers** `levels/level_*.tscn` (file-name order, names from `level_name`), current level, best stars in `user://progress.cfg`. |
-| `settings.gd` | Autoload `Settings`: mouse sensitivity, volume, fullscreen (`user://settings.cfg`). |
-| `sfx.gd` | Autoload `Sfx`: `Sfx.play("name")`. Plays `audio/<name>.ogg/.wav/.mp3` if present, silent otherwise. List in `SOUNDS` and `audio/README.md`. |
+| `settings.gd` | Autoload `Settings`: mouse sensitivity, master / SFX / music volume (buses "Master", "SFX", "Music"; SFX and Music are created in code and send to Master), fullscreen (`user://settings.cfg`). |
+| `sfx.gd` | Autoload `Sfx`: `Sfx.play("name")` on the "SFX" bus. Plays `audio/<name>.ogg/.wav/.mp3` if present, silent otherwise. The same sound twice within 60 ms plays once (30 maze walls = one door sound). List in `SOUNDS` and `audio/README.md`. |
 | `music.gd` | Autoload `Music`: looping background music, crossfaded (`Music.play("desk")`). Files `audio/music_<track>`; tracks `desk` (desktop), `game` (levels, or `Level.music`), `credits` (falls back to desk). "Music" bus created by `Settings` (`music_volume`). |
 | `settings_menu.gd` | Settings overlay (options + controls list read from the Input Map). Used by the desktop (titled "COMPANY SETTINGS") and the pause menu. |
 | `pause_menu.gd` | Esc in game: Resume / Settings / Level select / Quit. Added by `game.gd`. |
@@ -39,7 +39,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `character.gd/.tscn` | The operator: FPS movement, jetpack (hold Space), fly mode (F), paint (LMB), scrape (RMB). |
 | `paint_manager.gd`, `paint_mark.gd` | Splats (Decals). Each mark has a `role`: `nav` (stand here), `interact` (use this), `none`. Paint limit + refunds. |
 | `door.gd` | Door / moving platform (AnimatableBody3D): slides `move_distance` along `move_direction` when opened (editor shows a cyan ghost at the end position). `is_platform`: top paint = nav and rides along (`PaintMark.attach_to`), group `mover`, `moving` while sliding. |
-| `breakable.gd`, `door.gd`, `wall_button.gd`, `coin.gd` | Interactables. A button opens `target` + every `extra_targets` path; blocks parented under a door move with it (colliders included). Group `interactable` objects implement `paint_role(normal)`, `interact_point()`, `interact()`, `is_used()`, `kind`, `state_changed`. Group `resettable` implements `reset_state()`. |
+| `breakable.gd`, `door.gd`, `wall_button.gd`, `coin.gd` | Interactables. A button opens `target` + every `extra_targets` path; a target without `open()` (e.g. a "Maze" Node3D) opens every door inside it. Blocks and doors parented under a door move with it, colliders included (nested doors turn off `sync_to_physics`). Group `interactable` objects implement `paint_role(normal)`, `interact_point()`, `interact()`, `is_used()`, `kind`, `state_changed`. Group `resettable` implements `reset_state()`. |
 | `block.gd` + `debug_block.tscn` | Static level block, resized via `size` (never scale physics bodies). Grid shader for readable distances. |
 | `paint_gauge.gd` | HUD paint bar with min/optimal ticks. |
 
@@ -140,6 +140,9 @@ Lineups are a first pass; per-round minimums are placeholders (bucket rounds dou
 3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back. Cass Cene, Lou Tbox, Max Levell.
 4. `level_04` The Gauntlet: everything combined. Frank Rate, Dee Sync, Sven Tory.
 5. `level_05` The Tower: the user's vertical spiral level. Door2 is an elevator platform (button on it, rises 10m). Hugh Dee, Mike Rotransaction, Rhea Spawn.
+6. `level_06` Victory lap (**post-launch**, the $4.99 DLC): a straight road blocked by a wall. Its button raises the wall
+   AND `Geometry/Maze` (every maze wall is a door, sunk 3.6 m into the block), so the route has to be painted blind.
+   Liv Elup, Lou Tbox, Sven Tory.
 
 ## Adding a level
 Run `tools/new_level.gd` (Script editor > File > Run) or duplicate `levels/_template.tscn` as `levels/level_XX.tscn`.

@@ -60,8 +60,10 @@ func _ready() -> void:
 	root.add_child(options)
 	_slider_row(options, "Mouse sensitivity", 0.2, 3.0, 0.05, Settings.mouse_sensitivity,
 		func(v): Settings.mouse_sensitivity = v, func(v): return "%.2fx" % v)
-	_slider_row(options, "Volume", 0.0, 1.0, 0.05, Settings.master_volume,
+	_slider_row(options, "Master volume", 0.0, 1.0, 0.05, Settings.master_volume,
 		func(v): Settings.master_volume = v; Settings.apply(), func(v): return "%d%%" % roundi(v * 100))
+	_slider_row(options, "Sound effects", 0.0, 1.0, 0.05, Settings.sfx_volume,
+		func(v): Settings.sfx_volume = v; Settings.apply(), func(v): return "%d%%" % roundi(v * 100))
 	_slider_row(options, "Music", 0.0, 1.0, 0.05, Settings.music_volume,
 		func(v): Settings.music_volume = v; Settings.apply(), func(v): return "%d%%" % roundi(v * 100))
 	options.add_child(_label("Fullscreen", 20))
