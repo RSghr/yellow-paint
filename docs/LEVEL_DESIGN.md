@@ -44,7 +44,7 @@ Design around these numbers (they're exports on the Runner, in `runner.tscn`):
 
 | Ability | Value | Notes |
 |---|---|---|
-| Jump distance | **5.5 m** horizontal | From take-off to landing. It takes off 0.6 m back from an edge. A gap of **~4 m** is the comfortable maximum. |
+| Jump distance | **5.5 m** horizontal (★★☆ Jumping; ★☆☆ 4.5 m, ★★★ 7 m) | From take-off to landing. It takes off 0.6 m back from an edge. A gap of **~4 m** is the comfortable maximum (**~3.3 m** if a Short legs tester plays the level). A painted landing it can't reach makes it say so ("Too far!"). |
 | Jump height | **2.5 m** up | Higher ledges need a step (a crate, a lower ledge). |
 | Drop onto paint | up to **8 m** | It trusts paint, even paint in a pit. |
 | Unpainted drop | up to **2.6 m** | Without paint it won't jump down further than that. |
@@ -140,7 +140,7 @@ Each tester has three traits, shown to the player only as stars (never the names
 
 | Trait | ★☆☆ | ★★☆ (default) | ★★★ |
 |---|---|---|---|
-| Jump precision (unpainted jumps) | Incapable: tries, always falls short | Hit or miss: ~65% | Precise: ~95% |
+| Jumping (reach of **every** jump + improvised jumps) | Short legs: **4.5 m** across, **2.1 m** up; improvised jumps always fall short | Average: 5.5 m, 2.5 m up; improvised ~65% | Parkour: **7 m**, **3.2 m** up; improvised ~95% |
 | Trust | Needs a whole bucket: **2 splats** on a landing before jumping there, slow to decide | Thoughtful | Blind trust: one splat = full confidence, fast |
 | Exploration (when lost) | No paint, no way: looks around, but **never** jumps unpainted (no leaps of faith either) | Curious: a few look-arounds, improvises after ~8 s | Explorer: wanders further and twice as long, improvises late (~16 s) |
 
@@ -148,22 +148,22 @@ The numbers behind the stars are in `runner.gd`, export group "Traits" (one valu
 
 ### The roster
 
-| Tester | Outlet | Jump precision | Trust | Exploration |
+| Tester | Outlet | Jumping | Trust | Exploration |
 |---|---|---|---|---|
-| Rhea Spawn | IBN | ★★☆ Hit or miss | ★★☆ Thoughtful | ★★☆ Curious |
-| Polly Gonn | Polygone | ★★☆ Hit or miss | ★★★ Blind trust | ★★☆ Curious |
-| Al Gorithm | GameFAKs | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★☆ Curious |
-| Bea Tah | Early Axess Weekly | ★★☆ Hit or miss | ★★☆ Thoughtful | ★★★ Explorer |
-| Moe Cap | Game Misinformer | ★☆☆ Incapable | ★★☆ Thoughtful | ★★☆ Curious |
-| Liv Elup | Rock Paper Shortcut | ★★★ Precise | ★★☆ Thoughtful | ★☆☆ No paint, no way |
-| Cass Cene | Cinematic Universe Digest | ★★☆ Hit or miss | ★★☆ Thoughtful | ★☆☆ No paint, no way |
-| Lou Tbox | Kotakoo | ★★★ Precise | ★★☆ Thoughtful | ★★★ Explorer |
-| Max Levell | Eurogamble | ★★★ Precise | ★☆☆ Needs a whole bucket | ★★☆ Curious |
-| Frank Rate | PC Gamerish: 240 FPS Edition | ★★★ Precise | ★★★ Blind trust | ★★★ Explorer |
-| Dee Sync | Twitchy (streamer, 14 viewers) | ★☆☆ Incapable | ★★★ Blind trust | ★★☆ Curious |
-| Sven Tory | Destructoad | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★★ Explorer |
-| David Goodenough | The Casual Observer | ★★☆ Hit or miss | ★★★ Blind trust | ★☆☆ No paint, no way |
-| Mike Rotransaction | Freemium Times | ★☆☆ Incapable | ★★☆ Thoughtful | ★★★ Explorer |
+| Rhea Spawn | IBN | ★★☆ Average | ★★☆ Thoughtful | ★★☆ Curious |
+| Polly Gonn | Polygone | ★★☆ Average | ★★★ Blind trust | ★★☆ Curious |
+| Al Gorithm | GameFAKs | ★★☆ Average | ★☆☆ Needs a whole bucket | ★★☆ Curious |
+| Bea Tah | Early Axess Weekly | ★★☆ Average | ★★☆ Thoughtful | ★★★ Explorer |
+| Moe Cap | Game Misinformer | ★☆☆ Short legs | ★★☆ Thoughtful | ★★☆ Curious |
+| Liv Elup | Rock Paper Shortcut | ★★★ Parkour | ★★☆ Thoughtful | ★☆☆ No paint, no way |
+| Cass Cene | Cinematic Universe Digest | ★★☆ Average | ★★☆ Thoughtful | ★☆☆ No paint, no way |
+| Lou Tbox | Kotakoo | ★★★ Parkour | ★★☆ Thoughtful | ★★★ Explorer |
+| Max Levell | Eurogamble | ★★★ Parkour | ★☆☆ Needs a whole bucket | ★★☆ Curious |
+| Frank Rate | PC Gamerish: 240 FPS Edition | ★★★ Parkour | ★★★ Blind trust | ★★★ Explorer |
+| Dee Sync | Twitchy (streamer, 14 viewers) | ★☆☆ Short legs | ★★★ Blind trust | ★★☆ Curious |
+| Sven Tory | Destructoad | ★★☆ Average | ★☆☆ Needs a whole bucket | ★★★ Explorer |
+| David Goodenough | The Casual Observer | ★★☆ Average | ★★★ Blind trust | ★☆☆ No paint, no way |
+| Mike Rotransaction | Freemium Times | ★☆☆ Short legs | ★★☆ Thoughtful | ★★★ Explorer |
 
 ### Current lineups
 
@@ -198,8 +198,8 @@ refresh). Add the tester to the roster table above too.
 Ideas: start with someone easy-going, end with the one whose weak trait the level punishes:
 - **Needs a whole bucket** on a level of long jumps: every landing needs 2 splats.
 - **No paint, no way** where the default tester would leap to the flag or gamble on a short hop: those need paint now.
-- **Incapable** combined with **Explorer**: it improvises fast and always fails, so the paint has to be there before it gets bored.
-- **Blind trust** or **Precise + Explorer**: generous rounds, where a low minimum rewards a player who paints little.
+- **Short legs** combined with **Explorer**: it improvises fast and always fails, so the paint has to be there before it gets bored.
+- **Blind trust** or **Parkour + Explorer**: generous rounds, where a low minimum rewards a player who paints little.
 
 ## 8. Set each round's `minimum`
 

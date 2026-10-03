@@ -2,7 +2,8 @@ class_name FocusGroup
 ## The focus testers (each playtest gets a random one) and what they say about your level.
 
 ## The roster. Each tester has three traits, 0 (lowest) to 2. 1 is the default playtester.
-##   jump:     how reliable their unpainted (improvised) jumps are.  2 Precise | 1 Hit or miss | 0 Incapable
+##   jump:     "Jumping": reach of EVERY jump (painted too) + how well improvised ones land.
+##             2 Parkour (7 m, 3.2 m up) | 1 Average (5.5 m, 2.5 m up) | 0 Short legs (4.5 m, 2.1 m up, improvised jumps fall short)
 ##   trust:    how much paint they need and how fast they decide.    2 Blind trust | 1 Thoughtful | 0 Needs a whole bucket
 ##   patience: "Exploration" on the card: how much they look around when lost, and if/when they improvise.
 ##             2 Explorer (wanders far and long, improvises late) | 1 Curious | 0 No paint, no way (wanders, never improvises)
@@ -53,9 +54,9 @@ const ROSTER := {
 		intro = "Would pay to skip any jump. Explores every corner first, then tries one anyway. It never works."},
 }
 
-const TRAIT_LABELS := {jump = "Jump precision", trust = "Trust", patience = "Exploration"}
+const TRAIT_LABELS := {jump = "Jumping", trust = "Trust", patience = "Exploration"}
 const TRAIT_VALUES := {  ## For the docs/editor only. The game shows stars.
-	jump = ["Incapable", "Hit or miss", "Precise"],
+	jump = ["Short legs", "Average", "Parkour"],  ## Reach (all jumps) + how well improvised jumps land.
 	trust = ["Needs a whole bucket", "Thoughtful", "Blind trust"],
 	patience = ["No paint, no way", "Curious", "Explorer"],
 }
@@ -159,7 +160,7 @@ static func stars(value: int) -> String:
 	return "★".repeat(value + 1) + "☆".repeat(2 - value)
 
 
-## "Jump precision ★★☆   Trust ★★★   Exploration ★☆☆"
+## "Jumping ★★☆   Trust ★★★   Exploration ★☆☆"
 static func trait_line(tester: String) -> String:
 	var p := profile(tester)
 	var parts: PackedStringArray = []

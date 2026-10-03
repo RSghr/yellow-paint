@@ -78,8 +78,11 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 - Each round has its own `minimum_N` (that tester's reliable minimum, set by the user from playtesting), so its own
   optimal (+5) and can size (+15). Level result = sum of the 3 round scores, **out of 15** (`Progress`, `best_total`).
 - Traits (0 lowest, 1 default, 2 highest), shown to the player only as 1-3 stars. A tester has at most ONE trait at 0:
-  - **Jump precision**: Incapable / Hit or miss / Precise → `desperate_success_chance` 0 / 0.65 / 0.95, `leap_error`.
-    Incapable still improvises but always falls short (leaps of faith too).
+  - **Jumping**: Short legs / Average / Parkour → reach of EVERY jump, painted ones too (`reach_by_level` 4.5 / 5.5 / 7 m,
+    `reach_up_by_level` 2.1 / 2.5 / 3.2 m → `max_jump_distance` / `max_jump_up`), plus `desperate_success_chance`
+    0 / 0.65 / 0.95 and `leap_error` for improvised jumps (Short legs always falls short). A seen painted landing that's out
+    of reach makes it say "Too far!" (`_say_too_far`, once per spot). Average = the old default, so levels built for it
+    still work for 2-3★. Short legs needs gaps of ~3.3 m (The Tower needs 5 m: Mike Rotransaction can't finish it yet).
   - **Trust**: Needs a whole bucket / Thoughtful / Blind trust → splats needed on a landing to jump there 2/1/1,
     trust bonus 0/0/+2 (no hesitation), notice rate, scan and hesitation times.
   - **Exploration** (key `patience` in code): No paint, no way / Curious / Explorer → wanders 3/3/6 times up to 5/5/8 m,
