@@ -53,6 +53,7 @@ const PERCEPTION_INTERVAL := 0.1
 @export var hesitation_per_doubt := 0.9  ## Pause before jumping to a spot with only 1 splat.
 @export var leap_error := 0.7  ## Unpainted jumps are guesses: landing error in metres.
 @export var wander_limit := 3  ## Wanders on its own this many times before giving up.
+@export var wander_range := 5.0  ## Max distance of one wander walk.
 @export var patience := 8.0  ## Seconds without progress (after a full look-around) before it jumps at things unpainted.
 @export_range(0.0, 1.0, 0.05) var desperate_success_chance := 0.65  ## Chance (0-1) that an unpainted desperate jump lands. A miss falls well short.
 @export var setback_drop := 1.5  ## Landing this far below the last trusted spot (by accident) counts as a fall: retrace.
@@ -70,9 +71,10 @@ const PERCEPTION_INTERVAL := 0.1
 @export var notice_rate_by_level: Array[float] = [1.2, 1.6, 2.4]
 @export var scan_time_by_level: Array[float] = [2.4, 1.8, 1.1]  ## How long its look-arounds take.
 @export var hesitation_by_level: Array[float] = [1.3, 0.9, 0.5]  ## hesitation_per_doubt.
-@export_subgroup("Patience (No paint, no way / Lost fast / Explorer)")
-@export var patience_by_level: Array[float] = [-1.0, 8.0, 3.0]  ## Seconds lost before improvising. -1 = never improvises (no desperate jumps, no leaps of faith).
-@export var wander_limit_by_level: Array[int] = [3, 3, 2]
+@export_subgroup("Exploration (No paint, no way / Curious / Explorer)")  # "patience" in the code and roster.
+@export var patience_by_level: Array[float] = [-1.0, 8.0, 16.0]  ## Seconds lost (after its wanders) before improvising. -1 = never improvises (no desperate jumps, no leaps of faith).
+@export var wander_limit_by_level: Array[int] = [3, 3, 6]  ## Look-around walks before it gives up and waits.
+@export var wander_range_by_level: Array[float] = [5.0, 5.0, 8.0]  ## How far each look-around walk can go (metres).
 
 var min_jump_splats := 1
 var trust_bonus := 0
@@ -215,6 +217,7 @@ func apply_profile(tester: String, p: Dictionary) -> void:
 	patience = patience_by_level[p.patience]
 	improvises = patience >= 0.0
 	wander_limit = wander_limit_by_level[p.patience]
+	wander_range = wander_range_by_level[p.patience]
 
 
 func celebrate() -> void:
@@ -1140,7 +1143,7 @@ func _wander() -> void:
 	for attempt in 12:
 		var angle := attempt * TAU / 12.0
 		var dir := Vector3(cos(angle), 0, sin(angle))
-		var target := origin + dir * randf_range(2.0, 5.0)
+		var target := origin + dir * randf_range(2.0, maxf(wander_range, 2.5))
 		# Stays on roughly the same level: it won't wander down slopes on its own.
 		var y = _ground_y(space, target, origin.y, 0.3)
 		if y == null or absf(y - _home_y) > 0.3:
