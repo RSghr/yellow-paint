@@ -45,7 +45,7 @@ const ROSTER := {
 	"Sven Tory": {jump = 1, trust = 0, patience = 2,
 		outlet = "Destructoad",
 		intro = "Loot goblin. Wanders off to explore everything, but trusts nothing smaller than a bucket of paint."},
-	"Hugh Dee": {jump = 1, trust = 2, patience = 0,
+	"David Goodenough": {jump = 1, trust = 2, patience = 0,
 		outlet = "The Casual Observer",
 		intro = "Plays on his phone during cutscenes. Follows yellow instantly, won't move an inch without it."},
 	"Mike Rotransaction": {jump = 0, trust = 1, patience = 2,
