@@ -25,6 +25,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `progress.gd` | Autoload `Progress`: **auto-discovers** `levels/level_*.tscn` (file-name order, names from `level_name`), current level, best stars in `user://progress.cfg`. |
 | `settings.gd` | Autoload `Settings`: mouse sensitivity, volume, fullscreen (`user://settings.cfg`). |
 | `sfx.gd` | Autoload `Sfx`: `Sfx.play("name")`. Plays `audio/<name>.ogg/.wav/.mp3` if present, silent otherwise. List in `SOUNDS` and `audio/README.md`. |
+| `music.gd` | Autoload `Music`: looping background music, crossfaded (`Music.play("desk")`). Files `audio/music_<track>`; tracks `desk` (desktop), `game` (levels, or `Level.music`), `credits` (falls back to desk). "Music" bus created by `Settings` (`music_volume`). |
 | `settings_menu.gd` | Settings overlay (options + controls list read from the Input Map). Used by the desktop (titled "COMPANY SETTINGS") and the pause menu. |
 | `pause_menu.gd` | Esc in game: Resume / Settings / Level select / Quit. Added by `game.gd`. |
 | `spectator_camera.gd` | Orbit camera following the playtester (A on AZERTY = physical Q). Operator is frozen (`active = false`) while spectating. |
@@ -32,13 +33,13 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `art/paint_splat.png` | Splat image (white placeholder), tinted by `PaintManager.paint_color`. |
 | `levels/_template.tscn`, `tools/new_level.gd` | Level template + EditorScript (File > Run) that creates the next `level_XX.tscn`. Guide: `docs/LEVEL_DESIGN.md` (also has the roster with stars and the current lineups; keep them in sync). |
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
-| `level.gd` | `@tool` root script of every level: `level_name`, `intro_text`, `death_height`, 3 rounds (`tester_N` dropdown + `minimum_N`); editor warnings for missing spawns/goal/bad lineup. F6 on a level scene launches it inside `game.tscn`. |
+| `level.gd` | `@tool` root script of every level: `level_name`, `intro_text`, `death_height`, `post_launch`, `music` (track name, empty = game), 3 rounds (`tester_N` dropdown + `minimum_N`); editor warnings for missing spawns/goal/bad lineup. F6 on a level scene launches it inside `game.tscn`. |
 | `levels/` | Level scenes: world only (Geometry, Interactables/Coins, Goal, `RunnerSpawn`/`OperatorSpawn` Marker3Ds). |
 | `runner.gd/.tscn` | The AI playtester (perception, trust, planning, speech). |
 | `character.gd/.tscn` | The operator: FPS movement, jetpack (hold Space), fly mode (F), paint (LMB), scrape (RMB). |
 | `paint_manager.gd`, `paint_mark.gd` | Splats (Decals). Each mark has a `role`: `nav` (stand here), `interact` (use this), `none`. Paint limit + refunds. |
 | `door.gd` | Door / moving platform (AnimatableBody3D): slides `move_distance` along `move_direction` when opened (editor shows a cyan ghost at the end position). `is_platform`: top paint = nav and rides along (`PaintMark.attach_to`), group `mover`, `moving` while sliding. |
-| `breakable.gd`, `door.gd`, `wall_button.gd`, `coin.gd` | Interactables. Group `interactable` objects implement `paint_role(normal)`, `interact_point()`, `interact()`, `is_used()`, `kind`, `state_changed`. Group `resettable` implements `reset_state()`. |
+| `breakable.gd`, `door.gd`, `wall_button.gd`, `coin.gd` | Interactables. A button opens `target` + every `extra_targets` path; blocks parented under a door move with it (colliders included). Group `interactable` objects implement `paint_role(normal)`, `interact_point()`, `interact()`, `is_used()`, `kind`, `state_changed`. Group `resettable` implements `reset_state()`. |
 | `block.gd` + `debug_block.tscn` | Static level block, resized via `size` (never scale physics bodies). Grid shader for readable distances. |
 | `paint_gauge.gd` | HUD paint bar with min/optimal ticks. |
 

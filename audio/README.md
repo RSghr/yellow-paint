@@ -28,3 +28,15 @@ The list lives in `sfx.gd` (`SOUNDS`). To add a new sound, add a line there and 
 `Sfx.play("name")` where it should play. Volume is controlled by the Master volume in Settings.
 
 Tips: free sounds at freesound.org, kenney.nl (CC0 packs) or opengameart.org. Check the license.
+
+## Music (looping, crossfaded)
+
+Played by the `Music` autoload on the "Music" bus (volume: Company Settings > Music). Name the files
+`music_<track>.ogg` (or .mp3 / .wav). They loop automatically. Missing = silence.
+
+| File | When |
+|---|---|
+| `music_desk` | The company desktop (main menu) |
+| `music_game` | Inside a level (every level, unless it sets its own) |
+| `music_credits` | Launch-day credits (plays `music_desk` if missing) |
+| `music_<anything>` | A level whose `music` property is `<anything>` (e.g. `music = "maze"` → `music_maze.ogg`) |

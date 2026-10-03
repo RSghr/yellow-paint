@@ -34,6 +34,7 @@ var _close_modal := Callable()  ## How Esc closes the current modal (settings cl
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	get_tree().paused = false
+	Music.play("desk")
 	_build_wallpaper()
 	_build_icons()
 	_layer = Control.new()

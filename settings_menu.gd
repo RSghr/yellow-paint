@@ -62,6 +62,8 @@ func _ready() -> void:
 		func(v): Settings.mouse_sensitivity = v, func(v): return "%.2fx" % v)
 	_slider_row(options, "Volume", 0.0, 1.0, 0.05, Settings.master_volume,
 		func(v): Settings.master_volume = v; Settings.apply(), func(v): return "%d%%" % roundi(v * 100))
+	_slider_row(options, "Music", 0.0, 1.0, 0.05, Settings.music_volume,
+		func(v): Settings.music_volume = v; Settings.apply(), func(v): return "%d%%" % roundi(v * 100))
 	options.add_child(_label("Fullscreen", 20))
 	var fs := CheckBox.new()
 	fs.button_pressed = Settings.fullscreen

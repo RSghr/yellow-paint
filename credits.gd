@@ -20,6 +20,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_ending = ENDINGS.info(Progress.ending)
+	Music.play("credits")
 	var bg := ColorRect.new()
 	bg.color = Color.BLACK
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 Progress="*res://progress.gd"
 Settings="*res://settings.gd"
 Sfx="*res://sfx.gd"
+Music="*res://music.gd"
 
 [display]
 

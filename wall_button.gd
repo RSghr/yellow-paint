@@ -6,6 +6,8 @@ extends StaticBody3D
 signal state_changed
 
 @export var target: NodePath  ## Usually a Door. Anything with an open() method works.
+## More things to open with the same press (e.g. every wall of a maze that rises together).
+@export var extra_targets: Array[NodePath] = []
 
 var kind := "button"
 var pressed := false
@@ -55,9 +57,10 @@ func press() -> void:
 	pressed = true
 	_update_look()
 	Sfx.play("button", 0.0)
-	var t := get_node_or_null(target)
-	if t and t.has_method("open"):
-		t.open()
+	for path in [target] + extra_targets:
+		var t := get_node_or_null(path)
+		if t and t.has_method("open"):
+			t.open()
 	state_changed.emit()
 
 

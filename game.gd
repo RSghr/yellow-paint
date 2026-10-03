@@ -89,6 +89,7 @@ func _load_level() -> void:
 	var scene := load(Progress.current_path()) as PackedScene
 	level = scene.instantiate() as Level
 	add_child(level)
+	Music.play(level.music if level.music != "" else "game", "game")
 
 	# Playtester and operator come after the level, so they can find its goal, coins, etc.
 	runner = RUNNER_SCENE.instantiate()
