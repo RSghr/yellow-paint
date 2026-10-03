@@ -22,7 +22,7 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 | `settings_menu.gd` | Settings overlay (options + controls list read from the Input Map). Used by the desktop (titled "COMPANY SETTINGS") and the pause menu. |
 | `pause_menu.gd` | Esc in game: Resume / Settings / Level select / Quit. Added by `game.gd`. |
 | `spectator_camera.gd` | Orbit camera following the playtester (A on AZERTY = physical Q). Operator is frozen (`active = false`) while spectating. |
-| `focus_group.gd` | `FocusGroup`: the tester `ROSTER` (pun names, parody `outlet` (IBN, Polygone...), archetype `intro`, jump/trust/patience traits 0-2), star display, results quotes. |
+| `focus_group.gd` | `FocusGroup`: the tester `ROSTER` (pun names, parody `outlet` (IBN, Polygone...), archetype `intro`, jump/trust/exploration (`patience`) traits 0-2), star display, results quotes. |
 | `art/paint_splat.png` | Splat image (white placeholder), tinted by `PaintManager.paint_color`. |
 | `levels/_template.tscn`, `tools/new_level.gd` | Level template + EditorScript (File > Run) that creates the next `level_XX.tscn`. Guide: `docs/LEVEL_DESIGN.md` (also has the roster with stars and the current lineups; keep them in sync). |
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
@@ -57,8 +57,9 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
     Incapable still improvises but always falls short (leaps of faith too).
   - **Trust**: Needs a whole bucket / Thoughtful / Blind trust → splats needed on a landing to jump there 2/1/1,
     trust bonus 0/0/+2 (no hesitation), notice rate, scan and hesitation times.
-  - **Patience**: No paint, no way / Lost fast / Explorer → improvises after never / 8s / 3s. "No paint, no way" never
-    makes an unpainted jump (no desperate jumps, no leaps of faith).
+  - **Exploration** (key `patience` in code): No paint, no way / Curious / Explorer → wanders 3/3/6 times up to 5/5/8 m,
+    then improvises after never / 8s / 16s. "No paint, no way" still looks around but never makes an unpainted jump
+    (no desperate jumps, no leaps of faith). Explorer finds more on its own and gambles late.
   - Values live in runner.gd's "Traits" export arrays (index = trait level); `Runner.apply_profile()` applies them.
 
 ## AI rules (runner.gd), keep these intact

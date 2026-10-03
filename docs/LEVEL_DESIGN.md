@@ -126,25 +126,25 @@ Each tester has three traits, shown to the player only as stars (never the names
 |---|---|---|---|
 | Jump precision (unpainted jumps) | Incapable: tries, always falls short | Hit or miss: ~65% | Precise: ~95% |
 | Trust | Needs a whole bucket: **2 splats** on a landing before jumping there, slow to decide | Thoughtful | Blind trust: one splat = full confidence, fast |
-| Patience (before improvising) | No paint, no way: **never** jumps unpainted (no leaps of faith either) | Lost fast: ~8 s | Explorer: ~3 s |
+| Exploration (when lost) | No paint, no way: looks around, but **never** jumps unpainted (no leaps of faith either) | Curious: a few look-arounds, improvises after ~8 s | Explorer: wanders further and twice as long, improvises late (~16 s) |
 
 The numbers behind the stars are in `runner.gd`, export group "Traits" (one value per star level).
 
 ### The roster
 
-| Tester | Outlet | Jump precision | Trust | Patience |
+| Tester | Outlet | Jump precision | Trust | Exploration |
 |---|---|---|---|---|
-| Rhea Spawn | IBN | ★★☆ Hit or miss | ★★☆ Thoughtful | ★★☆ Lost fast |
-| Polly Gonn | Polygone | ★★☆ Hit or miss | ★★★ Blind trust | ★★☆ Lost fast |
-| Al Gorithm | GameFAKs | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★☆ Lost fast |
+| Rhea Spawn | IBN | ★★☆ Hit or miss | ★★☆ Thoughtful | ★★☆ Curious |
+| Polly Gonn | Polygone | ★★☆ Hit or miss | ★★★ Blind trust | ★★☆ Curious |
+| Al Gorithm | GameFAKs | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★☆ Curious |
 | Bea Tah | Early Axess Weekly | ★★☆ Hit or miss | ★★☆ Thoughtful | ★★★ Explorer |
-| Moe Cap | Game Misinformer | ★☆☆ Incapable | ★★☆ Thoughtful | ★★☆ Lost fast |
+| Moe Cap | Game Misinformer | ★☆☆ Incapable | ★★☆ Thoughtful | ★★☆ Curious |
 | Liv Elup | Rock Paper Shortcut | ★★★ Precise | ★★☆ Thoughtful | ★☆☆ No paint, no way |
 | Cass Cene | Cinematic Universe Digest | ★★☆ Hit or miss | ★★☆ Thoughtful | ★☆☆ No paint, no way |
 | Lou Tbox | Kotakoo | ★★★ Precise | ★★☆ Thoughtful | ★★★ Explorer |
-| Max Levell | Eurogamble | ★★★ Precise | ★☆☆ Needs a whole bucket | ★★☆ Lost fast |
+| Max Levell | Eurogamble | ★★★ Precise | ★☆☆ Needs a whole bucket | ★★☆ Curious |
 | Frank Rate | PC Gamerish: 240 FPS Edition | ★★★ Precise | ★★★ Blind trust | ★★★ Explorer |
-| Dee Sync | Twitchy (streamer, 14 viewers) | ★☆☆ Incapable | ★★★ Blind trust | ★★☆ Lost fast |
+| Dee Sync | Twitchy (streamer, 14 viewers) | ★☆☆ Incapable | ★★★ Blind trust | ★★☆ Curious |
 | Sven Tory | Destructoad | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★★ Explorer |
 | Hugh Dee | The Casual Observer | ★★☆ Hit or miss | ★★★ Blind trust | ★☆☆ No paint, no way |
 | Mike Rotransaction | Freemium Times | ★☆☆ Incapable | ★★☆ Thoughtful | ★★★ Explorer |

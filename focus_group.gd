@@ -4,7 +4,8 @@ class_name FocusGroup
 ## The roster. Each tester has three traits, 0 (lowest) to 2. 1 is the default playtester.
 ##   jump:     how reliable their unpainted (improvised) jumps are.  2 Precise | 1 Hit or miss | 0 Incapable
 ##   trust:    how much paint they need and how fast they decide.    2 Blind trust | 1 Thoughtful | 0 Needs a whole bucket
-##   patience: how soon they start improvising when lost.            2 Explorer | 1 Lost fast | 0 No paint, no way
+##   patience: "Exploration" on the card: how much they look around when lost, and if/when they improvise.
+##             2 Explorer (wanders far and long, improvises late) | 1 Curious | 0 No paint, no way (wanders, never improvises)
 ## Rule: a tester has at most ONE trait at 0. The operator only sees stars, never the names of the traits' values.
 ## `outlet` (a parody of a games site/magazine) and `intro` (a hint at their archetype) show on the round card.
 const ROSTER := {
@@ -19,7 +20,7 @@ const ROSTER := {
 		intro = "Writes 40-page walkthroughs. A drop of paint is a rumour; he wants a puddle before he commits to anything."},
 	"Bea Tah": {jump = 1, trust = 1, patience = 2,
 		outlet = "Early Axess Weekly",
-		intro = "Has played every beta since 2009. Gets bored fast and goes looking for 'secrets' (ledges)."},
+		intro = "Has played every beta since 2009. Checks every corner for 'secrets' before trying anything risky."},
 	"Moe Cap": {jump = 0, trust = 1, patience = 1,
 		outlet = "Game Misinformer",
 		intro = "Brilliant writer, 30 years in the industry. Nobody has ever told him he can't jump."},
@@ -49,14 +50,14 @@ const ROSTER := {
 		intro = "Plays on his phone during cutscenes. Follows yellow instantly, won't move an inch without it."},
 	"Mike Rotransaction": {jump = 0, trust = 1, patience = 2,
 		outlet = "Freemium Times",
-		intro = "Would pay to skip any jump. Gets bored and tries them anyway. It never works."},
+		intro = "Would pay to skip any jump. Explores every corner first, then tries one anyway. It never works."},
 }
 
-const TRAIT_LABELS := {jump = "Jump precision", trust = "Trust", patience = "Patience"}
+const TRAIT_LABELS := {jump = "Jump precision", trust = "Trust", patience = "Exploration"}
 const TRAIT_VALUES := {  ## For the docs/editor only. The game shows stars.
 	jump = ["Incapable", "Hit or miss", "Precise"],
 	trust = ["Needs a whole bucket", "Thoughtful", "Blind trust"],
-	patience = ["No paint, no way", "Lost fast", "Explorer"],
+	patience = ["No paint, no way", "Curious", "Explorer"],
 }
 const DEFAULT_TESTER := "Rhea Spawn"
 
@@ -145,7 +146,7 @@ static func stars(value: int) -> String:
 	return "★".repeat(value + 1) + "☆".repeat(2 - value)
 
 
-## "Jump precision ★★☆   Trust ★★★   Patience ★☆☆"
+## "Jump precision ★★☆   Trust ★★★   Exploration ★☆☆"
 static func trait_line(tester: String) -> String:
 	var p := profile(tester)
 	var parts: PackedStringArray = []
