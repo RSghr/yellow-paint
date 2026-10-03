@@ -32,6 +32,7 @@ var hotfix_mode := false:
 
 ## Splats currently "spent". Scraping refunds; paint lost to smashed planks or opened doors doesn't.
 var splats_used := 0
+var _stashed: Array[PaintMark] = []  ## Paint on objects that broke/opened this run (see remove_marks_on).
 
 static var _splat_texture: ImageTexture
 
@@ -78,15 +79,37 @@ func paint(hit_position: Vector3, hit_normal: Vector3, collider: Object = null) 
 
 
 ## Remove the paint on something (it broke, or a door slid away).
+## The paint on something that just broke or opened (planks, a door) is put aside, not deleted: it's gone for
+## the rest of this run, but it comes back with the object on reset (restore_stashed), so splats_used stays right.
 func remove_marks_on(host: Node) -> void:
 	var removed := false
 	for mark in get_marks():
 		if mark.host == host:
-			mark.queue_free()
 			remove_child(mark)
+			_stashed.append(mark)
 			removed = true
 	if removed:
 		paint_changed.emit()
+
+
+## Reset (R / next tester): the paint that went away with broken or opened objects comes back.
+## Hotfixes among them are dropped, like every other hotfix.
+func restore_stashed() -> void:
+	if _stashed.is_empty():
+		return
+	for mark in _stashed:
+		if mark.hotfix:
+			mark.free()
+		else:
+			add_child(mark)
+	_stashed.clear()
+	paint_changed.emit()
+
+
+func _exit_tree() -> void:
+	for mark in _stashed:
+		mark.free()
+	_stashed.clear()
 
 
 func _find_interactable(collider: Object) -> Node:
@@ -142,6 +165,9 @@ func clear_all() -> void:
 	for mark in get_marks():
 		mark.queue_free()
 		remove_child(mark)
+	for mark in _stashed:
+		mark.free()
+	_stashed.clear()
 	splats_used = 0
 	paint_changed.emit()
 
