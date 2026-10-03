@@ -370,7 +370,7 @@ func _nav_keys() -> Array:
 	return keys
 
 
-## Log the attempt that just ended in the tester's record (Progress.tester_stats, for the patch notes).
+## Log the attempt that just ended in the tester's record (Progress.playtest_stats, for the patch notes).
 func _close_attempt(outcome: String) -> void:
 	if not _attempt_open:
 		return

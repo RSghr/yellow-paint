@@ -5,14 +5,18 @@ A 3D Godot 4.6 game satirising the "yellow paint" handholding in AAA games. The 
 navigate a platforming level. The AI only trusts yellow. Scoring rewards using little paint
 (immersion) while collecting coins (side objectives).
 
+**Story premise:** the grey boxes are NOT the game's art. The operator's cheap work computer (the "ThinkBox 2009")
+can only render HYPERION LEGENDS as grey boxes; the testers play the real thing (12K textures, hand-sculpted moss,
+ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes and credits all follow this.
+
 ## Structure
 
 | File | What it is |
 |---|---|
 | `level_select.tscn/.gd` | Main scene = the operator's company **desktop** (built in code): icons Inlook / Level Select / Company Settings / Recycle Bin, taskbar with Start menu and clock. Quit = Start > Shut down ("...may result in your ~~contract~~ termination"). First launch = a clean desktop (the unread badge on Inlook does the talking, the player opens the mails themselves); returning from a level reopens Level Select (`Progress.open_levels_on_menu`). |
 | `desk_window.gd` | Draggable desktop window (title bar, close) used by the desktop. |
-| `inbox.gd` | Inlook's starting emails (`MAILS`, BBCode bodies) + `all_mails()` (delivered ones first). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, "early build" grey boxes). Read state in `Progress.read_mails`/`seen_intro`. "hr_exit" = HR's exit interview: its "Schedule meeting" button opens a DocuSigh resignation letter (sign, then confirm) that wipes the save (see Progression). |
-| `mail_writer.gd` | Emails written during progression: Chad's new-level announcement (opening line by score bracket 15 / 14-10 / 9-5 / 4-0), his performance review when a level scores under 10, and flavor mails (toxic-workplace parody): one about a tester of the new level chosen by their traits (`TESTER_STORIES`, e.g. Explorer leaked the level, admin123) + sometimes an office one (`OFFICE_STORIES`, sent once each). |
+| `inbox.gd` | Inlook's starting emails (`MAILS`, BBCode bodies) + `all_mails()` (delivered ones first). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, your ThinkBox 2009 only shows grey boxes). "workstation" = IT denying the graphics card. Read state in `Progress.read_mails`/`seen_intro`. "hr_exit" = HR's exit interview: its "Schedule meeting" button opens a DocuSigh resignation letter (sign, then confirm) that wipes the save (see Progression). |
+| `mail_writer.gd` | Emails written during progression: Chad's new-level announcement (opening line by score bracket 15 / 14-10 / 9-5 / 4-0), his performance review when a level scores under 10, and flavor mails (toxic-workplace parody): one about a tester of the new level chosen by their traits (`TESTER_STORIES`, e.g. Explorer leaked the level, admin123) + sometimes an office one (`OFFICE_STORIES`, sent once each). Tester stories: one matching their traits (70%) or a generic "any" one. Patch notes: `patch_notes()` lists **level changes** made because of how each tester did on that level (`LEVEL_CHANGES` per notable stat). |
 | `endings.gd` | The 3 endings (`ENDINGS`: title, critic/gamer scores and verdicts, investor quotes, tester line) + `tester_quote()` / `notable_stat()` (what a tester is remembered for, from their stats). |
 | `credits.tscn/.gd` | Launch-day credits (built in code, one tween timeline, hold Space/Enter/click = x6): title card, credits roll (contractor #, roster with outlets), investor quotes, focus group quotes (from `tester_stats`), critics score then gamers score, ending name, then back to the desktop (`Progress.finish_credits()`, fade in). |
 | `results_card.gd` | End-of-round results card (same style as the tester card): stars pop in, paint/coins/hotfix rows, review quote + byline, level total /15 after round 3 with NEW BEST / "New playtest scheduled" / "on hold" note, key chips. Also the "Focus tester lost" card. |
@@ -56,7 +60,8 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
   After the credits: Patch 1.1 (`shipped()`): Chad's early access mail (names the post-launch level, $4.99), scores
   kept, no more score mails (no stakes), `post_launch` levels open (`Level.post_launch`, tagged DLC), Start menu shows
   the ending. The results card of the last level says "Chad needs your greenlight" / "The launch is on hold until...".
-- **Tester stats** (`Progress.tester_stats`, per tester name, across all their tests, never scored): tests, finishes,
+- **Tester stats** (`Progress.playtest_stats`, per level key then tester name, across all their tests, never scored;
+  `tester_totals(keys)` adds levels up per tester, `level_stats()` lists levels 4+ in order; old saves land under key ""). The patch notes only cover levels 4+ (`patch_note_keys()`: no tutorials, no post-launch, no old unattributed stats); the credits quotes use every level: tests, finishes,
   deaths, retries (hold R after starting), failed_jumps (`Runner.failed_jumps`: landed off target or died mid-jump),
   lost/played seconds, hotfixes_seen (`Runner.hotfixes_seen`), hotfixes painted. Logged by `game.gd` `_close_attempt`
   when an attempt ends (flag, fall, retry, leaving). F6 runs aren't logged. Used by the patch notes and the credits.

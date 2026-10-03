@@ -24,8 +24,8 @@ Welcome to the [b]Level Readability Department[/b] at Synergex Interactive! As d
 
 [b]A few things before you start:[/b]
 
-[ul]You may notice the game is currently made of grey boxes. This is an [b]early build[/b]. The art direction is being finalized and will be breathtaking. Please do not mention the boxes to the testers.
-Use as little paint as possible. The art team says yellow paint "ruins the immersion". (They have not seen the boxes either.)
+[ul]Your workstation is a [b]ThinkBox 2009[/b]. Due to budget constraints, it can only render the game as [b]grey boxes[/b]. The testers play on the real hardware and see HYPERION LEGENDS in all its ray-traced, 12K-textured glory. Please do not tell them what you see. They will feel sorry for you.
+Use as little paint as possible. The art team spent four years on those textures and says yellow paint "ruins the immersion". You will have to take their word for it.
 Every star the testers give us goes straight into a slide for the investors. The investors like five stars. The investors have asked us not to show them fewer than five stars.
 Each tester is different. Read their profile. Some of them will need a lot of help. Some of them will jump off anything. All of them write reviews.
 If something goes wrong during a session, you [i]can[/i] push a hotfix. Please don't. The testers notice, and so does Legal.
@@ -46,19 +46,44 @@ Synergex Interactive | [i]"We put the extra A in AAAA."[/i]
 		from = "Art Department",
 		address = "art-direction@synergex-interactive.biz",
 		cc = "",
-		subject = "RE: Art direction status",
+		subject = "RE: Please stop painting our moss",
 		date = "Mon 7:48 AM",
 		flag = false,
 		body = """Hi all,
 
-Quick update: the art direction is [b]95% finalized[/b]. We have narrowed the palette down to "grey" and "slightly different grey".
+Quick reminder about the levels you're working on.
 
-The moodboard is attached: [i]moodboard_v14_FINAL_final(2)_USE_THIS.png[/i] (it's a grey box, but look at the [b]lighting[/b]).
+Every ledge in HYPERION LEGENDS has hand-sculpted moss. Every brick has its own normal map. The puddles are ray-traced. The waterfall in the Tower took one of us eight months and most of a marriage.
 
-Reminder: please [b]do not[/b] paint the boxes yellow. Yellow is not part of the brand. Yellow is the opposite of immersion.
+We are told your workstation shows all of this as [b]grey boxes[/b]. We have filed a complaint with IT. IT has filed it.
+
+So, from the people who can actually see the game: please [b]do not[/b] paint the moss yellow. Yellow is not part of the brand. Yellow is the opposite of immersion.
 
 Thanks,
 The Art Department (both of us)""",
+	},
+	{
+		id = "workstation",
+		from = "IT Helpdesk",
+		address = "noreply-helpdesk@synergex-interactive.biz",
+		cc = "",
+		subject = "RE: Workstation upgrade request #88412 (DENIED)",
+		date = "Mon 7:30 AM",
+		flag = false,
+		body = """Dear user,
+
+Your request for a graphics card has been [b]denied[/b].
+
+Your workstation (ThinkBox 2009, 2 GB of RAM, "integrated graphics") renders HYPERION LEGENDS as grey boxes. This is all the Level Readability Department needs to see. Grey boxes have edges. Edges are where the yellow goes.
+
+Approved alternatives:
+[ul]squinting
+asking a focus tester to describe it
+imagining it (imagination requests go through the portal)[/ul]
+
+The workstation fan is loud. This is normal. If it starts smelling like toast, this is also normal.
+
+IT Helpdesk | [i]"Have you tried turning it off and on again? (It takes 40 minutes to boot.)"[/i]""",
 	},
 	{
 		id = "it",

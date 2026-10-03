@@ -105,8 +105,9 @@ func _credit_lines() -> Array:
 		["Level Readability (yellow paint)", "Contractor #%d" % Progress.contractor_id()],
 		["Level Readability (previous yellow paint)", "Contractors #4471 to #%d" % (Progress.contractor_id() - 1)] \
 			if Progress.resignations > 0 else [],
-		["Art Direction", "Grey, Slightly Different Grey"],
-		["The Art Department", "Both of them"],
+		["Art Direction", "Four years, 12K textures, two burnouts"],
+		["The Art Department", "Both of them (still recovering)"],
+		["Moss", "Hand-sculpted, strand by strand"],
 		["Legal", "Legal"],
 		["Snacks", "Legal"],
 		["IT Helpdesk", "Have you tried turning it off and on again"],
@@ -128,8 +129,8 @@ func _credit_lines() -> Array:
 		["SPECIAL THANKS"],
 		["The investors", "(mandatory)"],
 		["Darren from Accounting", "We still don't know who took the yogurt"],
-		["Every grey box", "You were beautiful"],
-		["Yellow paint", "86.9 GB of it"],
+		["The ThinkBox 2009", "For rendering it all as grey boxes. You tried your best."],
+		["Yellow paint", "86.9 GB of it, on top of the 12K textures"],
 		["No focus testers were harmed in the making of this game.\n(Several fell. That's different.)"],
 	])
 	return lines
@@ -152,7 +153,7 @@ func _credit_row(role: String, name_text: String) -> Control:
 
 ## Up to 3 stat quotes from the testers who played the most, + the ending's line from another one.
 func _tester_quotes() -> Array:
-	var stats: Dictionary = Progress.tester_stats
+	var stats: Dictionary = Progress.tester_totals()
 	var names: Array = stats.keys()
 	names.sort_custom(func(a, b): return stats[a].get("tests", 0) > stats[b].get("tests", 0))
 	var out := []
