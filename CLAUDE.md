@@ -139,7 +139,7 @@ Lineups are a first pass; per-round minimums are placeholders (bucket rounds dou
    (The standard 3-splat route ends with a leap of faith to the flag: Liv Elup, "No paint, no way", needs it painted.)
 3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back. Cass Cene, Lou Tbox, Max Levell.
 4. `level_04` The Gauntlet: everything combined. Frank Rate, Dee Sync, Sven Tory.
-5. `level_05` The Tower: the user's vertical spiral level. Door2 is an elevator platform (button on it, rises 10m). Hugh Dee, Mike Rotransaction, Rhea Spawn.
+5. `level_05` The Tower: the user's vertical spiral level. Door2 is an elevator platform (button on it, rises 10m). David Goodenough, Mike Rotransaction, Rhea Spawn.
 6. `level_06` Victory lap (**post-launch**, the $4.99 DLC): a straight road blocked by a wall. Its button raises the wall
    AND `Geometry/Maze` (every maze wall is a door, sunk 3.6 m into the block), so the route has to be painted blind.
    Liv Elup, Lou Tbox, Sven Tory.
