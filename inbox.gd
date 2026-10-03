@@ -26,7 +26,7 @@ Welcome to the [b]Level Readability Department[/b] at Synergex Interactive! As d
 
 [ul]Your workstation is a [b]ThinkBox 2009[/b]. Due to budget constraints, it can only render the game as [b]grey boxes[/b]. The testers play on the real hardware and see HYPERION LEGENDS in all its ray-traced, 12K-textured glory. Please do not tell them what you see. They will feel sorry for you.
 Use as little paint as possible. The art team spent four years on those textures and says yellow paint "ruins the immersion". You will have to take their word for it.
-Every star the testers give us goes straight into a slide for the investors. The investors like five stars. The investors have asked us not to show them fewer than five stars.
+Every star the testers give us goes straight into a slide for the investors. They like five stars. They have asked us not to show them fewer than five stars.
 Each tester is different. Read their profile. Some of them will need a lot of help. Some of them will jump off anything. All of them write reviews.
 If something goes wrong during a session, you [i]can[/i] push a hotfix. Please don't. The testers notice, and so does Legal.
 Paint is expensive. Use it like it comes out of your salary. (It does.)[/ul]

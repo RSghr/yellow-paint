@@ -14,7 +14,7 @@ const CONTROLS := [
 	["move_left", "Move left"],
 	["move_back", "Move back"],
 	["move_right", "Move right"],
-	["jump", "Jump (hold in the air: jetpack)"],
+	["jump", "Jump (hold in the air to fly)"],
 	["sprint", "Sprint"],
 	["toggle_fly", "Fly mode on/off"],
 	["fly_down", "Fly down"],

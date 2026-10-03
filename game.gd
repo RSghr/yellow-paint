@@ -23,7 +23,7 @@ const RESULTS_CARD := preload("res://results_card.gd")
 @export_group("Scoring")
 @export var optimal_margin := 5  ## Optimal = round minimum + this. Enough slack to also grab the coins.
 @export var limit_margin := 10  ## Can size = optimal + this.
-@export var retry_hold_time := 2.0  ## Seconds R must be held to retry (avoids accidental resets).
+@export var retry_hold_time := 1.0  ## Seconds R must be held to retry (avoids accidental resets).
 
 var level: Level
 var runner: Runner
