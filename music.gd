@@ -65,6 +65,12 @@ func _set_volume(v: float, p: AudioStreamPlayer) -> void:
 	p.volume_db = linear_to_db(maxf(v, 0.0001))
 
 
+## The stream of the track currently playing (or fading in), null if silent.
+func playing_stream() -> AudioStream:
+	var p := _players[_active]
+	return p.stream if p.playing else null
+
+
 func stop() -> void:
 	play("")
 
