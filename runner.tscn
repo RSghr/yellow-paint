@@ -1,6 +1,6 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bk1yyg8iwgg04"]
 
-[ext_resource type="Script" path="res://runner.gd" id="1_runner"]
+[ext_resource type="Script" uid="uid://ce4ncesp8d5pj" path="res://runner.gd" id="1_runner"]
 
 [sub_resource type="CapsuleShape3D" id="Shape_runner"]
 radius = 0.4
@@ -22,36 +22,34 @@ emission_enabled = true
 emission = Color(0.3, 0.9, 1, 1)
 emission_energy_multiplier = 1.5
 
-[node name="Runner" type="CharacterBody3D"]
+[node name="Runner" type="CharacterBody3D" unique_id=746392746]
 collision_layer = 2
-collision_mask = 1
 script = ExtResource("1_runner")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=672795495]
 shape = SubResource("Shape_runner")
 
-[node name="Body" type="Node3D" parent="."]
+[node name="Body" type="Node3D" parent="." unique_id=1378335428]
 
-[node name="Mesh" type="MeshInstance3D" parent="Body"]
+[node name="Mesh" type="MeshInstance3D" parent="Body" unique_id=1119528552]
 mesh = SubResource("Mesh_runner")
 surface_material_override/0 = SubResource("Mat_runner")
 
-[node name="Head" type="Node3D" parent="Body"]
+[node name="Head" type="Node3D" parent="Body" unique_id=2077949356]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, 0)
 
-[node name="Visor" type="MeshInstance3D" parent="Body/Head"]
+[node name="Visor" type="MeshInstance3D" parent="Body/Head" unique_id=299163773]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.33)
 mesh = SubResource("Mesh_visor")
 surface_material_override/0 = SubResource("Mat_visor")
 
-[node name="Speech" type="Label3D" parent="."]
+[node name="Speech" type="Label3D" parent="." unique_id=924152467]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, 0)
+pixel_size = 0.004
 billboard = 1
 no_depth_test = true
-pixel_size = 0.004
-font_size = 32
-outline_size = 10
 text = "..."
+outline_size = 10
 vertical_alignment = 2
-width = 600.0
 autowrap_mode = 3
+width = 600.0

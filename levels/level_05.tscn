@@ -14,9 +14,9 @@ script = ExtResource("lvl_script")
 level_name = "The Tower"
 intro_text = "Manage to reach the the top and collect all the coins!"
 tester_1 = "Hugh Dee"
-minimum_1 = 20
+minimum_1 = 18
 tester_2 = "Mike Rotransaction"
-minimum_2 = 20
+minimum_2 = 16
 tester_3 = "Rhea Spawn"
 minimum_3 = 20
 
@@ -109,10 +109,6 @@ size = Vector3(3, 2, 3)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.458008, 12.897214, -2.4923654)
 size = Vector3(3, 2, 7)
 
-[node name="Breakable2" parent="Geometry" unique_id=71381949 instance=ExtResource("3_7d3dm")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.029793, 13.739384, 0.026247144)
-size = Vector3(2, 0.3, 2)
-
 [node name="Block13" parent="Geometry" unique_id=570256782 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.950571, 14.801603, 4.5020137)
 size = Vector3(6, 2, 3)
@@ -128,13 +124,16 @@ target = NodePath("../Door2")
 [node name="Door2" parent="Geometry" unique_id=1619902503 instance=ExtResource("5_a6hey")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.782, 16.01, 0)
 move_distance = 10.0
-is_platform = true
 open_time = 3.0
+is_platform = true
 size = Vector3(4, 0.5, 4)
 
 [node name="Block15" parent="Geometry" unique_id=1362436523 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.600133, 15.756359, 0.13983011)
 size = Vector3(5, 1, 5)
+
+[node name="Block16" parent="Geometry" unique_id=1104095163 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.888773, 14.834821, 0.01677066)
 
 [node name="Interactables" type="Node3D" parent="." unique_id=410667203]
 editor_description = "Put breakable.tscn, door.tscn and wall_button.tscn instances here."
@@ -158,7 +157,7 @@ transform = Transform3D(0.99999183, 0, 0.0040316433, 0, 1, 0, -0.0040316433, 0, 
 transform = Transform3D(0.99999183, 0, 0.0040316433, 0, 1, 0, -0.0040316433, 0, 0.99999183, 17.243387, 11.99527, -4.6877923)
 
 [node name="Coin6" parent="Coins" unique_id=1217212480 instance=ExtResource("coin")]
-transform = Transform3D(0.99999183, 0, 0.0040316433, 0, 1, 0, -0.0040316433, 0, 0.99999183, 19.253342, 14.007896, -0.17167711)
+transform = Transform3D(0.99999183, 0, 0.0040316433, 0, 1, 0, -0.0040316433, 0, 0.99999183, 19.057505, 15.845251, -0.009345531)
 
 [node name="Coin7" parent="Coins" unique_id=2022864725 instance=ExtResource("coin")]
 transform = Transform3D(0.038701836, 0, 0.99925077, 0, 1, 0, -0.99925077, 0, 0.038701836, 5.0276933, 17.252077, 4.1174307)
