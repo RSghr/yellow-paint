@@ -139,6 +139,9 @@ const HOTFIX_QUOTES := {
 
 
 static func profile(tester: String) -> Dictionary:
+	if not ROSTER.has(tester):
+		# A renamed tester still used by a level would silently get the default tester's traits.
+		push_warning("FocusGroup: no tester named \"%s\" in ROSTER (renamed?). Using %s's traits." % [tester, DEFAULT_TESTER])
 	return ROSTER.get(tester, ROSTER[DEFAULT_TESTER])
 
 

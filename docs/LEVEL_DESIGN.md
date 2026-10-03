@@ -162,7 +162,7 @@ The numbers behind the stars are in `runner.gd`, export group "Traits" (one valu
 | Frank Rate | PC Gamerish: 240 FPS Edition | ★★★ Precise | ★★★ Blind trust | ★★★ Explorer |
 | Dee Sync | Twitchy (streamer, 14 viewers) | ★☆☆ Incapable | ★★★ Blind trust | ★★☆ Curious |
 | Sven Tory | Destructoad | ★★☆ Hit or miss | ★☆☆ Needs a whole bucket | ★★★ Explorer |
-| Hugh Dee | The Casual Observer | ★★☆ Hit or miss | ★★★ Blind trust | ★☆☆ No paint, no way |
+| David Goodenough | The Casual Observer | ★★☆ Hit or miss | ★★★ Blind trust | ★☆☆ No paint, no way |
 | Mike Rotransaction | Freemium Times | ★☆☆ Incapable | ★★☆ Thoughtful | ★★★ Explorer |
 
 ### Current lineups
@@ -175,7 +175,7 @@ The minimums are placeholders until measured in playtesting.
 | `level_02` Breakables | Bea Tah (min 3) | Moe Cap (min 3) | Liv Elup (min 3) |
 | `level_03` Buttons | Cass Cene (min 6) | Lou Tbox (min 6) | Max Levell (min 12) |
 | `level_04` The Gauntlet | Frank Rate (min 10) | Dee Sync (min 10) | Sven Tory (min 20) |
-| `level_05` The Tower | Hugh Dee (min 20) | Mike Rotransaction (min 20) | Rhea Spawn (min 20) |
+| `level_05` The Tower | David Goodenough (min 20) | Mike Rotransaction (min 20) | Rhea Spawn (min 20) |
 
 ### Add a new tester
 
