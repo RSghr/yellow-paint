@@ -4,6 +4,12 @@ extends Control
 ##   title card > scrolling credits > what the investors said > what the focus group said
 ##   > the scores (critics first, then gamers) > the ending's name > back to the desktop (Patch 1.1).
 ## Hold Space / Enter / left click to fast-forward. Texts per ending live in endings.gd.
+##
+## PREVIEW: open credits.tscn and press F6. Pick the ending with `preview_ending` (Inspector, on the root),
+## or press 1 / 2 / 3 during the preview to restart it as Investors / GOTY / Mostly Fine.
+## Music: music_credits_<ending> (investors / goty / decent) if it exists, else music_credits, else music_desk.
+## A preview never touches the save. A label at the top shows the elapsed time vs the music's length, and
+## the Output panel prints both at the end, to check the credits track is long enough.
 
 const ENDINGS := preload("res://endings.gd")
 const YELLOW := Color(1, 0.82, 0.05)
@@ -11,7 +17,17 @@ const SOFT := Color(1, 1, 1, 0.55)
 const SCROLL_SPEED := 95.0  ## Pixels per second for the credits roll.
 const FAST := 6.0  ## Fast-forward speed while held.
 
+## Ending shown when the credits are run on their own (F6), not after a real greenlight.
+@export_enum("investors", "goty", "decent") var preview_ending := "goty"
+
+static var _restart_as := ""  ## Set by the 1/2/3 keys in a preview: the ending to restart with.
+const PREVIEW_KEYS := {KEY_1: "investors", KEY_2: "goty", KEY_3: "decent"}
+
 var _seq: Tween
+var _preview := false  ## Not a real launch: don't change the save.
+var _elapsed := 0.0  ## Real seconds since the credits started.
+var _fast_forwarded := false
+var _preview_label: Label
 var _ending: Dictionary
 var _hint: Label
 
@@ -19,8 +35,17 @@ var _hint: Label
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	_ending = ENDINGS.info(Progress.ending)
-	Music.play("credits")
+	_preview = Progress.ship_state != "credits"
+	if _restart_as != "":
+		preview_ending = _restart_as
+		_restart_as = ""
+	var ending_id: String = preview_ending if _preview else Progress.ending
+	_ending = ENDINGS.info(ending_id)
+	# Each ending can have its own track; otherwise the shared credits track, otherwise the desk one.
+	var track := "credits"
+	if Music.has_track("credits_" + ending_id):
+		track = "credits_" + ending_id
+	Music.play(track)
 	var bg := ColorRect.new()
 	bg.color = Color.BLACK
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -36,14 +61,31 @@ func _ready() -> void:
 	_hint.offset_bottom = -16
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(_hint)
+	if _preview:
+		_preview_label = _label("", 16, Color(1, 0.82, 0.05, 0.7))
+		_preview_label.position = Vector2(20, 14)
+		add_child(_preview_label)
+		print("[Credits preview] ending: %s, music: %s" % [_ending.title, _music_info()])
 	_build.call_deferred()  # Needs the viewport size.
 
 
-func _process(_delta: float) -> void:
+func _unhandled_input(event: InputEvent) -> void:
+	if _preview and event is InputEventKey and event.pressed and not event.echo \
+			and PREVIEW_KEYS.has(event.physical_keycode):
+		_restart_as = PREVIEW_KEYS[event.physical_keycode]
+		get_tree().reload_current_scene()
+
+
+func _process(delta: float) -> void:
 	var held := Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_ENTER) \
 		or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
 	if _seq and _seq.is_valid():
 		_seq.set_speed_scale(FAST if held else 1.0)
+	_elapsed += delta
+	_fast_forwarded = _fast_forwarded or held
+	if _preview_label:
+		_preview_label.text = "PREVIEW (save untouched, 1/2/3 = Investors/GOTY/Mostly Fine)  ·  ending: %s  ·  elapsed %s%s  ·  music: %s" % [
+			_ending.title, _time(_elapsed), " (fast-forwarded)" if _fast_forwarded else "", _music_info()]
 
 
 func _build() -> void:
@@ -260,9 +302,26 @@ func _set_score(block: Dictionary, value: float, max_value: int, decimal: bool) 
 
 
 func _finish() -> void:
-	Progress.finish_credits()
+	if _preview:
+		print("[Credits preview] the credits lasted %s%s. Music: %s" % [
+			_time(_elapsed), " (fast-forward was used, so it's shorter than real)" if _fast_forwarded else "", _music_info()])
+	else:
+		Progress.finish_credits()
 	Progress.desktop_fade_in = true
 	get_tree().change_scene_to_file(Progress.MENU_SCENE)
+
+
+## "music_credits.ogg, 2:31" (or the desk track it fell back to, or "none").
+func _music_info() -> String:
+	var stream: AudioStream = Music.playing_stream()
+	if stream == null:
+		return "none (add audio/music_credits or music_desk)"
+	return "%s, %s long" % [stream.resource_path.get_file(), _time(stream.get_length())]
+
+
+static func _time(seconds: float) -> String:
+	var t := roundi(seconds)
+	return "%d:%02d" % [t / 60, t % 60]
 
 
 # --- Helpers ---------------------------------------------------------------

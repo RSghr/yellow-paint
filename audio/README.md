@@ -39,4 +39,5 @@ Played by the `Music` autoload on the "Music" bus (volume: Company Settings > Mu
 | `music_desk` | The company desktop (main menu) |
 | `music_game` | Inside a level (every level, unless it sets its own) |
 | `music_credits` | Launch-day credits (plays `music_desk` if missing) |
+| `music_credits_investors` / `_goty` / `_decent` | Optional: credits music for one ending only (else `music_credits`) |
 | `music_<anything>` | A level whose `music` property is `<anything>` (e.g. `music = "maze"` → `music_maze.ogg`) |
