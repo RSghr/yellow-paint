@@ -191,8 +191,12 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## V (AI debug view): the tester's jump reach, centred where you aim (on a floor), or on the tester while spectating.
+## Only while painting (not from Enter until R).
 func _update_reach_gizmo() -> void:
 	if not runner.debug_view:
+		return
+	if _playtest_running:
+		runner.draw_reach(Vector3.INF)  # A painting tool: hidden during the playtest so the vision view stays clean.
 		return
 	if spectating:
 		runner.draw_reach(runner.feet())
@@ -276,6 +280,7 @@ func _reset_run() -> void:
 	paint.hotfix_mode = false
 	hotfixes = 0
 	paint.remove_hotfixes()  # Back to the route as it was before the playtest.
+	paint.restore_stashed()  # Paint on planks/doors broken or opened during the run comes back with them.
 	message_label.text = ""
 	results_card.hide_card()
 	get_tree().call_group("resettable", "reset_state")  # Coins, doors, buttons, breakables.

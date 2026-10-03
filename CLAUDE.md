@@ -35,7 +35,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
 | `level.gd` | `@tool` root script of every level: `level_name`, `intro_text`, `death_height`, `post_launch`, `music` (track name, empty = game), 3 rounds (`tester_N` dropdown + `minimum_N`); editor warnings for missing spawns/goal/bad lineup. F6 on a level scene launches it inside `game.tscn`. |
 | `levels/` | Level scenes: world only (Geometry, Interactables/Coins, Goal, `RunnerSpawn`/`OperatorSpawn` Marker3Ds). |
-| `runner.gd/.tscn` | The AI playtester (perception, trust, planning, speech). **V** = debug view: vision cone, known paint, plan, plus the **reach cylinder** (`draw_reach`, called every frame by `game.gd`): ground band = jump distance, floating band = jump height, label with the numbers. Centred on the floor the operator aims at (spectating: on the tester). |
+| `runner.gd/.tscn` | The AI playtester (perception, trust, planning, speech). **V** = debug view: vision cone, known paint, plan, plus the **reach cylinder** (`draw_reach`, called every frame by `game.gd`): ground band = jump distance, floating band = jump height, label with the numbers. Centred on the floor the operator aims at (spectating: on the tester). Only while painting: hidden from Enter until R so the vision view stays clean. |
 | `character.gd/.tscn` | The operator: FPS movement, jetpack (hold Space), fly mode (F), paint (LMB), scrape (RMB). |
 | `paint_manager.gd`, `paint_mark.gd` | Splats (Decals). Each mark has a `role`: `nav` (stand here), `interact` (use this), `none`. Paint limit + refunds. |
 | `door.gd` | Door / moving platform (AnimatableBody3D): slides `move_distance` along `move_direction` when opened (editor shows a cyan ghost at the end position). `is_platform`: top paint = nav and rides along (`PaintMark.attach_to`), group `mover`, `moving` while sliding. |
@@ -131,7 +131,7 @@ Hotfixes (splats painted during a playtest): 0 → 0, 1-3 → -1, 4+ → -2. The
 not in `splats_used`, no paint penalty) and are **removed on R**. From Enter until R the can is in **Hotfix mode**:
 can, crosshair, HUD and new splats turn red (`PaintManager.hotfix_color`); hotfix splats are bigger, pop in and pulse.
 Minimum 1★. Can size = optimal + 10. Hotfix quotes in `FocusGroup.HOTFIX_QUOTES`; the tester reacts when it notices one.
-Scraping refunds paint; paint destroyed with smashed/opened objects stays spent.
+Scraping refunds paint. Paint on objects that break or open (planks, doors) is put aside (`PaintManager.remove_marks_on` → `_stashed`), still counted, and comes back with the object on reset (`restore_stashed()` in `_reset_run`: hold R or next tester).
 Scraping (and Backspace clear) is **locked during a playtest**: from Enter until R (reset). Adding paint is still allowed
 but each splat is a **hotfix** (`PaintMark.hotfix`, counted in `game.gd` `hotfixes`; R deletes them via `remove_hotfixes()`).
 
