@@ -39,6 +39,7 @@ var round_index := 0  ## 0-2: which focus tester is playing.
 var round_stars: Array[int] = [0, 0, 0]  ## Stars per round (0 = not finished yet).
 var round_times: Array = [null, null, null]  ## {tester, session, lost} per finished round (logged, not scored).
 var _retry_hold := 0.0
+var _reach_anchor := Vector3.INF  ## Last floor the operator aimed at (the reach gizmo stays there when aiming at a wall).
 var _attempt_open := false  ## A playtest is running and its stats haven't been logged yet.
 var _round_tested := false  ## This round's tester has been started at least once (retries count after that).
 var _retry_lock := false  ## R must be released before another retry can start.
@@ -157,6 +158,7 @@ func paint_limit() -> int:
 
 func _process(delta: float) -> void:
 	_process_retry_hold(delta)
+	_update_reach_gizmo()
 	if _out_of_paint_timer > 0.0:
 		_out_of_paint_timer -= delta
 		if _out_of_paint_timer <= 0.0:
@@ -186,6 +188,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		_start_round(round_index + 1)  # After the 3rd tester it's back to the computer (Tab).
 	elif event.is_action_pressed("back_to_menu"):
 		Progress.to_menu()
+
+
+## V (AI debug view): the tester's jump reach, centred where you aim (on a floor), or on the tester while spectating.
+func _update_reach_gizmo() -> void:
+	if not runner.debug_view:
+		return
+	if spectating:
+		runner.draw_reach(runner.feet())
+		return
+	var hit: Dictionary = operator._aim_ray()
+	if not hit.is_empty() and hit.normal.y > 0.7:
+		_reach_anchor = hit.position
+	runner.draw_reach(_reach_anchor if _reach_anchor != Vector3.INF else runner.feet())
 
 
 ## Hold R for `retry_hold_time` seconds to retry; a bar fills at the bottom of the screen.

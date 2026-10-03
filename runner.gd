@@ -94,6 +94,9 @@ var profile := {jump = 1, trust = 1, patience = 1}
 		debug_view = value
 		if _debug_mesh:
 			_debug_mesh.visible = value
+		if _reach_mesh:
+			_reach_mesh.visible = value
+			_reach_label.visible = value
 
 var state := State.WAITING
 var session_time := 0.0  ## Seconds since the playtest started (stops at the flag). Logged, not scored.
@@ -148,6 +151,8 @@ var _last_pos := Vector3.ZERO
 @onready var _body: Node3D = $Body
 @onready var _head: Node3D = $Body/Head
 var _debug_mesh: MeshInstance3D
+var _reach_mesh: MeshInstance3D  ## V: the jump reach cylinder (drawn every frame by draw_reach()).
+var _reach_label: Label3D
 
 
 func _ready() -> void:
@@ -1397,6 +1402,82 @@ func _setup_debug() -> void:
 	_debug_mesh.material_override = mat
 	_debug_mesh.visible = debug_view
 	add_child(_debug_mesh)
+
+	_reach_mesh = MeshInstance3D.new()
+	_reach_mesh.top_level = true
+	_reach_mesh.mesh = ImmediateMesh.new()
+	var reach_mat := StandardMaterial3D.new()
+	reach_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	reach_mat.vertex_color_use_as_albedo = true
+	reach_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	reach_mat.cull_mode = BaseMaterial3D.CULL_DISABLED  # Bands are visible from both sides.
+	_reach_mesh.material_override = reach_mat  # Depth-tested: ledges cut the rings, so you see what's inside.
+	_reach_mesh.visible = debug_view
+	add_child(_reach_mesh)
+	_reach_label = Label3D.new()
+	_reach_label.top_level = true
+	_reach_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_reach_label.no_depth_test = true
+	_reach_label.font_size = 40
+	_reach_label.pixel_size = 0.01
+	_reach_label.outline_size = 10
+	_reach_label.modulate = REACH_COLOR
+	_reach_label.visible = debug_view
+	add_child(_reach_label)
+
+
+const REACH_COLOR := Color(0.35, 0.9, 1.0)
+
+## The jump reach as one cylinder centred on `center` (a spot it would stand on):
+## bottom ring = how far it can jump, top ring (raised by max_jump_up) = the highest ledge it can land on.
+## A ledge whose top pokes above the top ring is too high; a landing outside the rings is too far.
+## (It takes off 0.6 m back from an edge, so measure from where it would actually stand.)
+func draw_reach(center: Vector3) -> void:
+	var im: ImmediateMesh = _reach_mesh.mesh
+	im.clear_surfaces()
+	if center == Vector3.INF:
+		_reach_label.visible = false
+		return
+	_reach_label.visible = debug_view
+	var r := max_jump_distance
+	var up := max_jump_up
+	var segments := 64
+	var ring := func(a: float) -> Vector3: return Vector3(cos(a), 0, sin(a))
+	im.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in segments:
+		var a: Vector3 = ring.call(TAU * i / segments)
+		var b: Vector3 = ring.call(TAU * (i + 1) / segments)
+		# Faint disc on the ground: how far it can jump from here.
+		im.surface_set_color(Color(REACH_COLOR, 0.07))
+		for v in [center + Vector3.UP * 0.03, center + a * r + Vector3.UP * 0.03, center + b * r + Vector3.UP * 0.03]:
+			im.surface_add_vertex(v)
+		# Ground ring: a flat band, easy to see from above.
+		im.surface_set_color(Color(REACH_COLOR, 0.85))
+		var y0 := Vector3.UP * 0.04
+		for v in [center + a * (r - 0.08) + y0, center + a * (r + 0.08) + y0, center + b * (r + 0.08) + y0,
+				center + a * (r - 0.08) + y0, center + b * (r + 0.08) + y0, center + b * (r - 0.08) + y0]:
+			im.surface_add_vertex(v)
+		# Height ring: an upright band at max_jump_up, easy to see from the side.
+		im.surface_set_color(Color(REACH_COLOR, 0.55))
+		var lo := Vector3.UP * (up - 0.06)
+		var hi := Vector3.UP * (up + 0.06)
+		for v in [center + a * r + lo, center + a * r + hi, center + b * r + hi,
+				center + a * r + lo, center + b * r + hi, center + b * r + lo]:
+			im.surface_add_vertex(v)
+	im.surface_end()
+	# Thin uprights joining the rings, and a centre post showing the height.
+	im.surface_begin(Mesh.PRIMITIVE_LINES)
+	im.surface_set_color(Color(REACH_COLOR, 0.35))
+	for i in 8:
+		var a: Vector3 = ring.call(TAU * i / 8.0)
+		im.surface_add_vertex(center + a * r)
+		im.surface_add_vertex(center + a * r + Vector3.UP * up)
+	im.surface_set_color(Color(REACH_COLOR, 0.9))
+	im.surface_add_vertex(center)
+	im.surface_add_vertex(center + Vector3.UP * up)
+	im.surface_end()
+	_reach_label.global_position = center + Vector3.UP * (up * 0.5)  # Mid-height: stays on screen when looking down.
+	_reach_label.text = "%s: %.1f m across · %.1f m up" % [tester_name, r, up]
 
 
 func _draw_debug() -> void:

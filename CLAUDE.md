@@ -35,7 +35,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
 | `level.gd` | `@tool` root script of every level: `level_name`, `intro_text`, `death_height`, `post_launch`, `music` (track name, empty = game), 3 rounds (`tester_N` dropdown + `minimum_N`); editor warnings for missing spawns/goal/bad lineup. F6 on a level scene launches it inside `game.tscn`. |
 | `levels/` | Level scenes: world only (Geometry, Interactables/Coins, Goal, `RunnerSpawn`/`OperatorSpawn` Marker3Ds). |
-| `runner.gd/.tscn` | The AI playtester (perception, trust, planning, speech). |
+| `runner.gd/.tscn` | The AI playtester (perception, trust, planning, speech). **V** = debug view: vision cone, known paint, plan, plus the **reach cylinder** (`draw_reach`, called every frame by `game.gd`): ground band = jump distance, floating band = jump height, label with the numbers. Centred on the floor the operator aims at (spectating: on the tester). |
 | `character.gd/.tscn` | The operator: FPS movement, jetpack (hold Space), fly mode (F), paint (LMB), scrape (RMB). |
 | `paint_manager.gd`, `paint_mark.gd` | Splats (Decals). Each mark has a `role`: `nav` (stand here), `interact` (use this), `none`. Paint limit + refunds. |
 | `door.gd` | Door / moving platform (AnimatableBody3D): slides `move_distance` along `move_direction` when opened (editor shows a cyan ghost at the end position). `is_platform`: top paint = nav and rides along (`PaintMark.attach_to`), group `mover`, `moving` while sliding. |
