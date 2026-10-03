@@ -10,10 +10,13 @@ config_version=5
 
 [application]
 
-config/name="yellow-paint"
+config/name="Yellow Paint"
 run/main_scene="res://level_select.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0.047058824, 0.08235294, 0.15686275, 1)
+boot_splash/stretch_mode=4
+boot_splash/image="uid://cb75s2l2e76rj"
+config/icon="uid://bmrcnfneco0mg"
 
 [autoload]
 
