@@ -252,7 +252,7 @@ func greenlight() -> void:
 	ending = compute_ending()
 	ship_state = "credits"
 	_deliver(MAIL_WRITER.ending_mail(ending, _ending_scores()), "ending")
-	_deliver(MAIL_WRITER.patch_notes(ending, tester_totals(), level_stats()), "patch_notes")
+	_deliver(MAIL_WRITER.patch_notes(ending, tester_totals(patch_note_keys()), level_stats()), "patch_notes")
 	_save()
 
 
@@ -289,10 +289,13 @@ func log_tester(tester: String, data: Dictionary) -> void:
 	_save()
 
 
-## Each tester's record, all levels added up: {"Rhea Spawn": {tests, deaths...}}.
-func tester_totals() -> Dictionary:
+## Each tester's record, levels added up: {"Rhea Spawn": {tests, deaths...}}.
+## `keys` limits it to some levels (level keys like "level_04"); empty = every level.
+func tester_totals(keys: Array = []) -> Dictionary:
 	var out := {}
 	for key in playtest_stats:
+		if not keys.is_empty() and key not in keys:
+			continue
 		for tester in playtest_stats[key]:
 			var t: Dictionary = out.get(tester, {})
 			for k in STAT_KEYS:
@@ -301,15 +304,20 @@ func tester_totals() -> Dictionary:
 	return out
 
 
-## [{name, testers: {tester: stats}}] in level order (stats with no level last, named "").
+## Keys of the levels the patch notes talk about: the ones that decide the ending (no tutorials,
+## no post-launch). Stats from old saves (key "", level unknown) are left out too.
+func patch_note_keys() -> Array:
+	return ending_levels().map(func(i): return _key(LEVELS[i].path))
+
+
+## [{name, testers: {tester: stats}}] of the patch-note levels, in level order.
 func level_stats() -> Array:
 	var out := []
-	for info in LEVELS:
-		var key := _key(info.path)
+	for key in patch_note_keys():
 		if playtest_stats.has(key):
-			out.append({name = info.name, testers = playtest_stats[key]})
-	if playtest_stats.has(""):
-		out.append({name = "", testers = playtest_stats[""]})
+			for info in LEVELS:
+				if _key(info.path) == key:
+					out.append({name = info.name, testers = playtest_stats[key]})
 	return out
 
 

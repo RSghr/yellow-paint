@@ -61,7 +61,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   kept, no more score mails (no stakes), `post_launch` levels open (`Level.post_launch`, tagged DLC), Start menu shows
   the ending. The results card of the last level says "Chad needs your greenlight" / "The launch is on hold until...".
 - **Tester stats** (`Progress.playtest_stats`, per level key then tester name, across all their tests, never scored;
-  `tester_totals()` adds levels up per tester, `level_stats()` lists them in level order; old saves land under key ""): tests, finishes,
+  `tester_totals(keys)` adds levels up per tester, `level_stats()` lists levels 4+ in order; old saves land under key ""). The patch notes only cover levels 4+ (`patch_note_keys()`: no tutorials, no post-launch, no old unattributed stats); the credits quotes use every level: tests, finishes,
   deaths, retries (hold R after starting), failed_jumps (`Runner.failed_jumps`: landed off target or died mid-jump),
   lost/played seconds, hotfixes_seen (`Runner.hotfixes_seen`), hotfixes painted. Logged by `game.gd` `_close_attempt`
   when an attempt ends (flag, fall, retry, leaving). F6 runs aren't logged. Used by the patch notes and the credits.
