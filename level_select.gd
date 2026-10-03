@@ -3,13 +3,17 @@ extends Control
 ##   Desktop icons: Inlook (mail, inbox.gd), Level Select, Company Settings, Recycle Bin.
 ##   Taskbar: Start menu (with Shut down), open windows, clock.
 ##   Quitting = shutting the computer down, which HR has opinions about.
-## First launch opens Inlook on the boss's welcome email. Coming back from a level reopens Level Select.
+## First launch is a clean desktop (the Inlook badge does the talking). Coming back from a level reopens Level Select.
+## Release: Chad's "greenlight" mail has the ship button; after it, closing Inlook (patch notes read) rolls
+## the credits (credits.gd), which come back here for Patch 1.1.
 ## Everything is built in code; windows are desk_window.gd.
 
 const SETTINGS_MENU := preload("res://settings_menu.gd")
 const DESK_WINDOW := preload("res://desk_window.gd")
 const INBOX := preload("res://inbox.gd")
 const SPLAT := preload("res://art/paint_splat.png")
+const CREDITS_SCENE := "res://credits.tscn"
+const ENDINGS := preload("res://endings.gd")
 
 const YELLOW := Color(1, 0.82, 0.05)
 const INK := Color(0.12, 0.12, 0.15)
@@ -38,6 +42,9 @@ func _ready() -> void:
 	add_child(_layer)
 	_build_taskbar()
 
+	if Progress.desktop_fade_in:  # Back from the credits: the screen comes back on.
+		Progress.desktop_fade_in = false
+		_fade_in()
 	if Progress.new_mail_ping and Progress.seen_intro:
 		Progress.new_mail_ping = false
 		_toast.call_deferred()
@@ -323,6 +330,9 @@ func _show_start_menu() -> void:
 		_start_menu.add_child(col)
 		col.add_child(_label("Contractor #%d" % Progress.contractor_id(), 20, Color.WHITE))
 		col.add_child(_label("Level Readability Department", 14, Color(1, 1, 1, 0.5)))
+		if Progress.shipped():
+			col.add_child(_label("HYPERION LEGENDS v1.1  ·  shipped: %s" % ENDINGS.info(Progress.ending).title,
+				14, YELLOW))
 		col.add_child(HSeparator.new())
 		for item in [["Inlook", func(): _open_inlook()], ["Level Select", _open_levels],
 				["Company Settings", _open_settings], ["Recycle Bin", _open_bin]]:
@@ -383,13 +393,13 @@ func _open_levels() -> void:
 	for side in ["left", "right", "top", "bottom"]:
 		pad.add_theme_constant_override("margin_" + side, 18)
 	pad.add_child(col)
-	col.add_child(_label("Scheduled playtest sessions", 24, INK))
+	col.add_child(_label("Patch 1.1: replay any session" if Progress.shipped() else "Scheduled playtest sessions", 24, INK))
 	col.add_child(_label("Each session: 3 focus testers, one after the other. Your paint stays between testers.", 15, MUTED))
 	var hidden := 0
 	for i in Progress.LEVELS.size():
 		if Progress.is_unlocked(i):
 			col.add_child(_level_row(i))
-		else:
+		elif not Progress.LEVELS[i].post_launch:
 			hidden += 1  # Locked levels are invisible: they arrive by email.
 	if hidden > 0:
 		col.add_child(_label("More playtests will be scheduled based on your results (%d/15 or better)." % Progress.UNLOCK_STARS, 15, MUTED))
@@ -424,7 +434,7 @@ func _level_row(i: int) -> Control:
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text.custom_minimum_size = Vector2(430, 0)
 	row.add_child(text)
-	text.add_child(_label(info.name, 22, INK))
+	text.add_child(_label(info.name + ("   [$4.99 DLC]" if info.post_launch else ""), 22, INK))
 	var best_time := Progress.best_total_time(info.path)
 	text.add_child(_label("Testers: " + ", ".join(Progress.level_testers(info.path))
 		+ (("   ·   best time " + Progress.format_time(best_time)) if best_time >= 0.0 else ""), 14, MUTED))
@@ -514,6 +524,10 @@ func _open_inlook(select := "") -> void:
 			pane.add_child(_welcome_buttons())
 		elif mail.id == "hr_exit":
 			pane.add_child(_hr_buttons())
+		elif mail.id == "greenlight":
+			pane.add_child(_greenlight_buttons())
+		elif mail.id == "patch_notes" and Progress.ship_state == "credits":
+			pane.add_child(_launch_buttons())
 		for r in rows.size():
 			_style_mail_row(rows[r], _mails[r], r == index)
 		folder.text = "Inbox (%d unread)" % INBOX.unread_count()
@@ -529,7 +543,8 @@ func _open_inlook(select := "") -> void:
 		_style_mail_row(row, _mails[i], false)
 	folder.text = "Inbox (%d unread)" % INBOX.unread_count()
 
-	_window("inlook", "Inlook - Inbox - contractor-%d@synergex-interactive.biz" % Progress.contractor_id(), root, Vector2(300, 70))
+	var win := _window("inlook", "Inlook - Inbox - contractor-%d@synergex-interactive.biz" % Progress.contractor_id(), root, Vector2(300, 70))
+	win.closed.connect(_on_inlook_closed)
 	var start := -1
 	for i in _mails.size():
 		if _mails[i].id == select:
@@ -625,6 +640,156 @@ func _hr_buttons() -> Control:
 	book.pressed.connect(func(): Sfx.play("ui_click"); _ask_resignation())
 	row.add_child(book)
 	return row
+
+
+func _yellow_button(text: String, width: float) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(width, 44)
+	b.add_theme_font_size_override("font_size", 18)
+	b.add_theme_color_override("font_color", INK)
+	b.add_theme_color_override("font_hover_color", INK)
+	b.add_theme_color_override("font_focus_color", INK)
+	for state in ["normal", "hover", "pressed", "focus"]:
+		var st := StyleBoxFlat.new()
+		st.bg_color = YELLOW.lightened(0.15) if state == "hover" else YELLOW
+		st.set_corner_radius_all(4)
+		b.add_theme_stylebox_override(state, st)
+	return b
+
+
+func _greenlight_buttons() -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_END
+	if Progress.ship_state != "":
+		var done := Button.new()
+		done.text = "Greenlit ✓"
+		done.disabled = true
+		done.custom_minimum_size = Vector2(200, 44)
+		done.add_theme_font_size_override("font_size", 18)
+		row.add_child(done)
+		return row
+	var go := _yellow_button("Give the greenlight...", 280)
+	go.pressed.connect(func(): Sfx.play("ui_click"); _ask_greenlight())
+	row.add_child(go)
+	return row
+
+
+func _launch_buttons() -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_END
+	var go := _yellow_button("Publish patch notes & launch", 320)
+	go.pressed.connect(func():
+		Sfx.play("ui_click")
+		if _windows.has("inlook"):
+			_windows.inlook.close_window())  # Closing Inlook rolls the credits.
+	row.add_child(go)
+	return row
+
+
+## Patch notes read and Inlook closed after the greenlight: launch day (the credits).
+func _on_inlook_closed() -> void:
+	if Progress.ship_state == "credits" and INBOX.is_read("patch_notes"):
+		_roll_credits()
+
+
+func _roll_credits() -> void:
+	var black := ColorRect.new()
+	black.color = Color.BLACK
+	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	black.mouse_filter = Control.MOUSE_FILTER_STOP
+	black.modulate.a = 0.0
+	add_child(black)
+	var t := create_tween()
+	t.tween_property(black, "modulate:a", 1.0, 1.6)
+	t.tween_interval(0.6)
+	t.tween_callback(func(): get_tree().change_scene_to_file(CREDITS_SCENE))
+
+
+func _fade_in() -> void:
+	var black := ColorRect.new()
+	black.color = Color.BLACK
+	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(black)
+	var t := create_tween()
+	t.tween_interval(0.4)
+	t.tween_property(black, "modulate:a", 0.0, 1.4)
+	t.tween_callback(black.queue_free)
+
+
+## A centred modal window over a dimmed desktop. Returns [overlay, window, close_callable].
+func _dialog(title: String, body: Control) -> Array:
+	var overlay := Control.new()
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(dim)
+	add_child(overlay)
+	_modal = overlay
+	var w = DESK_WINDOW.new()
+	w.title = title
+	w.body = body
+	overlay.add_child(w)
+	var close := func():
+		_modal = null
+		_close_modal = Callable()
+		if is_instance_valid(overlay):
+			overlay.queue_free()
+	_close_modal = close
+	w.closed.connect(close)
+	(func(): w.position = (get_viewport_rect().size - w.size) / 2.0).call_deferred()
+	return [overlay, w, close]
+
+
+## The ship button: shows what goes on the launch slide, then ships for good.
+func _ask_greenlight() -> void:
+	if _modal or Progress.ship_state != "":
+		return
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 14)
+	var pad := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		pad.add_theme_constant_override("margin_" + side, 26)
+	pad.add_child(col)
+	var lines: PackedStringArray = []
+	for i in Progress.ending_levels():
+		lines.append("%s: [b]%d/15[/b]" % [Progress.LEVELS[i].name, Progress.best(Progress.LEVELS[i].path)])
+	var text := RichTextLabel.new()
+	text.bbcode_enabled = true
+	text.fit_content = true
+	text.custom_minimum_size = Vector2(640, 0)
+	text.add_theme_color_override("default_color", INK)
+	for f in ["normal_font_size", "bold_font_size", "italics_font_size"]:
+		text.add_theme_font_size_override(f, 19)
+	text.text = ("[b]RELEASE APPROVAL[/b]\n\nI, Contractor #%d, give the final greenlight to ship [b]HYPERION LEGENDS: ETERNAL DAWN[/b].\n\nThe launch slide will show:\n[ul]%s[/ul]\n\nI understand that the launch slide is forever, and that the game cannot be un-shipped.\n[font_size=13][color=#6b6e7a]Tutorial sessions are not on the slide. Neither is the art.[/color][/font_size]") % [
+		Progress.contractor_id(), "\n".join(lines)]
+	col.add_child(text)
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_END
+	buttons.add_theme_constant_override("separation", 12)
+	col.add_child(buttons)
+	var wait := Button.new()
+	wait.text = "Not yet"
+	wait.custom_minimum_size = Vector2(160, 44)
+	wait.add_theme_font_size_override("font_size", 17)
+	buttons.add_child(wait)
+	var ship := _yellow_button("Greenlight & ship it", 260)
+	buttons.add_child(ship)
+	var d := _dialog("Release approval - DocuSigh", pad)
+	var close: Callable = d[2]
+	wait.pressed.connect(func(): Sfx.play("ui_click"); close.call())
+	ship.pressed.connect(func():
+		Sfx.play("ui_click")
+		close.call()
+		Progress.greenlight()
+		if _windows.has("inlook"):
+			_windows.inlook.close_window()
+		_open_inlook("ending")
+		Sfx.play("mail", 0.0))
+	wait.grab_focus.call_deferred()
 
 
 ## The exit interview: sign, confirm, the screen switches off, and a new contractor starts from scratch.

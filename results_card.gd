@@ -118,8 +118,9 @@ func show_round(data: Dictionary) -> void:
 		var total := _label("%d / %d ★" % [lv.total, lv.max], 40, YELLOW)
 		total.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		section.add_child(total)
-		if lv.get("unlocked", "") != "":
-			var note := _label("New playtest scheduled: %s. Check your Inlook." % lv.unlocked, 17, GOOD)
+		if lv.get("unlocked", "") != "" or lv.get("good_note", "") != "":
+			var note := _label(lv.get("good_note", "") if lv.get("good_note", "") != "" \
+				else "New playtest scheduled: %s. Check your Inlook." % lv.unlocked, 17, GOOD)
 			note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			note.custom_minimum_size = Vector2(WIDTH - 60, 0)

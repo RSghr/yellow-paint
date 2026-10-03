@@ -96,6 +96,8 @@ var profile := {jump = 1, trust = 1, patience = 1}
 var state := State.WAITING
 var session_time := 0.0  ## Seconds since the playtest started (stops at the flag). Logged, not scored.
 var time_lost := 0.0  ## Part of it spent lost: confused, wandering, or winding up an unpainted gamble.
+var failed_jumps := 0  ## Jumps that didn't land where it aimed (this attempt). Stats for the patch notes.
+var hotfixes_seen := 0  ## Hotfix splats it noticed (this attempt).
 var tester_name := "Playtester"  ## Set by the Game scene via apply_profile().
 
 var _path: Array[Dictionary] = []  ## Steps: {pos, jump, trust, leap}
@@ -193,6 +195,8 @@ func start() -> void:
 func reset_to_spawn() -> void:
 	session_time = 0.0
 	time_lost = 0.0
+	failed_jumps = 0
+	hotfixes_seen = 0
 	global_transform = _spawn
 	velocity = Vector3.ZERO
 	_path.clear()
@@ -510,6 +514,8 @@ func _process_jump(delta: float) -> void:
 			if off.length() < 1.2:
 				_arrive(step)
 				return
+			if step.get("jump", false):
+				failed_jumps += 1
 			# Any landing that isn't where it meant to go might be a fall.
 			if not _check_setback() and step.leap:
 				say(["Made it! ...mostly.", "Nailed it. Sort of."].pick_random(), true)
@@ -680,6 +686,8 @@ func _jump_to(step: Dictionary) -> void:
 
 
 func _die() -> void:
+	if state == State.JUMPING:
+		failed_jumps += 1  # Died mid-air: that jump didn't work out.
 	state = State.DEAD
 	_path.clear()
 	Sfx.play("fall", 0.0)
@@ -775,6 +783,7 @@ func _on_noticed(mark: PaintMark, blob: int) -> void:
 	if mark.role in ["interact", "nav"]:
 		_lost_time = 0.0
 	if mark.hotfix:
+		hotfixes_seen += 1
 		_lost_time = 0.0
 		_rethink = true
 		_urgent = true

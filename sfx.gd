@@ -24,6 +24,7 @@ const SOUNDS := {
 	"ui_click": "Menu button clicked",
 	"mail": "New email in Inlook (desktop notification)",
 	"power_off": "Computer switches off (resignation)",
+	"score_reveal": "Credits: a review score lands (critics, then gamers)",
 }
 const PLAYER_COUNT := 10
 

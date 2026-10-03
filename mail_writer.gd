@@ -3,12 +3,17 @@ extends RefCounted
 ##   announcement(...)  - from Chad: how your last level went (by score bracket) + the new playtest
 ##                        that got added to the scheduler.
 ##   performance(...)   - from Chad, when a level is finished under the unlock threshold.
+##   greenlight(...)    - from Chad, once every level scored 10+: the last greenlight before shipping.
+##   ending_mail(...)   - from Chad after the greenlight, depends on the ending (endings.gd).
+##   patch_notes(...)   - the day-one patch notes, built from every tester's record (Progress.tester_stats).
+##   patch_mail(...)    - from Chad after the credits: early access went well, Patch 1.1.
 ##   flavor_for(...)    - "flavor" mails: a parody of a toxic workplace. One is about a tester of the
 ##                        new level (their traits decide what kind of trouble they got into), and
 ##                        sometimes a generic one from the company.
 ## Edit the texts freely. Placeholders: {name} {outlet} {level} {total} {testers}.
 
 const CHAD := ["Chad Bossworth", "c.bossworth@synergex-interactive.biz"]
+const ENDINGS := preload("res://endings.gd")
 
 ## Chad's opening line about your last level, by total stars (out of 15).
 const BRACKETS := {
@@ -95,10 +100,154 @@ static func announcement(level_name: String, total: int, testers: PackedStringAr
 	return _mail(CHAD[0], CHAD[1], "New playtest scheduled: %s" % level_name, body, true)
 
 
-static func performance(level_name: String, total: int, needed: int, note := "") -> Dictionary:
-	var body := "Hi,\n\nAbout [b]%s[/b].\n\n%s\n\nThe next playtest stays [b]on hold[/b] until this session scores at least [b]%d/15[/b]. Please run it again.\n\nChad%s" % [
-		level_name, bracket_text(total), needed, ("\n\n" + note) if note != "" else ""]
+static func performance(level_name: String, total: int, needed: int, note := "", final := false) -> Dictionary:
+	var body := "Hi,\n\nAbout [b]%s[/b].\n\n%s\n\n%s stays [b]on hold[/b] until this session scores at least [b]%d/15[/b]. Please run it again.\n\nChad%s" % [
+		level_name, bracket_text(total), "The launch of HYPERION LEGENDS" if final else "The next playtest", needed,
+		("\n\n" + note) if note != "" else ""]
 	return _mail(CHAD[0], CHAD[1], "RE: %s results" % level_name, body, true)
+
+
+# --- Release ------------------------------------------------------------------
+
+static func greenlight(note := "") -> Dictionary:
+	var body := """Hi,
+
+Big day. Every playtest has been run and every department has signed off on [b]HYPERION LEGENDS: ETERNAL DAWN[/b]:
+
+[ul]Art: approved (grey)
+Legal: approved (with snacks)
+Marketing: approved (they announced the release date last week)
+The investors: approved (they did not read it)[/ul]
+
+You are the [b]last department[/b] that needs to give their greenlight.
+
+When you press the button below, the build ships. Whatever your [b]best scores[/b] are at that moment go on the launch slide, and the launch slide is forever. You can still rerun any playtest before you press it. Take your time. (Do not take your time.)
+
+Chad%s""" % (("\n\n" + note) if note != "" else "")
+	return _mail(CHAD[0], CHAD[1], "FINAL GREENLIGHT NEEDED: HYPERION LEGENDS (gold master)", body, true)
+
+
+## scores: [{name, stars}] of the levels that decided the ending.
+static func ending_mail(ending: String, scores: Array) -> Dictionary:
+	var lines: PackedStringArray = []
+	for sc in scores:
+		lines.append("%s: [b]%d/15[/b]" % [sc.name, sc.stars])
+	var table := "[ul]%s[/ul]" % "\n".join(lines)
+	var subject := ""
+	var body := ""
+	match ending:
+		"investors":
+			subject = "WE DID IT (the investors did it)"
+			body = "Hi,\n\nIt's shipping. Look at this slide:\n\n%s\n\nPerfect. Every. Single. Session. I showed it to the board and three investors cried. One of them bought a second yacht, to have somewhere to put the first one.\n\nThe art team says the game has \"no soul\" and \"plays itself\". The art team is not on the slide.\n\nThe day-one patch notes are next in your inbox. Read them, then close Inlook and enjoy launch day.\n\nChad"
+		"goty":
+			subject = "RE: the launch slide (we need to talk)"
+			body = "Hi,\n\nIt's shipping. Here is the slide:\n\n%s\n\n[b]Ten.[/b] Every session. Exactly the minimum. Not nine, not eleven. Do you know how hard it is to be [i]that[/i] consistently average? The investors asked if it was a typo. It is not a typo. I checked. Twice.\n\nWe're shipping anyway because Marketing already spent the budget on a blimp.\n\nThe day-one patch notes are next in your inbox. Read them, then close Inlook and enjoy launch day. We will discuss your future after the launch.\n\nChad"
+		_:
+			subject = "We're shipping!"
+			body = "Hi,\n\nIt's shipping. Here is the slide:\n\n%s\n\nThe investors looked at it for a long time and said \"fine\". I have decided to hear \"great\".\n\nThe day-one patch notes are next in your inbox. Read them, then close Inlook and enjoy launch day.\n\nChad"
+	return _mail(CHAD[0], CHAD[1], subject, body % table, true)
+
+
+## The day-one patch notes: every focus tester's record, written as fixes. stats = Progress.tester_stats.
+static func patch_notes(ending: String, stats: Dictionary) -> Dictionary:
+	var names: Array = stats.keys()
+	names.sort_custom(func(a, b): return stats[a].get("tests", 0) > stats[b].get("tests", 0))
+	var total := {}
+	for n in names:
+		for k in stats[n]:
+			total[k] = total.get(k, 0) + stats[n][k]
+
+	var fixes: PackedStringArray = []
+	for n in names:
+		fixes.append(_fix_line(n, stats[n]))
+	if fixes.is_empty():
+		fixes.append("No focus tester data was found. Shipping anyway.")
+
+	var table := "[table=6][cell][b]Tester[/b]   [/cell][cell][b]Tests[/b]   [/cell][cell][b]Falls[/b]   [/cell][cell][b]Missed jumps[/b]   [/cell][cell][b]Time lost[/b]   [/cell][cell][b]Hotfixes seen[/b][/cell]"
+	for n in names:
+		var st: Dictionary = stats[n]
+		table += "[cell]%s   [/cell][cell]%d[/cell][cell]%d[/cell][cell]%d[/cell][cell]%s[/cell][cell]%d[/cell]" % [
+			n, st.get("tests", 0), st.get("deaths", 0), st.get("failed_jumps", 0), _t(st.get("lost", 0.0)), st.get("hotfixes_seen", 0)]
+	table += "[/table]"
+
+	var known: PackedStringArray = []
+	match ending:
+		"investors":
+			known.append("Players report that the game \"plays itself\". Investigating whether this is a feature. (It is a feature.)")
+			known.append("Some players report seeing yellow when they close their eyes. Working as intended.")
+		"goty":
+			known.append("Some ledges are not yellow. Players love this. Management does not. Investigating.")
+			known.append("Players report \"having fun\" and \"getting lost\". A fix is planned.")
+		_:
+			known.append("The game is fine.")
+			known.append("Some ledges are yellow and some are not. Nobody can explain the pattern, including us.")
+	known.append("The art is still grey boxes. This is our bold minimalist art direction.")
+
+	var body := """[b]HYPERION LEGENDS: ETERNAL DAWN - v1.0.0 Day-One Patch[/b]
+[font_size=15][color=#6b6e7a]Download size: 87 GB (86.9 GB of yellow textures)[/color][/font_size]
+
+[b]GENERAL[/b]
+[ul]Shipped.
+Focus testers ran [b]%d[/b] playtests, spent a combined [b]%s[/b] lost, and fell [b]%d[/b] times.
+%s[/ul]
+
+[b]FOCUS TESTER FIXES[/b]
+[ul]%s[/ul]
+
+[b]TELEMETRY[/b] (Legal says we have to show this)
+%s
+
+[b]KNOWN ISSUES[/b]
+[ul]%s[/ul]
+
+The HYPERION LEGENDS Live Team
+[i]"Patching it live since day one."[/i]""" % [
+		int(total.get("tests", 0)), _t(total.get("lost", 0.0)), int(total.get("deaths", 0)),
+		("Removed %d emergency red splats that were \"always there\". Legal would like to know who painted them." % int(total.get("hotfixes", 0)))
+			if total.get("hotfixes", 0) > 0 else "Zero hotfixes were applied during playtests. Legal is suspicious.",
+		"\n".join(fixes), table, "\n".join(known)]
+	var m := _mail("HYPERION LEGENDS Live Team", "liveops@synergex-interactive.biz",
+		"HYPERION LEGENDS v1.0.0 - Day-One Patch Notes", body, false)
+	m.date = "Launch day"
+	return m
+
+
+static func _fix_line(name: String, s: Dictionary) -> String:
+	match ENDINGS.notable_stat(s):
+		"deaths":
+			return "Fixed an issue where [b]%s[/b] could fall out of the world (reported %d times)." % [name, s.deaths]
+		"failed_jumps":
+			return "[b]%s[/b] now lands %d fewer jumps short. (They do not. We just stopped counting.)" % [name, s.failed_jumps]
+		"hotfixes_seen":
+			return "[b]%s[/b] will no longer notice the %d red splats that appeared behind their back." % [name, s.hotfixes_seen]
+		"lost":
+			return "Reduced the time [b]%s[/b] spends staring at grey boxes (was %s)." % [name, _t(s.lost)]
+		"retries":
+			return "[b]%s[/b] was reset %d times. Their memory was wiped each time. Working as intended." % [name, s.retries]
+	return "[b]%s[/b]: no changes. Suspiciously competent. Under investigation." % name
+
+
+## After the credits. `extra_level` = the post-launch level's name ("" if the game has none).
+static func patch_mail(ending: String, extra_level: String) -> Dictionary:
+	var e := ENDINGS.info(ending)
+	var opener := ""
+	match ending:
+		"investors":
+			opener = "The critics gave us a [b]%d[/b]. The players gave us a [b]%.1f[/b] and a lot of words I had to look up. The investors have asked me to stop forwarding them the player reviews." % [e.critics, e.gamers]
+		"goty":
+			opener = "The players gave us a [b]%.1f[/b] and are calling it Game of the Year. The critics gave us a %d. The investors gave me a look. I am choosing to take credit for all of it." % [e.gamers, e.critics]
+		_:
+			opener = "Critics: [b]%d[/b]. Players: [b]%.1f[/b]. Investors: \"fine\". It's fine. Everything is fine." % [e.critics, e.gamers]
+	var dlc := ""
+	if extra_level != "":
+		dlc = "\n\nAlso, the devs managed to finish a [b]new secret area[/b] that 4.3%% of players could experience: [b]%s[/b]. We're selling it for [b]$4.99[/b]. It's in your Level Select. It needs paint." % extra_level
+	var body := "Hi,\n\nGreat news: early access is going well. (We are calling it early access now. Legal says it helps.)\n\n%s\n\nWe raised enough funds to patch the game: welcome to [b]Patch 1.1[/b]. Your scores stay on file. You can replay any playtest and try to beat your best scores and times. Nothing is at stake anymore. (Something is always at stake.)%s\n\nChad\n\n[i]Sent from my yacht (financed by Patch 1.1)[/i]" % [opener, dlc]
+	return _mail(CHAD[0], CHAD[1], "Early access is going GREAT (Patch 1.1)", body, true)
+
+
+static func _t(seconds: float) -> String:
+	var s := roundi(seconds)
+	return "%d:%02d" % [s / 60, s % 60]
 
 
 static func bracket_text(total: int) -> String:
