@@ -39,6 +39,8 @@ var round_index := 0  ## 0-2: which focus tester is playing.
 var round_stars: Array[int] = [0, 0, 0]  ## Stars per round (0 = not finished yet).
 var round_times: Array = [null, null, null]  ## {tester, session, lost} per finished round (logged, not scored).
 var _retry_hold := 0.0
+var _attempt_open := false  ## A playtest is running and its stats haven't been logged yet.
+var _round_tested := false  ## This round's tester has been started at least once (retries count after that).
 var _retry_lock := false  ## R must be released before another retry can start.
 var _retry_bar: Control  ## "Hold R to retry" progress, bottom centre.
 var _retry_fill: ColorRect
@@ -79,6 +81,10 @@ func _ready() -> void:
 	add_child(PAUSE_MENU.new())
 
 
+func _exit_tree() -> void:
+	_close_attempt("quit")  # Left mid-playtest (Tab, pause menu): it still counts as a test.
+
+
 func _load_level() -> void:
 	var scene := load(Progress.current_path()) as PackedScene
 	level = scene.instantiate() as Level
@@ -108,6 +114,7 @@ func current_round() -> Dictionary:
 ## Bring in the next focus tester. The level resets, the paint stays.
 func _start_round(index: int) -> void:
 	round_index = index
+	_round_tested = false
 	var r := current_round()
 	runner.apply_profile(r.tester, FocusGroup.profile(r.tester))
 	paint.paint_limit = paint_limit()
@@ -162,6 +169,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_playtest_running = true
 		paint.scrape_locked = true
 		paint.hotfix_mode = true
+		if not _attempt_open and not _finished and runner.state != Runner.State.DEAD:
+			_attempt_open = true
+			_round_tested = true
 		runner.start()
 	elif event.is_action_pressed("clear_paint"):
 		paint.clear_all()
@@ -233,12 +243,16 @@ func _build_retry_bar() -> void:
 
 ## Hold R: same tester, same round, try again (hotfixes are removed, your paint stays).
 func _retry() -> void:
+	if _round_tested:
+		_close_attempt("retry")
+		Progress.log_tester(runner.tester_name, {retries = 1})
 	_reset_run()
 	status_label.text = "Focus tester: %s" % runner.tester_name
 	speech_feed.clear()
 
 
 func _reset_run() -> void:
+	_close_attempt("reset")
 	_out_of_paint_timer = 0.0  # Drop any timed HUD message (e.g. "HOTFIX #n").
 	_finished = false
 	_playtest_running = false
@@ -356,7 +370,20 @@ func _nav_keys() -> Array:
 	return keys
 
 
+## Log the attempt that just ended in the tester's record (Progress.tester_stats, for the patch notes).
+func _close_attempt(outcome: String) -> void:
+	if not _attempt_open:
+		return
+	_attempt_open = false
+	Progress.log_tester(runner.tester_name, {
+		tests = 1, finishes = 1 if outcome == "finish" else 0, deaths = 1 if outcome == "death" else 0,
+		failed_jumps = runner.failed_jumps, lost = runner.time_lost, played = runner.session_time,
+		hotfixes_seen = runner.hotfixes_seen, hotfixes = hotfixes,
+	})
+
+
 func _on_goal() -> void:
+	_close_attempt("finish")
 	_finished = true
 	var result := score(paint.splats_used, optimal_paint(), coins_collected, _coin_total(), hotfixes)
 	round_stars[round_index] = result.stars
@@ -384,17 +411,28 @@ func _on_goal() -> void:
 		var new_best := Progress.record(Progress.current_path(), total)
 		var unlocked := Progress.level_finished(total, round_times.filter(func(r): return r != null))
 		var hint := ""
-		if unlocked == "" and not Progress.has_next() and Progress.current + 1 < Progress.LEVELS.size() \
-				and Progress.level_override == "":
-			var missing := Progress.missing_for(Progress.current + 1)
-			hint = "The next playtest is on hold until %s %s %d/15 or better." % [
-				" and ".join(missing), "scores" if missing.size() == 1 else "score", Progress.UNLOCK_STARS]
+		var good_note := ""
+		if Progress.level_override != "" or Progress.ship_state != "":
+			pass  # Testing a scene, or the game already shipped: nothing is at stake.
+		elif Progress.current == Progress.final_level():
+			if Progress.ready_to_ship():
+				good_note = "Every playtest is done. Chad needs your greenlight to ship. Check your Inlook."
+			else:
+				hint = _on_hold_hint("The launch", Progress.missing_for(Progress.current + 1))
+		elif unlocked == "" and not Progress.has_next() and Progress.current + 1 < Progress.LEVELS.size():
+			hint = _on_hold_hint("The next playtest", Progress.missing_for(Progress.current + 1))
 		data.level = {rounds = rounds, total = total, max = Level.ROUNDS * 5, new_best = new_best,
-			unlocked = unlocked, locked_hint = hint}
+			unlocked = unlocked, locked_hint = hint, good_note = good_note}
 	data.nav = _nav_keys()
 	message_label.text = ""
 	results_card.show_round(data)
 
 
+func _on_hold_hint(what: String, missing: PackedStringArray) -> String:
+	return "%s is on hold until %s %s %d/15 or better." % [
+		what, " and ".join(missing), "scores" if missing.size() == 1 else "score", Progress.UNLOCK_STARS]
+
+
 func _on_died() -> void:
+	_close_attempt("death")
 	results_card.show_death(runner.tester_name, [["Hold R", "retry"], ["Tab", "level select"]])

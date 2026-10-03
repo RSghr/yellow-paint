@@ -19,7 +19,7 @@ The template starts with `_`, so it's ignored. To reorder levels, rename the fil
 
 | Node | What it is |
 |---|---|
-| Root (`level.gd`) | Settings in the Inspector: `level_name` (menu/HUD), `intro_text` (shown at start), `death_height`, and **Round 1-3**: a tester (dropdown) and that round's `minimum`. |
+| Root (`level.gd`) | Settings in the Inspector: `level_name` (menu/HUD), `intro_text` (shown at start), `death_height`, `post_launch` (Patch 1.1 bonus level, see 7), and **Round 1-3**: a tester (dropdown) and that round's `minimum`. |
 | `RunnerSpawn` (Marker3D) | Where the playtester starts. Put it **0.9 above the floor** (its origin is at its middle). |
 | `OperatorSpawn` (Marker3D) | Where you start. **1.05 above the floor**. Rotate it to choose the starting view. |
 | `Geometry` | Static blocks: instances of `debug_block.tscn`. |
@@ -105,6 +105,16 @@ level before it has scored at least **10/15**.
 see every level in Level Select. It only works in the editor / debug builds, and it doesn't send the unlock emails. Then Chad emails the player that a new playtest was scheduled (with the new
 level's testers), plus one or two flavor emails, one of them about one of your testers. So the file order is also the
 unlock order: make sure each level is beatable at 10/15 by someone who just finished the previous one.
+
+**The last level ends the game.** Once the last level (that isn't post-launch) has 10/15 or more, along with every
+level before it, Chad sends the greenlight mail and the player can ship. The ending depends on the best scores of
+every level **after the tutorials** (levels 4+): 15 on all of them = Investors, exactly 10 on all of them = GOTY,
+anything else = Decent. Adding a level 6 later changes what each ending asks for, and the new level becomes the
+one that triggers the greenlight.
+
+**Post-launch level (the $4.99 "secret area")**: tick **Post Launch** on the level root. It stays hidden until the
+game has shipped (Patch 1.1), never holds other levels back, doesn't count for the ending, and Chad's Patch 1.1
+mail names it. Give it a file name after the main levels (e.g. `level_06.tscn`).
 
 ## 7b. Pick the 3 testers
 

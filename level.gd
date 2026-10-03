@@ -16,6 +16,9 @@ extends Node3D
 		update_configuration_warnings()
 @export_multiline var intro_text := "Paint a route, then press Enter to start the playtest."
 @export var death_height := -2.5  ## The playtester is lost below this height. Keep it above the pit floor.
+## Post-launch content (the $4.99 "secret area"): hidden until the game ships (Patch 1.1), never needed
+## to unlock other levels, and doesn't count for the ending.
+@export var post_launch := false
 
 ## A level is played by 3 focus testers in a row (paint carries over between rounds).
 ## Each round has its own minimum: the fewest splats that reliably get THAT tester to the flag (no coins).

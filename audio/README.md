@@ -22,6 +22,7 @@ Missing files are silent, so you can add them one at a time.
 | `ui_click` | Menu button clicked |
 | `mail` | New email in Inlook (desktop notification) |
 | `power_off` | Computer switches off (resignation in Inlook) |
+| `score_reveal` | Credits: a review score lands (critics, then gamers) |
 
 The list lives in `sfx.gd` (`SOUNDS`). To add a new sound, add a line there and call
 `Sfx.play("name")` where it should play. Volume is controlled by the Master volume in Settings.

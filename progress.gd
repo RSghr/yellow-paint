@@ -15,7 +15,7 @@ const UNLOCK_STARS := 10  ## A level after the tutorials appears once EVERY leve
 ## Testing: Project Settings > Yellow Paint > Debug > Unlock All Levels shows every level (debug builds only).
 const UNLOCK_ALL_SETTING := "yellow_paint/debug/unlock_all_levels"
 
-var LEVELS: Array[Dictionary] = []  ## [{name, path}], filled by _discover_levels().
+var LEVELS: Array[Dictionary] = []  ## [{name, path, post_launch}], filled by _discover_levels().
 var current := 0  ## Index into LEVELS.
 var level_override := ""  ## Set when a level scene is launched directly (F6) and isn't in LEVELS.
 var resignations := 0  ## Times the player resigned (save reset via HR). Survives the reset: the new hire's number.
@@ -24,8 +24,18 @@ var read_mails: Array = []  ## Ids of Inlook emails already opened (see inbox.gd
 var delivered_mails: Array = []  ## Emails received during play (mail_writer.gd), oldest first.
 var new_mail_ping := false  ## New mail since the desktop was last shown (it plays a sound).
 var open_levels_on_menu := false  ## Coming back from a level: the desktop reopens the Level Select window.
+var desktop_fade_in := false  ## Back from the credits: the desktop fades in from black.
 var best_times := {}  ## "level_01" -> [round 0..2] = {session, lost} of the fastest finish (logged, not scored).
 var best_stars := {}  ## "level_01" -> best total stars over the 3 rounds, out of 15 (0 = never finished)
+## Every focus tester's record across all their playtests (for the day-one patch notes).
+## "Rhea Spawn" -> {tests, finishes, deaths, retries, failed_jumps, lost, played, hotfixes_seen, hotfixes}
+var tester_stats := {}
+## Release: "" = in development, "credits" = greenlit (ending + patch notes mails sent, credits not seen yet),
+## "shipped" = Patch 1.1 (replay everything, no stakes, post-launch levels open).
+var ship_state := ""
+var ending := ""  ## "investors" / "goty" / "decent", decided when the game is greenlit.
+
+const STAT_KEYS := ["tests", "finishes", "deaths", "retries", "failed_jumps", "lost", "played", "hotfixes_seen", "hotfixes"]
 
 
 func _ready() -> void:
@@ -42,18 +52,19 @@ func _discover_levels() -> void:
 	files.sort()
 	for f in files:
 		var path := LEVEL_DIR + f
-		LEVELS.append({name = _read_level_name(path), path = path})
+		LEVELS.append({name = _read_root_prop(path, "level_name", path.get_file().get_basename()), path = path,
+			post_launch = bool(_read_root_prop(path, "post_launch", false))})
 
 
-## Reads `level_name` from the level's root without instancing the whole scene.
-static func _read_level_name(path: String) -> String:
+## Reads a property set on the level's root without instancing the whole scene.
+static func _read_root_prop(path: String, prop: String, default: Variant) -> Variant:
 	var packed := load(path) as PackedScene
 	if packed:
 		var state := packed.get_state()
 		for i in state.get_node_property_count(0):
-			if state.get_node_property_name(0, i) == "level_name":
+			if state.get_node_property_name(0, i) == prop:
 				return state.get_node_property_value(0, i)
-	return path.get_file().get_basename()
+	return default
 
 
 func current_path() -> String:
@@ -84,9 +95,12 @@ func has_next() -> bool:
 
 
 ## Tutorials are always open; a later level shows up once every level before it scored UNLOCK_STARS.
+## Post-launch levels open when the game has shipped.
 func is_unlocked(index: int) -> bool:
 	if index < 0 or index >= LEVELS.size():
 		return false
+	if LEVELS[index].post_launch:
+		return unlock_all() or shipped()
 	return unlock_all() or earned(index)
 
 
@@ -101,6 +115,8 @@ func earned(index: int) -> bool:
 func missing_for(index: int) -> PackedStringArray:
 	var missing: PackedStringArray = []
 	for i in mini(index, LEVELS.size()):
+		if LEVELS[i].post_launch:
+			continue  # Bonus content never holds anything up.
 		if best(LEVELS[i].path) < UNLOCK_STARS:
 			missing.append(LEVELS[i].name)
 	return missing
@@ -115,12 +131,20 @@ func unlock_all() -> bool:
 ## Sends Chad's mails and returns the name of a level that just got unlocked ("" if none).
 ## `rounds`: [{tester, session, lost}] of this run, for Chad's comments about lost testers.
 func level_finished(total: int, rounds: Array = []) -> String:
-	if level_override != "":
-		return ""
+	if level_override != "" or ship_state != "":
+		return ""  # After the greenlight there are no stakes: no more mails from Chad about scores.
 	var lost_note := MAIL_WRITER.lost_note(rounds)
+	# Every playtest is good enough: Chad needs the last greenlight (once). Comes first: any unlock
+	# announcement still unsent at this point (debug unlock) is old news.
+	if ready_to_ship() and not _has_mail("greenlight"):
+		_deliver(MAIL_WRITER.greenlight(lost_note), "greenlight")
+		_save()
+		return ""
 	# Did this result open a new level? (The first one earned whose mail hasn't been sent.)
 	for i in range(TUTORIAL_COUNT, LEVELS.size()):
 		var info: Dictionary = LEVELS[i]
+		if info.post_launch:
+			continue
 		var unlock_id := "unlock_" + _key(info.path)
 		if not earned(i):
 			break
@@ -135,11 +159,12 @@ func level_finished(total: int, rounds: Array = []) -> String:
 		_save()
 		return info.name
 	# This level is still holding things up: one review per score bracket.
-	if best(current_path()) < UNLOCK_STARS and current + 1 < LEVELS.size():
+	if best(current_path()) < UNLOCK_STARS and not LEVELS[current].post_launch:
 		var bracket := "15" if total >= 15 else ("10" if total >= 10 else ("5" if total >= 5 else "0"))
 		var perf_id := "perf_%s_%s" % [_key(current_path()), bracket]
 		if not _has_mail(perf_id):
-			_deliver(MAIL_WRITER.performance(LEVELS[current].name, total, UNLOCK_STARS, lost_note), perf_id)
+			_deliver(MAIL_WRITER.performance(LEVELS[current].name, total, UNLOCK_STARS, lost_note,
+				current == final_level()), perf_id)
 			_save()
 			return ""
 	# Nothing else to say, but a tester was lost for half the session or more: Chad noticed (once per level).
@@ -175,6 +200,89 @@ func to_menu() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	open_levels_on_menu = true
 	get_tree().change_scene_to_file(MENU_SCENE)
+
+
+# --- Release (greenlight, endings, Patch 1.1) ---------------------------------
+
+func shipped() -> bool:
+	return ship_state == "shipped"
+
+
+## Index of the last level of the main game (post-launch levels don't count). -1 if none.
+func final_level() -> int:
+	for i in range(LEVELS.size() - 1, -1, -1):
+		if not LEVELS[i].post_launch:
+			return i
+	return -1
+
+
+## Indices of the levels that decide the ending: the main game after the tutorials.
+func ending_levels() -> Array[int]:
+	var out: Array[int] = []
+	for i in range(TUTORIAL_COUNT, LEVELS.size()):
+		if not LEVELS[i].post_launch:
+			out.append(i)
+	return out
+
+
+## Every main level has a best of UNLOCK_STARS or more: the game can ship.
+func ready_to_ship() -> bool:
+	var last := final_level()
+	return last >= 0 and missing_for(last + 1).is_empty()
+
+
+## Investors: 15 everywhere. GOTY (for gamers): exactly UNLOCK_STARS everywhere. Anything else: decent.
+func compute_ending() -> String:
+	var levels := ending_levels()
+	if levels.is_empty():
+		return "decent"
+	if levels.all(func(i): return best(LEVELS[i].path) >= 15):
+		return "investors"
+	if levels.all(func(i): return best(LEVELS[i].path) == UNLOCK_STARS):
+		return "goty"
+	return "decent"
+
+
+## The greenlight button: the ending is decided by the current bests, Chad's ending mail and the
+## day-one patch notes arrive. The credits roll once the player closes Inlook (ship_state "credits").
+func greenlight() -> void:
+	if ship_state != "" or not ready_to_ship():
+		return
+	ending = compute_ending()
+	ship_state = "credits"
+	_deliver(MAIL_WRITER.ending_mail(ending, _ending_scores()), "ending")
+	_deliver(MAIL_WRITER.patch_notes(ending, tester_stats), "patch_notes")
+	_save()
+
+
+## The credits are over: Patch 1.1. Chad's early access mail; post-launch levels open.
+func finish_credits() -> void:
+	if ship_state != "credits":
+		return
+	ship_state = "shipped"
+	var extra := ""
+	for info in LEVELS:
+		if info.post_launch:
+			extra = info.name
+			break
+	_deliver(MAIL_WRITER.patch_mail(ending, extra), "patch_1_1")
+	_save()
+
+
+## [{name, stars}] of the levels that decided the ending.
+func _ending_scores() -> Array:
+	return ending_levels().map(func(i): return {name = LEVELS[i].name, stars = best(LEVELS[i].path)})
+
+
+## Add one attempt's numbers to a tester's record. `data` uses STAT_KEYS (missing keys = 0).
+func log_tester(tester: String, data: Dictionary) -> void:
+	if level_override != "" or tester == "":
+		return  # F6 test runs don't count.
+	var s: Dictionary = tester_stats.get(tester, {})
+	for k in STAT_KEYS:
+		s[k] = s.get(k, 0) + data.get(k, 0)
+	tester_stats[tester] = s
+	_save()
 
 
 func best(path: String) -> int:
@@ -235,6 +343,9 @@ func resign() -> void:
 	delivered_mails = []
 	best_stars = {}
 	best_times = {}
+	tester_stats = {}
+	ship_state = ""
+	ending = ""
 	new_mail_ping = false
 	open_levels_on_menu = false
 	current = 0
@@ -282,6 +393,9 @@ func _load() -> void:
 	read_mails = cfg.get_value("story", "read_mails", [])
 	delivered_mails = cfg.get_value("story", "delivered_mails", [])
 	best_times = cfg.get_value("times", "best", {})
+	tester_stats = cfg.get_value("stats", "testers", {})
+	ship_state = cfg.get_value("release", "state", "")
+	ending = cfg.get_value("release", "ending", "")
 	for key in cfg.get_section_keys("best_total") if cfg.has_section("best_total") else []:
 		best_stars[key] = cfg.get_value("best_total", key, 0)
 
@@ -293,6 +407,9 @@ func _save() -> void:
 	cfg.set_value("story", "read_mails", read_mails)
 	cfg.set_value("story", "delivered_mails", delivered_mails)
 	cfg.set_value("times", "best", best_times)
+	cfg.set_value("stats", "testers", tester_stats)
+	cfg.set_value("release", "state", ship_state)
+	cfg.set_value("release", "ending", ending)
 	for key in best_stars:
 		cfg.set_value("best_total", key, best_stars[key])
 	cfg.save(SAVE_PATH)

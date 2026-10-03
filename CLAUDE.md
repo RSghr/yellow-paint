@@ -13,6 +13,8 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 | `desk_window.gd` | Draggable desktop window (title bar, close) used by the desktop. |
 | `inbox.gd` | Inlook's starting emails (`MAILS`, BBCode bodies) + `all_mails()` (delivered ones first). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, "early build" grey boxes). Read state in `Progress.read_mails`/`seen_intro`. "hr_exit" = HR's exit interview: its "Schedule meeting" button opens a DocuSigh resignation letter (sign, then confirm) that wipes the save (see Progression). |
 | `mail_writer.gd` | Emails written during progression: Chad's new-level announcement (opening line by score bracket 15 / 14-10 / 9-5 / 4-0), his performance review when a level scores under 10, and flavor mails (toxic-workplace parody): one about a tester of the new level chosen by their traits (`TESTER_STORIES`, e.g. Explorer leaked the level, admin123) + sometimes an office one (`OFFICE_STORIES`, sent once each). |
+| `endings.gd` | The 3 endings (`ENDINGS`: title, critic/gamer scores and verdicts, investor quotes, tester line) + `tester_quote()` / `notable_stat()` (what a tester is remembered for, from their stats). |
+| `credits.tscn/.gd` | Launch-day credits (built in code, one tween timeline, hold Space/Enter/click = x6): title card, credits roll (contractor #, roster with outlets), investor quotes, focus group quotes (from `tester_stats`), critics score then gamers score, ending name, then back to the desktop (`Progress.finish_credits()`, fade in). |
 | `results_card.gd` | End-of-round results card (same style as the tester card): stars pop in, paint/coins/hotfix rows, review quote + byline, level total /15 after round 3 with NEW BEST / "New playtest scheduled" / "on hold" note, key chips. Also the "Focus tester lost" card. |
 | `round_intro.gd` | Start of each round: level intro banner at the top (round 1 only) + tester card sliding in bottom-left (name, outlet, intro, stars popping in). Fades after `hold_time` (7s) or when the playtest starts. **C** (`toggle_tester_card`) brings the card back / hides it (it stays until C again). The top-right HUD shows the level name and "Focus tester: name" (StatusLabel). |
 | `speech_feed.gd` | Tester speech on the HUD as a chat log under the tester name: "Name: message", oldest on top, newest at the bottom, max 3 lines, each fades `line_life` (6s) after it was said. The newest line is `newest_scale` (1.2x) bigger until the next one. Hidden while spectating. |
@@ -45,8 +47,21 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
   announcement + 1-2 flavor mails are delivered (once, id `unlock_<level>`); if this level's best is still under 10,
   Chad's review (once per level and score bracket). Mails persist in `Progress.delivered_mails`; the desktop shows a "new email" toast
   (sound `mail`) and the red unread badge on Inlook.
+- **Release** (`Progress.ship_state` "" → "credits" → "shipped", `ending`): when every non-post-launch level has 10+
+  (`ready_to_ship()`), `level_finished` sends Chad's **greenlight** mail (before anything else, once). Its button opens a
+  "Release approval" dialog listing the scores of levels 4+ (`ending_levels()`); "Greenlight & ship it" calls
+  `Progress.greenlight()`: `compute_ending()` (15 on all = `investors`, exactly 10 on all = `goty`, else `decent`),
+  Chad's ending mail + the **day-one patch notes** (`MailWriter.patch_notes`, from `tester_stats`), Inlook opens on them.
+  Closing Inlook once the patch notes were read (or their "Publish patch notes & launch" button) fades to `credits.tscn`.
+  After the credits: Patch 1.1 (`shipped()`): Chad's early access mail (names the post-launch level, $4.99), scores
+  kept, no more score mails (no stakes), `post_launch` levels open (`Level.post_launch`, tagged DLC), Start menu shows
+  the ending. The results card of the last level says "Chad needs your greenlight" / "The launch is on hold until...".
+- **Tester stats** (`Progress.tester_stats`, per tester name, across all their tests, never scored): tests, finishes,
+  deaths, retries (hold R after starting), failed_jumps (`Runner.failed_jumps`: landed off target or died mid-jump),
+  lost/played seconds, hotfixes_seen (`Runner.hotfixes_seen`), hotfixes painted. Logged by `game.gd` `_close_attempt`
+  when an attempt ends (flag, fall, retry, leaving). F6 runs aren't logged. Used by the patch notes and the credits.
 - **Resigning** (HR mail `hr_exit` > Schedule meeting > sign > Confirm): the screen switches off like a CRT (sound `power_off`),
-  then `Progress.resign()` wipes stars, times, mails and read state and the desktop reloads clean. Settings are kept.
+  then `Progress.resign()` wipes stars, times, mails, read state, tester stats and the release (the only way to get another ending) and the desktop reloads clean. Settings are kept.
   `Progress.resignations` survives the reset: `contractor_id()` = 4471 + resignations (Start menu, Inlook), the welcome
   mail gets a P.S. about the predecessor, the HR mail counts the resignations.
 

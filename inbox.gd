@@ -119,7 +119,7 @@ As part of our commitment to employee wellbeing, every contractor is entitled to
 During this meeting you will:
 [ul]sign your resignation letter
 return your paint can (please rinse it)
-forfeit all your stars, session times and emails
+forfeit all your stars, session times and emails (and any game you shipped: it will be quietly un-shipped)
 be replaced by a new contractor within the hour[/ul]
 
 As a gesture of goodwill, your settings (mouse sensitivity, volume) will be kept for your replacement.
