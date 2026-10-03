@@ -41,9 +41,8 @@ func _ready() -> void:
 	if Progress.new_mail_ping and Progress.seen_intro:
 		Progress.new_mail_ping = false
 		_toast.call_deferred()
-	if not Progress.seen_intro:
-		_open_inlook.call_deferred("welcome")  # First day at work.
-	elif Progress.open_levels_on_menu:
+	# First launch: a clean desktop. The unread badge on Inlook does the talking.
+	if Progress.open_levels_on_menu:
 		_open_levels.call_deferred()
 	Progress.open_levels_on_menu = false
 
@@ -322,7 +321,7 @@ func _show_start_menu() -> void:
 		var col := VBoxContainer.new()
 		col.add_theme_constant_override("separation", 6)
 		_start_menu.add_child(col)
-		col.add_child(_label("Contractor #4471", 20, Color.WHITE))
+		col.add_child(_label("Contractor #%d" % Progress.contractor_id(), 20, Color.WHITE))
 		col.add_child(_label("Level Readability Department", 14, Color(1, 1, 1, 0.5)))
 		col.add_child(HSeparator.new())
 		for item in [["Inlook", func(): _open_inlook()], ["Level Select", _open_levels],
@@ -498,7 +497,7 @@ func _open_inlook(select := "") -> void:
 			child.queue_free()
 		pane.add_child(_label(mail.subject, 24, INK))
 		pane.add_child(_label("From:  %s <%s>" % [mail.from, mail.address], 15, MUTED))
-		pane.add_child(_label("To:  You <contractor-4471@synergex-interactive.biz>", 15, MUTED))
+		pane.add_child(_label("To:  You <contractor-%d@synergex-interactive.biz>" % Progress.contractor_id(), 15, MUTED))
 		if mail.cc != "":
 			pane.add_child(_label("Cc:  " + mail.cc, 15, MUTED))
 		pane.add_child(_label("Date:  " + mail.date, 15, MUTED))
@@ -513,6 +512,8 @@ func _open_inlook(select := "") -> void:
 		pane.add_child(body)
 		if mail.id == "welcome":
 			pane.add_child(_welcome_buttons())
+		elif mail.id == "hr_exit":
+			pane.add_child(_hr_buttons())
 		for r in rows.size():
 			_style_mail_row(rows[r], _mails[r], r == index)
 		folder.text = "Inbox (%d unread)" % INBOX.unread_count()
@@ -528,7 +529,7 @@ func _open_inlook(select := "") -> void:
 		_style_mail_row(row, _mails[i], false)
 	folder.text = "Inbox (%d unread)" % INBOX.unread_count()
 
-	_window("inlook", "Inlook - Inbox - contractor-4471@synergex-interactive.biz", root, Vector2(300, 70))
+	_window("inlook", "Inlook - Inbox - contractor-%d@synergex-interactive.biz" % Progress.contractor_id(), root, Vector2(300, 70))
 	var start := -1
 	for i in _mails.size():
 		if _mails[i].id == select:
@@ -612,6 +613,134 @@ func _welcome_buttons() -> Control:
 		_open_levels())
 	row.add_child(accept)
 	return row
+
+
+func _hr_buttons() -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_END
+	var book := Button.new()
+	book.text = "Schedule meeting"
+	book.custom_minimum_size = Vector2(240, 44)
+	book.add_theme_font_size_override("font_size", 18)
+	book.pressed.connect(func(): Sfx.play("ui_click"); _ask_resignation())
+	row.add_child(book)
+	return row
+
+
+## The exit interview: sign, confirm, the screen switches off, and a new contractor starts from scratch.
+func _ask_resignation() -> void:
+	if _modal:
+		return
+	var overlay := Control.new()
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(dim)
+	add_child(overlay)
+	_modal = overlay
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 14)
+	var pad := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		pad.add_theme_constant_override("margin_" + side, 26)
+	pad.add_child(col)
+	var letter := RichTextLabel.new()
+	letter.bbcode_enabled = true
+	letter.fit_content = true
+	letter.custom_minimum_size = Vector2(640, 0)
+	letter.add_theme_color_override("default_color", INK)
+	for f in ["normal_font_size", "bold_font_size", "italics_font_size"]:
+		letter.add_theme_font_size_override(f, 19)
+	letter.text = ("[b]RESIGNATION LETTER[/b]\n\nI, Contractor #%d, hereby resign from the Level Readability Department of Synergex Interactive.\n\nI understand that:\n[ul]all my stars, session times and emails will be deleted\nmy desk will be given to a new contractor within the hour\nmy parking spot will be reassigned\nmy coffee subscription will continue[/ul]\n[font_size=13][color=#6b6e7a]By signing, you also agree to the Non-Disparagement Clause, the Non-Compete Clause, and the Non-Feelings Clause.[/color][/font_size]") % Progress.contractor_id()
+	col.add_child(letter)
+
+	var sig_row := HBoxContainer.new()
+	sig_row.add_theme_constant_override("separation", 14)
+	col.add_child(sig_row)
+	var sig := _label("Signature:  ______________________", 20, INK)
+	sig.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sig_row.add_child(sig)
+	var sign_btn := Button.new()
+	sign_btn.text = "Sign"
+	sign_btn.custom_minimum_size = Vector2(120, 40)
+	sign_btn.add_theme_font_size_override("font_size", 17)
+	sig_row.add_child(sign_btn)
+
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_END
+	buttons.add_theme_constant_override("separation", 12)
+	col.add_child(buttons)
+	var cancel := Button.new()
+	cancel.text = "I changed my mind"
+	cancel.custom_minimum_size = Vector2(200, 44)
+	cancel.add_theme_font_size_override("font_size", 17)
+	buttons.add_child(cancel)
+	var confirm := Button.new()
+	confirm.text = "Confirm resignation"
+	confirm.disabled = true
+	confirm.tooltip_text = "Sign the letter first."
+	confirm.custom_minimum_size = Vector2(230, 44)
+	confirm.add_theme_font_size_override("font_size", 17)
+	confirm.add_theme_color_override("font_color", Color(0.75, 0.1, 0.08))
+	buttons.add_child(confirm)
+
+	var w = DESK_WINDOW.new()
+	w.title = "Exit interview - DocuSigh"
+	w.body = pad
+	overlay.add_child(w)
+	var close_dialog := func():
+		_modal = null
+		_close_modal = Callable()
+		if is_instance_valid(overlay):
+			overlay.queue_free()
+	_close_modal = close_dialog
+	cancel.pressed.connect(func(): Sfx.play("ui_click"); close_dialog.call())
+	w.closed.connect(close_dialog)
+	sign_btn.pressed.connect(func():
+		Sfx.play("ui_click")
+		sig.text = "Signature:  ~ Contractor #%d ~" % Progress.contractor_id()
+		sig.add_theme_color_override("font_color", Color(0.1, 0.2, 0.6))
+		sign_btn.disabled = true
+		confirm.disabled = false
+		confirm.tooltip_text = "")
+	confirm.pressed.connect(func():
+		_close_modal = Callable()  # No backing out now.
+		_power_off())
+	cancel.grab_focus.call_deferred()
+	(func(): w.position = (get_viewport_rect().size - w.size) / 2.0).call_deferred()
+
+
+## Old-monitor switch-off: the picture squashes into a line, then a dot, then black. Then a fresh save.
+func _power_off() -> void:
+	Sfx.play("power_off", 0.0)
+	var screen := get_viewport_rect().size
+	var black := ColorRect.new()
+	black.color = Color.BLACK
+	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	black.mouse_filter = Control.MOUSE_FILTER_STOP
+	black.modulate.a = 0.0
+	add_child(black)
+	var glow := ColorRect.new()
+	glow.color = Color(0.92, 0.95, 1.0)
+	glow.size = screen
+	glow.position = Vector2.ZERO
+	glow.modulate.a = 0.0
+	add_child(glow)
+	var t := create_tween()
+	t.tween_property(glow, "modulate:a", 0.85, 0.06)
+	t.tween_callback(func(): black.modulate.a = 1.0)
+	t.tween_property(glow, "size:y", 4.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.parallel().tween_property(glow, "position:y", screen.y / 2.0 - 2.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_property(glow, "size:x", 6.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.parallel().tween_property(glow, "position:x", screen.x / 2.0 - 3.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_property(glow, "modulate:a", 0.0, 0.25)
+	t.tween_interval(1.2)
+	t.tween_callback(func():
+		Progress.resign()
+		get_tree().reload_current_scene())
 
 
 func _open_bin() -> void:

@@ -23,6 +23,7 @@ const SOUNDS := {
 	"goal": "Level complete",
 	"ui_click": "Menu button clicked",
 	"mail": "New email in Inlook (desktop notification)",
+	"power_off": "Computer switches off (resignation)",
 }
 const PLAYER_COUNT := 10
 

@@ -9,9 +9,9 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
 
 | File | What it is |
 |---|---|
-| `level_select.tscn/.gd` | Main scene = the operator's company **desktop** (built in code): icons Inlook / Level Select / Company Settings / Recycle Bin, taskbar with Start menu and clock. Quit = Start > Shut down ("...may result in your ~~contract~~ termination"). First launch opens Inlook on the welcome mail; returning from a level reopens Level Select (`Progress.open_levels_on_menu`). |
+| `level_select.tscn/.gd` | Main scene = the operator's company **desktop** (built in code): icons Inlook / Level Select / Company Settings / Recycle Bin, taskbar with Start menu and clock. Quit = Start > Shut down ("...may result in your ~~contract~~ termination"). First launch = a clean desktop (the unread badge on Inlook does the talking, the player opens the mails themselves); returning from a level reopens Level Select (`Progress.open_levels_on_menu`). |
 | `desk_window.gd` | Draggable desktop window (title bar, close) used by the desktop. |
-| `inbox.gd` | Inlook's starting emails (`MAILS`, BBCode bodies) + `all_mails()` (delivered ones first). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, "early build" grey boxes). Read state in `Progress.read_mails`/`seen_intro`. |
+| `inbox.gd` | Inlook's starting emails (`MAILS`, BBCode bodies) + `all_mails()` (delivered ones first). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, "early build" grey boxes). Read state in `Progress.read_mails`/`seen_intro`. "hr_exit" = HR's exit interview: its "Schedule meeting" button opens a DocuSigh resignation letter (sign, then confirm) that wipes the save (see Progression). |
 | `mail_writer.gd` | Emails written during progression: Chad's new-level announcement (opening line by score bracket 15 / 14-10 / 9-5 / 4-0), his performance review when a level scores under 10, and flavor mails (toxic-workplace parody): one about a tester of the new level chosen by their traits (`TESTER_STORIES`, e.g. Explorer leaked the level, admin123) + sometimes an office one (`OFFICE_STORIES`, sent once each). |
 | `results_card.gd` | End-of-round results card (same style as the tester card): stars pop in, paint/coins/hotfix rows, review quote + byline, level total /15 after round 3 with NEW BEST / "New playtest scheduled" / "on hold" note, key chips. Also the "Focus tester lost" card. |
 | `round_intro.gd` | Start of each round: level intro banner at the top (round 1 only) + tester card sliding in bottom-left (name, outlet, intro, stars popping in). Fades after `hold_time` (7s) or when the playtest starts. **C** (`toggle_tester_card`) brings the card back / hides it (it stays until C again). The top-right HUD shows the level name and "Focus tester: name" (StatusLabel). |
@@ -45,6 +45,10 @@ navigate a platforming level. The AI only trusts yellow. Scoring rewards using l
   announcement + 1-2 flavor mails are delivered (once, id `unlock_<level>`); if this level's best is still under 10,
   Chad's review (once per level and score bracket). Mails persist in `Progress.delivered_mails`; the desktop shows a "new email" toast
   (sound `mail`) and the red unread badge on Inlook.
+- **Resigning** (HR mail `hr_exit` > Schedule meeting > sign > Confirm): the screen switches off like a CRT (sound `power_off`),
+  then `Progress.resign()` wipes stars, times, mails and read state and the desktop reloads clean. Settings are kept.
+  `Progress.resignations` survives the reset: `contractor_id()` = 4471 + resignations (Start menu, Inlook), the welcome
+  mail gets a P.S. about the predecessor, the HR mail counts the resignations.
 
 ## Focus testers and rounds
 - A level is played by **3 testers in a row** (`Level.rounds()`), set per level. **Paint carries over** between rounds;
