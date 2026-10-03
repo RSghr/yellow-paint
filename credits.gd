@@ -5,7 +5,9 @@ extends Control
 ##   > the scores (critics first, then gamers) > the ending's name > back to the desktop (Patch 1.1).
 ## Hold Space / Enter / left click to fast-forward. Texts per ending live in endings.gd.
 ##
-## PREVIEW: open credits.tscn and press F6. Pick the ending with `preview_ending` (Inspector, on the root).
+## PREVIEW: open credits.tscn and press F6. Pick the ending with `preview_ending` (Inspector, on the root),
+## or press 1 / 2 / 3 during the preview to restart it as Investors / GOTY / Mostly Fine.
+## Music: music_credits_<ending> (investors / goty / decent) if it exists, else music_credits, else music_desk.
 ## A preview never touches the save. A label at the top shows the elapsed time vs the music's length, and
 ## the Output panel prints both at the end, to check the credits track is long enough.
 
@@ -17,6 +19,9 @@ const FAST := 6.0  ## Fast-forward speed while held.
 
 ## Ending shown when the credits are run on their own (F6), not after a real greenlight.
 @export_enum("investors", "goty", "decent") var preview_ending := "goty"
+
+static var _restart_as := ""  ## Set by the 1/2/3 keys in a preview: the ending to restart with.
+const PREVIEW_KEYS := {KEY_1: "investors", KEY_2: "goty", KEY_3: "decent"}
 
 var _seq: Tween
 var _preview := false  ## Not a real launch: don't change the save.
@@ -31,8 +36,16 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_preview = Progress.ship_state != "credits"
-	_ending = ENDINGS.info(preview_ending if _preview else Progress.ending)
-	Music.play("credits")
+	if _restart_as != "":
+		preview_ending = _restart_as
+		_restart_as = ""
+	var ending_id: String = preview_ending if _preview else Progress.ending
+	_ending = ENDINGS.info(ending_id)
+	# Each ending can have its own track; otherwise the shared credits track, otherwise the desk one.
+	var track := "credits"
+	if Music.has_track("credits_" + ending_id):
+		track = "credits_" + ending_id
+	Music.play(track)
 	var bg := ColorRect.new()
 	bg.color = Color.BLACK
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -56,6 +69,13 @@ func _ready() -> void:
 	_build.call_deferred()  # Needs the viewport size.
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if _preview and event is InputEventKey and event.pressed and not event.echo \
+			and PREVIEW_KEYS.has(event.physical_keycode):
+		_restart_as = PREVIEW_KEYS[event.physical_keycode]
+		get_tree().reload_current_scene()
+
+
 func _process(delta: float) -> void:
 	var held := Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_ENTER) \
 		or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
@@ -64,7 +84,7 @@ func _process(delta: float) -> void:
 	_elapsed += delta
 	_fast_forwarded = _fast_forwarded or held
 	if _preview_label:
-		_preview_label.text = "PREVIEW (save untouched)  ·  ending: %s  ·  elapsed %s%s  ·  music: %s" % [
+		_preview_label.text = "PREVIEW (save untouched, 1/2/3 = Investors/GOTY/Mostly Fine)  ·  ending: %s  ·  elapsed %s%s  ·  music: %s" % [
 			_ending.title, _time(_elapsed), " (fast-forwarded)" if _fast_forwarded else "", _music_info()]
 
 

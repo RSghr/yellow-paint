@@ -12,6 +12,9 @@ const TRACKS := {
 	"desk": "Company desktop (main menu): office ambience, elevator music...",
 	"game": "Playing a level (default for every level)",
 	"credits": "Launch-day credits (uses the desk track if missing)",
+	"credits_investors": "Optional: credits of the Investors' Cut ending (else credits)",
+	"credits_goty": "Optional: credits of the GOTY (by gamers) ending (else credits)",
+	"credits_decent": "Optional: credits of the Mostly Fine ending (else credits)",
 }
 const FALLBACK := {"credits": "desk"}  ## A missing track plays this one instead ("" = silence).
 const FADE_TIME := 1.2
@@ -63,6 +66,11 @@ func play(track: String, fallback := "") -> void:
 
 func _set_volume(v: float, p: AudioStreamPlayer) -> void:
 	p.volume_db = linear_to_db(maxf(v, 0.0001))
+
+
+## True if audio/music_<track> exists.
+func has_track(track: String) -> bool:
+	return _stream_for(track) != null
 
 
 ## The stream of the track currently playing (or fading in), null if silent.
