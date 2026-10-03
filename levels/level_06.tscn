@@ -10,14 +10,14 @@
 [node name="Level06" type="Node3D" unique_id=918810662]
 editor_description = "Level root. Set level_name, intro_text and the 3 rounds (tester + minimum) in the Inspector. See docs/LEVEL_DESIGN.md."
 script = ExtResource("lvl_script")
-level_name = "Victory lap"
+level_name = "Victory Lap"
 intro_text = ""
 post_launch = true
-tester_1 = "Liv Elup"
+tester_1 = "Sven Tory"
 minimum_1 = 25
 tester_2 = "Lou Tbox"
 minimum_2 = 25
-tester_3 = "Sven Tory"
+tester_3 = "Liv Elup"
 minimum_3 = 50
 
 [node name="RunnerSpawn" type="Marker3D" parent="." unique_id=1379500677]
@@ -67,11 +67,11 @@ editor_description = "The maze walls (doors). Sunk 3.6 m into the block; the but
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.6, 0)
 
 [node name="Door2" parent="Geometry/Maze" unique_id=292995611 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -15.526737, 1.651, -1.784547)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -15.440527, 1.651, -1.784547)
 size = Vector3(0.5, 3.5, 12)
 
 [node name="Door3" parent="Geometry/Maze" unique_id=362674626 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -18.54369, 1.651, 1.293507)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -18.428097, 1.651, 1.293507)
 
 [node name="Door5" parent="Geometry/Maze" unique_id=2000133983 instance=ExtResource("4_ifoay")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.28004, 1.651, 7.0740776)
@@ -193,7 +193,7 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 17.3
 size = Vector3(0.5, 3.5, 22.5)
 
 [node name="Door36" parent="Geometry/Maze" unique_id=1358886701 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.324764, 1.651, -8.268141)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.166275, 1.651, -8.20148)
 size = Vector3(0.5, 3.5, 13.5)
 
 [node name="Interactables" type="Node3D" parent="." unique_id=1344542114]
