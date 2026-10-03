@@ -73,6 +73,12 @@ Behaviour that matters for layout:
   Set the button's **`target`** to the door (`../Door`). The button's face points along its **-Z**, i.e. opposite
   the blue Z gizmo arrow. The playtester stands 0.9 m in front of the face. Only **painted** buttons get pressed.
   Painting a door does nothing (that's the joke).
+- **One button, many doors**: fill the button's **`extra_targets`** with more doors; one press opens them all.
+  A target can also be a plain Node3D: every door inside it opens (level 6: `extra_targets = ../Maze`, ~35 walls).
+  Each door still moves by its own `move_direction`/`move_distance`, and the cyan ghosts show where they end up.
+  To hide a group underground, lower the group node (level 6's `Maze` sits at Y -3.6) and set it back to 0 to edit.
+- **Things that move together**: blocks or doors parented **under a door** ride along with it, colliders
+  included. Never scale the door or a parent of blocks: resize with `size`.
   - **`move_direction`** / **`move_distance`**: which way and how far it slides (any axis, e.g. `(0, 0, 1)` to slide
 	sideways). **`open_time`**: how long it takes. The editor shows a **cyan ghost** where it ends up.
 - **Moving platform**: a `door.tscn` with **`is_platform`** on. Paint on its **top** is a landing like any other,

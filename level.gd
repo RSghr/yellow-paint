@@ -19,6 +19,9 @@ extends Node3D
 ## Post-launch content (the $4.99 "secret area"): hidden until the game ships (Patch 1.1), never needed
 ## to unlock other levels, and doesn't count for the ending.
 @export var post_launch := false
+## Music for this level: plays audio/music_<name>.ogg/.mp3/.wav. Empty = the usual "game" track
+## (also used if the file is missing).
+@export var music := ""
 
 ## A level is played by 3 focus testers in a row (paint carries over between rounds).
 ## Each round has its own minimum: the fewest splats that reliably get THAT tester to the flag (no coins).

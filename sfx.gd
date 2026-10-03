@@ -31,6 +31,8 @@ const PLAYER_COUNT := 10
 var _streams := {}
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
+var _last_played := {}  ## sound -> time (ms). The same sound twice within SAME_SOUND_GAP plays once.
+const SAME_SOUND_GAP := 60  ## ms. E.g. a button raising 30 maze walls: one "door" sound, not 30.
 
 
 func _ready() -> void:
@@ -43,7 +45,7 @@ func _ready() -> void:
 				break
 	for i in PLAYER_COUNT:
 		var p := AudioStreamPlayer.new()
-		p.bus = "Master"
+		p.bus = "SFX"  # Created by Settings (SFX volume), sends to Master.
 		add_child(p)
 		_players.append(p)
 
@@ -53,6 +55,10 @@ func play(sound: String, pitch_jitter := 0.06, volume_db := 0.0) -> void:
 	var stream: AudioStream = _streams.get(sound)
 	if stream == null:
 		return  # No file yet: silent placeholder.
+	var now := Time.get_ticks_msec()
+	if now - _last_played.get(sound, -100000) < SAME_SOUND_GAP:
+		return
+	_last_played[sound] = now
 	var p := _players[_next]
 	_next = (_next + 1) % _players.size()
 	p.stream = stream

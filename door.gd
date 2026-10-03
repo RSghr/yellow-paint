@@ -40,10 +40,23 @@ func _ready() -> void:
 		_update_ghost()
 	else:
 		_closed_position = position
+		# Inside another door (e.g. maze walls under the wall that raises them): physics must follow the
+		# parent's movement too. With sync_to_physics the collider would stay behind while the mesh moves.
+		if _inside_door():
+			set("sync_to_physics", false)  # The root is an AnimatableBody3D (the script extends block.gd).
 		add_to_group("interactable")
 		add_to_group("resettable")
 		if is_platform:
 			add_to_group("mover")
+
+
+func _inside_door() -> bool:
+	var p := get_parent()
+	while p:
+		if p is AnimatableBody3D:
+			return true
+		p = p.get_parent()
+	return false
 
 
 func paint_role(normal: Vector3) -> String:
