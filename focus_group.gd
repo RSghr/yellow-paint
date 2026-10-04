@@ -6,7 +6,8 @@ class_name FocusGroup
 ##             2 Parkour (7 m, 3.2 m up) | 1 Average (5.5 m, 2.5 m up) | 0 Short legs (4.5 m, 2.1 m up, improvised jumps fall short)
 ##   trust:    how much paint they need and how fast they decide.    2 Blind trust | 1 Thoughtful | 0 Needs a whole bucket
 ##   patience: "Exploration" on the card: how much they look around when lost, and if/when they improvise.
-##             2 Explorer (wanders far and long, improvises late) | 1 Curious | 0 No paint, no way (wanders, never improvises)
+##             2 Explorer (wanders far and long, improvises late, presses/smashes unpainted things, gambles for coins)
+##             | 1 Curious | 0 No paint, no way (stays on its splat and turns around, never improvises)
 ## Rule: a tester has at most ONE trait at 0. The operator only sees stars, never the names of the traits' values.
 ## `outlet` (a parody of a games site/magazine) and `intro` (a hint at their archetype) show on the round card.
 const ROSTER := {

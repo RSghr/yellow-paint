@@ -76,11 +76,17 @@ const PERCEPTION_INTERVAL := 0.1
 @export_subgroup("Exploration (No paint, no way / Curious / Explorer)")  # "patience" in the code and roster.
 @export var patience_by_level: Array[float] = [-1.0, 8.0, 16.0]  ## Seconds lost (after its wanders) before improvising. -1 = never improvises (no desperate jumps, no leaps of faith).
 @export var wander_limit_by_level: Array[int] = [3, 3, 6]  ## Look-around walks before it gives up and waits.
-@export var wander_range_by_level: Array[float] = [5.0, 5.0, 8.0]  ## How far each look-around walk can go (metres).
+@export var wander_range_by_level: Array[float] = [5.0, 5.0, 8.0]
+## False = it never walks off to explore: it only turns around on the spot looking for the next splat.
+@export var wander_walks_by_level: Array[bool] = [false, true, true]
+## True = curious: presses unpainted buttons and smashes unpainted planks it sees, and gambles on a jump for a coin.
+@export var curious_by_level: Array[bool] = [false, false, true]  ## How far each look-around walk can go (metres).
 
 var min_jump_splats := 1
 var trust_bonus := 0
 var improvises := true  ## False = "No paint, no way": never jumps anywhere unpainted.
+var wander_walks := true  ## False: looks around on the spot instead of walking off to explore.
+var curious := false  ## Explorer: tries unpainted buttons/planks and jumps for coins.
 var profile := {jump = 1, trust = 1, patience = 1}
 
 @export_group("Speech")
@@ -128,6 +134,7 @@ var _last_jump_desperate := false
 var _too_far_said := {}  ## Spots it already complained were out of reach (cleared on reset).
 var _coin_attention := {}  ## coin instance id -> attention
 var _seen_coins := {}
+var _seen_things := {}  ## Explorer: unpainted buttons/breakables it has noticed (instance id -> true).
 var _choices := {}  ## breakable id -> {i, t, choice}: remembered break-or-climb guesses
 var _task: Dictionary = {}  ## The interaction in progress.
 
@@ -218,6 +225,7 @@ func reset_to_spawn() -> void:
 	_detoured = false
 	_coin_attention.clear()
 	_seen_coins.clear()
+	_seen_things.clear()
 	_choices.clear()
 	_task = {}
 	_body.position = Vector3.ZERO
@@ -253,6 +261,8 @@ func apply_profile(tester: String, p: Dictionary) -> void:
 	improvises = patience >= 0.0
 	wander_limit = wander_limit_by_level[p.patience]
 	wander_range = wander_range_by_level[p.patience]
+	wander_walks = wander_walks_by_level[p.patience]
+	curious = curious_by_level[p.patience]
 
 
 func celebrate() -> void:
@@ -381,6 +391,32 @@ func _breakable_choice(host: Node, seen: Array[PaintMark]) -> String:
 	_choices[id] = {i = i, t = t, choice = choice}
 	say("Climb it or smash it? Make up your mind! ...%s!" % ("Smash" if choice == "break" else "Climb"), true)
 	return choice
+
+
+## Explorer: unpainted buttons and breakables it has noticed and could try: [{pos (where to stand), host}].
+## Anything with paint on it (that it has seen) is left to the paint: a crate painted on top gets climbed, not smashed.
+func known_curios() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if not curious:
+		return out
+	var seen := _seen_marks()
+	for node in get_tree().get_nodes_in_group("interactable"):
+		if not _seen_things.has(node.get_instance_id()) or node.is_used():
+			continue
+		if seen.any(func(m): return m.host == node):
+			continue
+		var pos: Vector3
+		if node.kind == "button":
+			pos = node.interact_point(Vector3.ZERO, Vector3.ZERO)
+		else:
+			# The side facing it.
+			var side: Vector3 = feet() - node.global_position
+			side.y = 0
+			side = side.normalized() if side.length() > 0.01 else Vector3.FORWARD
+			var half: float = maxf(node.size.x, node.size.z) * 0.5
+			pos = node.interact_point(node.global_position + side * half, side)
+		out.append({pos = pos, host = node})
+	return out
 
 
 func known_coins() -> Array[Coin]:
@@ -599,7 +635,12 @@ func _start_interacting(step: Dictionary) -> void:
 	state = State.INTERACTING
 	_timer = 0.0
 	_scan_duration = step.host.interact_duration()
-	if step.host.kind == "button":
+	if step.get("kind", "") == "curio":
+		if step.host.kind == "button":
+			say(["No paint, but a button is a button. *boop*", "Let's see what this one does.", "Pressing it. For science."].pick_random(), true)
+		else:
+			say(["These planks look smashable. HYAAA!", "Nobody said NOT to smash it.", "Shortcut? Shortcut."].pick_random(), true)
+	elif step.host.kind == "button":
 		say(["Yellow button. I know this one.", "*boop*", "Pressing the obvious button."].pick_random(), true)
 	else:
 		say(["Yellow means smash!", "HYAAA!", "Sorry, planks."].pick_random(), true)
@@ -616,9 +657,9 @@ func _on_world_changed() -> void:
 ## Reached a step of the path.
 func _arrive(step: Dictionary) -> void:
 	_stuck_count = 0
-	if step.get("kind", "") in ["task", "coin", "paint", "goal"]:
+	if step.get("kind", "") in ["task", "curio", "coin", "paint", "goal"]:
 		_lost_time = 0.0
-	if step.get("kind", "") == "task":
+	if step.get("kind", "") in ["task", "curio"]:
 		_start_interacting(step)
 		return
 	if step.get("kind", "") == "coin":
@@ -647,7 +688,9 @@ func _advance() -> void:
 		if step.get("desperate", false):
 			doubt = 1.6
 			Sfx.play("desperate", 0.0)
-			if desperate_success_chance <= 0.0:
+			if step.get("coin_gamble", false):
+				say(["No paint? That coin is worth it.", "I can make that. Probably. COIN!", "Money first, safety second."].pick_random(), true)
+			elif desperate_success_chance <= 0.0:
 				say(["I've never made a jump in my life. Here goes!", "How hard can jumping be?",
 					"I don't really do jumps. But okay!"].pick_random(), true)
 			else:
@@ -793,6 +836,16 @@ func _perceive(dt: float) -> void:
 				_look_at(ctarget, 0.8)
 				say(["Ooh, shiny!", "A coin! I want it.", "Is that... money?"].pick_random())
 
+	# Explorer: buttons and planks are interesting even without paint.
+	if curious:
+		for node in get_tree().get_nodes_in_group("interactable"):
+			var tid: int = node.get_instance_id()
+			if _seen_things.has(tid) or not (node.get("kind") in ["button", "breakable"]) or node.is_used():
+				continue
+			if not _can_see(space, eye, look, cos_half, node.global_position + Vector3.UP * 0.5):
+				continue
+			_seen_things[tid] = true
+
 	if _goal and not _goal_known:
 		var flag := _goal.global_position + Vector3.UP * 1.5
 		if _can_see(space, eye, look, cos_half, flag):
@@ -896,6 +949,13 @@ func _decide() -> void:
 		kinds.append("coin")
 		payload.append(c)
 		hot.append(false)
+		jumpable.append(curious)  # An Explorer will gamble on an unpainted jump for a coin.
+	for t in known_curios():
+		nodes.append(t.pos)
+		trust.append(1)
+		kinds.append("curio")
+		payload.append(t.host)
+		hot.append(false)
 		jumpable.append(false)
 
 	# Dijkstra. Jumps only land on paint or the flag. Low-trust spots cost extra.
@@ -940,6 +1000,11 @@ func _decide() -> void:
 		while i > 0:
 			_path.push_front({pos = nodes[i], jump = via_jump[i], trust = trust[i], leap = false,
 				paint = kinds[i] == "paint", kind = kinds[i], host = payload[i]})
+			if kinds[i] == "coin" and via_jump[i]:
+				# No paint there: it's a gamble with this tester's improvised-jump odds.
+				_path[0].leap = true
+				_path[0].desperate = true
+				_path[0].coin_gamble = true
 			if via_point[i] != null:
 				_path.push_front({pos = via_point[i], jump = false, trust = 99, leap = false,
 					paint = false, kind = "walk", host = null})
@@ -958,6 +1023,9 @@ func _decide() -> void:
 				say(["I know where I'm going!", "Flag, here I come."].pick_random())
 			"task":
 				say(["Going to do the yellow thing.", "I see what I'm supposed to do."].pick_random())
+			"curio":
+				say(["Nobody painted that. Which means I MUST touch it.", "Ooh. What does this do?",
+					"Unpainted? Sounds like a secret."].pick_random(), true)
 		_advance()
 		return
 
@@ -1043,6 +1111,13 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 			score = trust[i] * 1.5 + nodes[i].distance_to(_spawn.origin) * 0.3 - dist[i] * 0.15
 		if score > best_score:
 			best_score = score
+			best = i
+	if best != -1:
+		return best
+
+	# Explorer: nothing painted left to do, so it pokes at things nobody painted (right or wrong).
+	for i in nodes.size():
+		if kinds[i] == "curio" and dist[i] < INF and (best == -1 or dist[i] < dist[best]):
 			best = i
 	if best != -1:
 		return best
@@ -1234,6 +1309,15 @@ func _find_takeoff(space: PhysicsDirectSpaceState3D, from: Vector3, dir: Vector3
 ## Mooch around the current platform looking for yellow.
 func _wander() -> void:
 	_wanders += 1
+	if not wander_walks:
+		# "No paint, no way": it won't leave its splat to explore. It turns around on the spot in case
+		# the next splat is behind it or around a corner.
+		_path.clear()
+		_start_scan(scan_time * 1.6)
+		_body_turn = deg_to_rad(randf_range(110, 170)) * (1 if _wanders % 2 == 1 else -1)
+		say(["Where's the next splat?", "I'm not moving until I see yellow.", "Is there yellow behind me?",
+			"Looking. Not walking. Looking."].pick_random())
+		return
 	var space := get_world_3d().direct_space_state
 	# Try a ring of spots and prefer the one furthest from anywhere it has already been.
 	var best := Vector3.INF
@@ -1477,7 +1561,7 @@ func draw_reach(center: Vector3) -> void:
 	im.surface_add_vertex(center + Vector3.UP * up)
 	im.surface_end()
 	_reach_label.global_position = center + Vector3.UP * (up * 0.5)  # Mid-height: stays on screen when looking down.
-	_reach_label.text = "%s: %.1f m across · %.1f m up" % [tester_name, r, up]
+	_reach_label.text = "Jump reach"
 
 
 func _draw_debug() -> void:
