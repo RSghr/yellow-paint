@@ -83,8 +83,15 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
     0 / 0.65 / 0.95 and `leap_error` for improvised jumps (Short legs always falls short). A seen painted landing that's out
     of reach makes it say "Too far!" (`_say_too_far`, once per spot). Average = the old default, so levels built for it
     still work for 2-3★. Short legs needs gaps of ~3.3 m (The Tower needs 5 m: Mike Rotransaction can't finish it yet).
-  - **Trust**: Needs a whole bucket / Thoughtful / Blind trust → splats needed on a landing to jump there 2/1/1,
-    trust bonus 0/0/+2 (no hesitation), notice rate, scan and hesitation times.
+  - **Trust**: Needs a trail / Thoughtful / Blind trust (+ trust bonus 0/0/+2 = no hesitation, notice rate, scan and
+    hesitation times; one splat is enough to jump for everyone, `min_jump_splats_by_level` 1/1/1).
+    - 1★ "Needs a trail" (`trail_gap_by_level` 5 m): won't walk more than 5 m of unpainted floor between known spots
+      (corridors, the walk to a take-off point, the walk to the flag): long walks need breadcrumbs. Says "I need a
+      trail" (`_say_no_trail`, also for the flag) before improvising.
+    - 3★ "Blind trust" (`overreach_by_level` 1.5 m): picks the NEAREST unvisited yellow (dead ends included) instead of
+      the one toward the flag, and when there's no proper way it jumps at paint up to 1.5 m beyond its reach
+      (`_link` fallback, step `overreach`): it gets as far as its legs allow and usually falls. Leftover paint from
+      the previous tester becomes a trap: scrape it.
   - **Exploration** (key `patience` in code): No paint, no way / Curious / Explorer.
     - 1★ "No paint, no way": never walks off to explore (`wander_walks_by_level` false): it moves splat to splat and,
       when it sees nothing, turns around on the spot (3 look-arounds), so each splat must be visible from where it
@@ -143,8 +150,8 @@ Scraping (and Backspace clear) is **locked during a playtest**: from Enter until
 but each splat is a **hotfix** (`PaintMark.hotfix`, counted in `game.gd` `hotfixes`; R deletes them via `remove_hotfixes()`).
 
 ## Levels (in `Progress.LEVELS` order)
-Lineups are a first pass; per-round minimums are placeholders (bucket rounds doubled) until the user playtests them.
-1. `level_01` Onboarding: paint landings. Rhea Spawn (default), Polly Gonn (blind trust), Al Gorithm (bucket).
+Lineups are a first pass; per-round minimums are set by the user from playtesting (retune after trait changes).
+1. `level_01` Onboarding: paint landings. Rhea Spawn (default), Polly Gonn (blind trust), Al Gorithm (needs a trail).
 2. `level_02` Breakables: planks side = smash, crate top = climb; coin on a crate. Bea Tah, Moe Cap, Liv Elup.
    (The standard 3-splat route ends with a leap of faith to the flag: Liv Elup, "No paint, no way", needs it painted.)
 3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back. Cass Cene, Lou Tbox, Max Levell.

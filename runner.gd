@@ -67,8 +67,14 @@ const PERCEPTION_INTERVAL := 0.1
 @export var reach_up_by_level: Array[float] = [2.1, 2.5, 3.2]  ## max_jump_up: how high a ledge it can jump onto.
 @export var jump_success_by_level: Array[float] = [0.0, 0.65, 0.95]  ## desperate_success_chance. 0 = always falls short (leaps of faith too).
 @export var leap_error_by_level: Array[float] = [0.7, 0.7, 0.25]  ## Leap-of-faith aim error in metres.
-@export_subgroup("Trust (Needs a whole bucket / Thoughtful / Blind trust)")
-@export var min_jump_splats_by_level: Array[int] = [2, 1, 1]  ## Splats needed on a landing before it will jump there.
+@export_subgroup("Trust (Needs a trail / Thoughtful / Blind trust)")
+@export var min_jump_splats_by_level: Array[int] = [1, 1, 1]  ## Splats needed on a landing before it will jump there.
+## Longest walk it accepts on unpainted floor between two known spots (metres). -1 = no limit.
+## "Needs a trail": long walks (to a take-off point, along a corridor, to the flag) need breadcrumbs.
+@export var trail_gap_by_level: Array[float] = [5.0, -1.0, -1.0]
+## Blind trust: heads for the NEAREST yellow (dead end or not), and will jump at paint up to this much further
+## than it can actually reach (and fall short). 0 = never.
+@export var overreach_by_level: Array[float] = [0.0, 0.0, 1.5]
 @export var trust_bonus_by_level: Array[int] = [0, 0, 2]  ## Added to every spot's trust (3+ = no hesitation, confident walk).
 @export var notice_rate_by_level: Array[float] = [1.2, 1.6, 2.4]
 @export var scan_time_by_level: Array[float] = [2.4, 1.8, 1.1]  ## How long its look-arounds take.
@@ -83,6 +89,8 @@ const PERCEPTION_INTERVAL := 0.1
 @export var curious_by_level: Array[bool] = [false, false, true]  ## How far each look-around walk can go (metres).
 
 var min_jump_splats := 1
+var trail_gap := -1.0  ## See trail_gap_by_level.
+var overreach := 0.0  ## See overreach_by_level. > 0 also means "Blind trust": nearest yellow first.
 var trust_bonus := 0
 var improvises := true  ## False = "No paint, no way": never jumps anywhere unpainted.
 var wander_walks := true  ## False: looks around on the spot instead of walking off to explore.
@@ -253,6 +261,8 @@ func apply_profile(tester: String, p: Dictionary) -> void:
 	desperate_success_chance = jump_success_by_level[p.jump]
 	leap_error = leap_error_by_level[p.jump]
 	min_jump_splats = min_jump_splats_by_level[p.trust]
+	trail_gap = trail_gap_by_level[p.trust]
+	overreach = overreach_by_level[p.trust]
 	trust_bonus = trust_bonus_by_level[p.trust]
 	notice_rate = notice_rate_by_level[p.trust]
 	scan_time = scan_time_by_level[p.trust]
@@ -696,6 +706,8 @@ func _advance() -> void:
 			else:
 				say(["Fine. I'll do it myself.", "No yellow anywhere. Improvising!", "Nobody's painting? I'm jumping.",
 					"This is what happens when you don't paint, boss."].pick_random(), true)
+		elif step.get("overreach", false):
+			say(["That's far. But it's YELLOW!", "If it's painted, I can reach it. Right?", "Yellow never lies. JUMPING!"].pick_random(), true)
 		elif step.leap:
 			doubt = 1.6
 			say(["No yellow... but the flag is RIGHT THERE.", "Unpainted jump. Here goes nothing.", "If I die, put that in the report."].pick_random(), true)
@@ -748,6 +760,14 @@ func _jump_to(step: Dictionary) -> void:
 			target = from.lerp(target, randf_range(0.45, 0.65))  # Short legs: never makes an unpainted jump.
 		else:
 			target += flat.normalized() * randf_range(-leap_error, leap_error * 0.6)
+	if step.get("overreach", false):
+		# Blind trust jumped at paint it can't actually reach: it gets as far as its legs allow.
+		var full := target - from
+		var fl := Vector3(full.x, 0, full.z)
+		if fl.length() > max_jump_distance:
+			target = from + fl.normalized() * max_jump_distance * 0.92 + Vector3.UP * minf(full.y, max_jump_up)
+		elif full.y > max_jump_up:
+			target = from + fl * 0.6 + Vector3.UP * max_jump_up * 0.5
 	var d := target - from
 	var h := d.y
 	flat = Vector3(d.x, 0, d.z)
@@ -964,12 +984,14 @@ func _decide() -> void:
 	var prev: Array[int] = []
 	var via_jump: Array[bool] = []
 	var via_point: Array = []  ## Take-off point to walk to before jumping (or null).
+	var via_over: Array[bool] = []  ## That jump is beyond its real reach (Blind trust): it will fall short.
 	var done: Array[bool] = []
 	for i in n:
 		dist.append(INF)
 		prev.append(-1)
 		via_jump.append(false)
 		via_point.append(null)
+		via_over.append(false)
 		done.append(false)
 	dist[0] = 0.0
 	for _iter in n:
@@ -992,6 +1014,7 @@ func _decide() -> void:
 				prev[v] = u
 				via_jump[v] = link.jump
 				via_point[v] = link.get("via")
+				via_over[v] = link.get("overreach", false)
 
 	var target := _pick_target(nodes, trust, kinds, dist, hot)
 	_path.clear()
@@ -1000,6 +1023,8 @@ func _decide() -> void:
 		while i > 0:
 			_path.push_front({pos = nodes[i], jump = via_jump[i], trust = trust[i], leap = false,
 				paint = kinds[i] == "paint", kind = kinds[i], host = payload[i]})
+			if via_over[i]:
+				_path[0].overreach = true
 			if kinds[i] == "coin" and via_jump[i]:
 				# No paint there: it's a gamble with this tester's improvised-jump odds.
 				_path[0].leap = true
@@ -1029,6 +1054,10 @@ func _decide() -> void:
 		_advance()
 		return
 
+	# "Needs a trail": it can see where to go but won't walk there on grey. Say so first.
+	if _say_no_trail():
+		_start_scan(scan_time)
+		return
 	if improvises and _goal_known and _try_leap_of_faith():
 		return
 	# Out of ideas for `patience` seconds AND it has finished a full round of looking around
@@ -1102,7 +1131,9 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 		if kinds[i] != "paint" or dist[i] == INF or _is_visited(nodes[i]):
 			continue
 		var score: float
-		if _goal_known:
+		if overreach > 0.0:
+			score = -dist[i]  # Blind trust: the nearest yellow, wherever it leads.
+		elif _goal_known:
 			var gd := nodes[i].distance_to(_goal.global_position)
 			if gd > here_to_goal - 0.5:
 				continue
@@ -1178,6 +1209,36 @@ func _say_too_far() -> bool:
 		else:
 			say(["That yellow is too far for my little legs.", "Too far! Paint me something closer.",
 				"I can see the paint. I can't reach the paint."].pick_random(), true)
+		return true
+	return false
+
+
+## "Needs a trail": it can see paint it could walk to, but not without a trail of yellow in between.
+func _say_no_trail() -> bool:
+	if trail_gap <= 0.0:
+		return false
+	var me := feet()
+	var targets: Array[Vector3] = []
+	for s in known_spots():
+		targets.append(s.pos)
+	if _goal_known:
+		targets.append(_goal.global_position)
+	for pos in targets:
+		var key := pos.snapped(Vector3.ONE * 0.5)
+		if _is_visited(pos) or _too_far_said.has(key):
+			continue
+		if not _link(me, pos).is_empty():
+			continue
+		var old := trail_gap
+		trail_gap = -1.0
+		var without_limit := _link(me, pos)
+		trail_gap = old
+		if without_limit.is_empty():
+			continue
+		_too_far_said[key] = true
+		_look_at(pos, 1.0)
+		say(["That's a long walk without any yellow.", "I need a trail. Breadcrumbs. Yellow ones.",
+			"Walk all that way on grey? No thank you."].pick_random(), true)
 		return true
 	return false
 
@@ -1361,21 +1422,34 @@ func _wander() -> void:
 ## Can I get from a to b (feet positions)? {} if not, else {cost, jump}.
 ## Jumps are only allowed onto paint (or the flag it can see).
 func _link(a: Vector3, b: Vector3, allow_jump := true) -> Dictionary:
+	var link := _link_within(a, b, allow_jump, max_jump_distance, max_jump_up)
+	# Blind trust: only when there's no proper way, it jumps at paint a bit beyond its reach (and falls short).
+	if link.is_empty() and allow_jump and overreach > 0.0:
+		link = _link_within(a, b, true, max_jump_distance + overreach, max_jump_up + overreach * 0.4)
+		if not link.is_empty() and link.jump:
+			link.overreach = true
+			link.cost += 6.0
+	return link
+
+
+func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_up: float) -> Dictionary:
 	var d := b - a
 	var flat := Vector2(d.x, d.z).length()
 	if flat < 0.05 and absf(d.y) < 0.3:
 		return {cost = 0.0, jump = false}
 	if _walkable(a, b):
+		if trail_gap > 0.0 and flat > trail_gap:
+			return {}  # "Needs a trail": too far to walk without yellow.
 		return {cost = flat, jump = false}
-	if not allow_jump or d.y > max_jump_up + 1.5 or d.y < -max_drop - 1.5:
+	if not allow_jump or d.y > reach_up + 1.5 or d.y < -max_drop - 1.5:
 		return {}
-	if flat <= max_jump_distance and d.y <= max_jump_up and d.y >= -max_drop and _jump_clear(a, b):
+	if flat <= reach and d.y <= reach_up and d.y >= -max_drop and _jump_clear(a, b):
 		return {cost = flat + 2.0, jump = true}
 	# Paint marks where to LAND. Walk to a sensible take-off point on this ground first.
 	var space := get_world_3d().direct_space_state
 	var back := Vector3(-d.x, 0, -d.z).normalized()
 	var r := 1.2
-	while r <= max_jump_distance and r < flat:
+	while r <= reach and r < flat:
 		var launch: Vector3 = b + back * r
 		r += 0.2
 		var y = _ground_y(space, launch, a.y, 0.45)
@@ -1386,8 +1460,10 @@ func _link(a: Vector3, b: Vector3, allow_jump := true) -> Dictionary:
 		if _ground_y(space, launch - back * takeoff_margin, y, 0.3) == null:
 			continue
 		var j: Vector3 = b - launch
-		if j.y > max_jump_up or j.y < -max_drop:
+		if j.y > reach_up or j.y < -max_drop:
 			continue
+		if trail_gap > 0.0 and Vector2(launch.x - a.x, launch.z - a.z).length() > trail_gap:
+			continue  # "Needs a trail": the walk to the take-off point is too long without yellow.
 		if not _walkable(a, launch) or not _jump_clear(launch, b):
 			continue
 		return {cost = a.distance_to(launch) + r + 2.0, jump = true, via = launch}
