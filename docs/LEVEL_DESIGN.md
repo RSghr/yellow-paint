@@ -140,7 +140,7 @@ Each tester has three traits, shown to the player only as stars (never the names
 
 | Trait | ★☆☆ | ★★☆ (default) | ★★★ |
 |---|---|---|---|
-| Jumping (reach of **every** jump + improvised jumps) | Short legs: **4.5 m** across, **2.1 m** up; improvised jumps (leaps of faith too) land ~40% | Average: 5.5 m, 2.5 m up; improvised ~65% | Parkour: **7 m**, **3.2 m** up; improvised ~95% |
+| Jumping (reach of **every** jump + improvised jumps) | Short legs: **4.5 m** across, **2.1 m** up; improvised jumps (leaps of faith too) land ~50% | Average: 5.5 m, 2.5 m up; improvised ~65% | Parkour: **7 m**, **3.2 m** up; improvised ~95% |
 | Trust (how much paint it takes to convince them) | Skeptic: a paint spot has to **convince** it before it uses it. One splat takes ~5 s of staring and doubting, 2 splats ~1.3 s, 3 splats ≈ normal. While it doubts it may get bored and improvise. Paint 2-3 splats per landing, or accept a slow, unpredictable round | Thoughtful | Blind trust: believes any paint instantly, fast, but goes for the **nearest** yellow (dead end or not) and jumps at paint up to 1.5 m out of reach (and falls). Scrape leftover paint before its round |
 | Exploration | No paint, no way: only short look-around walks (**1.5-3 m**), so the next splat must be visible from close to the last one. Never jumps unpainted (no leaps of faith either) | Curious: a few look-around walks, improvises after ~8 s | Explorer: wanders much further and longer (8 walks up to 9 m), improvises late (~16 s), and **gets curious**: presses unpainted buttons, smashes unpainted planks/crates it saw, and gambles on a jump to reach a coin (paint the coin's ledge to make it safe) |
 
@@ -198,7 +198,7 @@ refresh). Add the tester to the roster table above too.
 Ideas: start with someone easy-going, end with the one whose weak trait the level punishes:
 - **Skeptic** where single splats would do for everyone else: it needs 2-3 per landing to keep moving, or it stalls and gambles.
 - **No paint, no way** where the default tester would leap to the flag or gamble on a short hop: those need paint now.
-- **Short legs** combined with **Explorer**: it improvises and mostly fails (~40%), so the paint has to be there before it gets bored.
+- **Short legs** combined with **Explorer**: it improvises and fails half the time (~50%), so the paint has to be there before it gets bored.
 - **Blind trust** or **Parkour + Explorer**: generous rounds, where a low minimum rewards a player who paints little.
 
 ## 8. Set each round's `minimum`

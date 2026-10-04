@@ -65,7 +65,7 @@ const PERCEPTION_INTERVAL := 0.1
 @export_subgroup("Jumping (Short legs / Average / Parkour)")
 @export var reach_by_level: Array[float] = [4.5, 5.5, 7.0]  ## max_jump_distance: how far ANY jump goes (painted ones too).
 @export var reach_up_by_level: Array[float] = [2.1, 2.5, 3.2]  ## max_jump_up: how high a ledge it can jump onto.
-@export var jump_success_by_level: Array[float] = [0.4, 0.65, 0.95]  ## desperate_success_chance: odds that an improvised jump lands (Short legs: leaps of faith too).
+@export var jump_success_by_level: Array[float] = [0.5, 0.65, 0.95]  ## desperate_success_chance: odds that an improvised jump lands (Short legs: leaps of faith too).
 @export var leap_error_by_level: Array[float] = [0.7, 0.7, 0.25]  ## Leap-of-faith aim error in metres.
 @export_subgroup("Trust (Skeptic / Thoughtful / Blind trust)")
 ## Skeptic: seconds before it believes a spot with ONE splat it has seen (n splats: this / n², so 3 splats ≈ 0.5 s,
@@ -132,6 +132,7 @@ var _visited: Array[Vector3] = []  ## Paint spots it has stood on.
 var _explored: Array[Vector3] = []  ## Places it wandered to (for picking new directions).
 var _furthest := Vector3.INF  ## The most recent NEW paint spot it reached: its best progress so far.
 var _retrace_to := Vector3.INF  ## After a fall: head back to this spot before exploring again.
+var _shaken := false  ## Just fell: no unpainted leaps until it has looked around for a way back (wanders + patience).
 var _detoured := false  ## Went off its route for a coin or to use something: may need to return to _furthest.
 var _wanders := 0
 var _home_y := 0.0  ## Height of the last trusted ground; wandering stays near it.
@@ -239,6 +240,7 @@ func reset_to_spawn() -> void:
 	_explored.clear()
 	_furthest = Vector3.INF
 	_retrace_to = Vector3.INF
+	_shaken = false
 	_detoured = false
 	_coin_attention.clear()
 	_seen_coins.clear()
@@ -684,6 +686,8 @@ func _check_setback() -> bool:
 		return false
 	_home_y = feet().y  # It's on a new floor now: wander here, not on the floor it fell from.
 	_wanders = 0
+	_shaken = true
+	_lost_time = 0.0  # A full patience period on this floor before it improvises again.
 	if _furthest != Vector3.INF:
 		_retrace_to = _furthest
 		say(["Ow. Okay, I know the way back up.", "Fell. Let's retrace my steps.", "That was a shortcut. Down."].pick_random(), true)
@@ -1141,7 +1145,9 @@ func _decide() -> void:
 		say(["Hmm. Is that really yellow?", "It LOOKS yellow. But is it?", "I've been fooled by yellow before.",
 			"Let me think about that splat.", "Yellow... or a reflection? These graphics are too good."].pick_random())
 		return
-	if improvises and _goal_known and _try_leap_of_faith():
+	# Just fell and no painted way back: look around this floor first (wanders + patience), no blind leaps yet.
+	var cautious := _shaken and not (_wanders >= wander_limit and _lost_time >= patience)
+	if improvises and _goal_known and not cautious and _try_leap_of_faith():
 		return
 	# Out of ideas for `patience` seconds AND it has finished a full round of looking around
 	# (that's usually when it spots paint it missed): gamble on a jump instead of sulking.
@@ -1261,11 +1267,13 @@ func _record_visit(pos: Vector3) -> void:
 	if not _is_visited(pos):
 		_visited.append(pos)
 		_furthest = pos
+		_shaken = false  # New ground: it's over the fall.
 		_detoured = false  # New progress: whatever detour it took is behind it.
 	elif pos.distance_to(_furthest) < 1.0:
 		_detoured = false  # Back where it left off.
 	if _retrace_to != Vector3.INF and pos.distance_to(_retrace_to) < 1.0:
 		_retrace_to = Vector3.INF
+		_shaken = false
 		say(["Back where I was. Now, onwards.", "Right, I remember this bit."].pick_random())
 
 
