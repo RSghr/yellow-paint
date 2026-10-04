@@ -193,6 +193,11 @@ using raycasts, call `game.runner.start()`, and step `physics_frame`. The AI is 
   - The user pulls with Godot closed or reloads when prompted.
 - Godot's open editor can overwrite files changed on disk (script editor buffers). Never assume a write landed, verify.
 - Fly down is Ctrl only (C is the tester card).
+- **Fast-forward** (T, `fast_forward`, physical): during a playtest (Enter until the flag/death/R) cycles
+  `game.gd` `fast_forward_speeds` 1x / 2x / 4x (HUD "▶▶ 4x"). Sets `Engine.time_scale` AND scales
+  `physics_ticks_per_second`, so the physics step stays 1/60 and the AI plays exactly the same. Back to 1x on
+  goal, death, R / next tester and leaving. The operator (`character.gd`), the R hold bar, HUD timers and the
+  speech feed undo the time scale, so they stay real-time.
 - Input actions use **physical** keycodes (the user is on AZERTY) except menu keys (N, Tab, Esc) which use logical keycodes.
 - Controls are listed in the Settings menu (`settings_menu.gd` `CONTROLS`), not on the HUD. Add new actions there too.
 - Test scripts can live outside the project (e.g. a scratchpad) and be run with `--script /abs/path.gd`; don't reference

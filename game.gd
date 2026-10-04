@@ -24,6 +24,8 @@ const RESULTS_CARD := preload("res://results_card.gd")
 @export var optimal_margin := 5  ## Optimal = round minimum + this. Enough slack to also grab the coins.
 @export var limit_margin := 10  ## Can size = optimal + this.
 @export var retry_hold_time := 1.0  ## Seconds R must be held to retry (avoids accidental resets).
+## T during a playtest cycles through these speeds. Physics ticks scale with it, so the AI plays exactly the same.
+@export var fast_forward_speeds: Array[float] = [1.0, 2.0, 4.0]
 
 var level: Level
 var runner: Runner
@@ -39,6 +41,9 @@ var round_index := 0  ## 0-2: which focus tester is playing.
 var round_stars: Array[int] = [0, 0, 0]  ## Stars per round (0 = not finished yet).
 var round_times: Array = [null, null, null]  ## {tester, session, lost} per finished round (logged, not scored).
 var _retry_hold := 0.0
+var _speed_index := 0
+var _base_ticks := 60
+var _speed_label: Label
 var _reach_anchor := Vector3.INF  ## Last floor the operator aimed at (the reach gizmo stays there when aiming at a wall).
 var _attempt_open := false  ## A playtest is running and its stats haven't been logged yet.
 var _round_tested := false  ## This round's tester has been started at least once (retries count after that).
@@ -78,11 +83,14 @@ func _ready() -> void:
 	results_card = RESULTS_CARD.new()
 	$HUD.add_child(results_card)
 	_build_retry_bar()
+	_build_speed_label()
+	_base_ticks = Engine.physics_ticks_per_second
 	_start_round(0)
 	add_child(PAUSE_MENU.new())
 
 
 func _exit_tree() -> void:
+	_set_speed(0)  # Never leave the desktop/credits running fast.
 	_close_attempt("quit")  # Left mid-playtest (Tab, pause menu): it still counts as a test.
 
 
@@ -157,6 +165,7 @@ func paint_limit() -> int:
 
 
 func _process(delta: float) -> void:
+	delta /= Engine.time_scale  # HUD timers run in real time, even at fast-forward.
 	_process_retry_hold(delta)
 	_update_reach_gizmo()
 	if _out_of_paint_timer > 0.0:
@@ -176,6 +185,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			_attempt_open = true
 			_round_tested = true
 		runner.start()
+	elif event.is_action_pressed("fast_forward"):
+		if _playtest_running and not _finished and runner.state != Runner.State.DEAD:
+			_set_speed((_speed_index + 1) % fast_forward_speeds.size())
 	elif event.is_action_pressed("clear_paint"):
 		paint.clear_all()
 	elif event.is_action_pressed("toggle_tester_card"):
@@ -271,7 +283,37 @@ func _retry() -> void:
 	speech_feed.clear()
 
 
+## Fast-forward: index into fast_forward_speeds (0 = normal speed).
+func _set_speed(index: int) -> void:
+	_speed_index = index
+	var s: float = fast_forward_speeds[index] if index < fast_forward_speeds.size() else 1.0
+	Engine.time_scale = s
+	Engine.physics_ticks_per_second = roundi(_base_ticks * s)  # Same physics step: same jumps, same AI.
+	Engine.max_physics_steps_per_frame = maxi(8, ceili(8 * s))
+	if _speed_label:
+		_speed_label.visible = s > 1.0
+		_speed_label.text = "▶▶ %dx" % roundi(s)
+
+
+func _build_speed_label() -> void:
+	_speed_label = Label.new()
+	_speed_label.anchor_left = 0.5
+	_speed_label.anchor_right = 0.5
+	_speed_label.offset_left = -100
+	_speed_label.offset_right = 100
+	_speed_label.offset_top = 16
+	_speed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_speed_label.add_theme_font_size_override("font_size", 30)
+	_speed_label.add_theme_color_override("font_color", Color(1, 0.82, 0.05))
+	_speed_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_speed_label.add_theme_constant_override("outline_size", 8)
+	_speed_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_speed_label.visible = false
+	$HUD.add_child(_speed_label)
+
+
 func _reset_run() -> void:
+	_set_speed(0)
 	_close_attempt("reset")
 	_out_of_paint_timer = 0.0  # Drop any timed HUD message (e.g. "HOTFIX #n").
 	_finished = false
@@ -404,6 +446,7 @@ func _close_attempt(outcome: String) -> void:
 
 
 func _on_goal() -> void:
+	_set_speed(0)  # Results at normal speed.
 	_close_attempt("finish")
 	_finished = true
 	var result := score(paint.splats_used, optimal_paint(), coins_collected, _coin_total(), hotfixes)
@@ -455,5 +498,6 @@ func _on_hold_hint(what: String, missing: PackedStringArray) -> String:
 
 
 func _on_died() -> void:
+	_set_speed(0)  # Results at normal speed.
 	_close_attempt("death")
 	results_card.show_death(runner.tester_name, [["Hold R", "retry"], ["Tab", "level select"]])

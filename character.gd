@@ -74,6 +74,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# Fast-forward (game.gd) speeds up the playtest, not you: undo Engine.time_scale for the operator.
+	delta /= Engine.time_scale
 	_move(delta)
 	_handle_paint(delta)
 	if global_position.y < FALL_RESET_Y:
@@ -106,7 +108,10 @@ func _move(delta: float) -> void:
 		if active and Input.is_action_pressed("jump") and velocity.y < JETPACK_MAX_RISE:
 			velocity.y = minf(velocity.y + JETPACK_ACCEL * delta, JETPACK_MAX_RISE)
 
+	var ts := Engine.time_scale
+	velocity /= ts  # move_and_slide() steps by the scaled physics delta.
 	move_and_slide()
+	velocity *= ts
 
 
 func _handle_paint(delta: float) -> void:
