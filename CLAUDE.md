@@ -173,7 +173,11 @@ using raycasts, call `game.runner.start()`, and step `physics_frame`. The AI is 
 - Web (Compatibility renderer) doesn't draw the paint Decals: a web build needs a fallback first.
 
 ## Workflow
-- Changes go on branches (`claude/...`) and pull requests to `master`. The user pulls with Godot closed or reloads when prompted.
+- Changes go on branches (`claude/...`) and pull requests to `master` (Claude can open and merge PRs with `gh api`).
+  - **Big features or design changes** (new mechanics, trait redesigns, new systems): Claude opens the PR and the
+    **user reviews and merges** it.
+  - **Bug fixes and small tweaks**: Claude opens the PR and **merges it itself** once its tests pass, then tells the user.
+  - The user pulls with Godot closed or reloads when prompted.
 - Godot's open editor can overwrite files changed on disk (script editor buffers). Never assume a write landed, verify.
 - Fly down is Ctrl only (C is the tester card).
 - Input actions use **physical** keycodes (the user is on AZERTY) except menu keys (N, Tab, Esc) which use logical keycodes.
