@@ -80,8 +80,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 - Traits (0 lowest, 1 default, 2 highest), shown to the player only as 1-3 stars. A tester has at most ONE trait at 0:
   - **Jumping**: Short legs / Average / Parkour → reach of EVERY jump, painted ones too (`reach_by_level` 4.5 / 5.5 / 7 m,
     `reach_up_by_level` 2.1 / 2.5 / 3.2 m → `max_jump_distance` / `max_jump_up`), plus `desperate_success_chance`
-    0.4 / 0.65 / 0.95 (`jump_success_by_level`) and `leap_error` for improvised jumps (Short legs: leaps of faith also
-    land only 40%, `short_legs`). A seen painted landing that's out of reach makes it say "Too far!" (`_say_too_far`,
+    0.5 / 0.65 / 0.95 (`jump_success_by_level`) and `leap_error` for improvised jumps (Short legs: leaps of faith also
+    land only 50%, `short_legs`). A seen painted landing that's out of reach makes it say "Too far!" (`_say_too_far`,
     once per spot). Short legs needs gaps of ~3.3 m (The Tower needs 5 m: Mike Rotransaction can't finish it yet).
   - **Trust** (how much paint it takes to convince them): Skeptic / Thoughtful / Blind trust (+ trust bonus 0/0/+2 =
     no hesitation, notice rate, scan and hesitation times).
@@ -124,6 +124,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 - **Retrace after a fall**: landing by accident more than `setback_drop` (1.5m) below its last trusted spot = setback.
   It heads back to `_furthest` (the most recent NEW paint spot it reached) using known spots as stepping stones,
   then explores normally. If no painted way back exists, it clears `_visited` and explores anything reachable.
+  After a fall it is `_shaken`: no leap of faith toward the flag until it has done its wanders AND `patience` on the
+  new floor (like a desperate jump), so a painted way back has time to show up. Cleared on new paint or the retrace spot.
 - **Return after a detour**: after going for a coin or using a button/breakable (`_detoured`), if it has nothing new to
   try it walks back once to `_furthest` and looks again from there. Plain wandering does NOT count as a detour.
 - It only plans **straight-line walks** between points (no navmesh): it can't plan a walk around a pillar or corner.
