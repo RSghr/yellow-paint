@@ -101,7 +101,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
     - 3★ Explorer: wanders 8 times up to 9 m, improvises after 16 s, and is **curious** (`curious_by_level`): presses
       unpainted buttons and smashes unpainted breakables it has seen (`known_curios`, `_seen_things`, path kind
       "curio", tried once nothing painted is left), and jumps for a coin it sees without paint (`coin_gamble`: a
-      desperate jump with its Jumping odds). Anything with paint is left to the paint.
+      desperate jump with its Jumping odds; only for a coin with floor under it, `_has_floor_under`: a coin floating over a
+      pit is only for painted jumps through it). Anything with paint is left to the paint.
   - Values live in runner.gd's "Traits" export arrays (index = trait level); `Runner.apply_profile()` applies them.
 
 ## AI rules (runner.gd), keep these intact
