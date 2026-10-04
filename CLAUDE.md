@@ -150,8 +150,8 @@ Scraping (and Backspace clear) is **locked during a playtest**: from Enter until
 but each splat is a **hotfix** (`PaintMark.hotfix`, counted in `game.gd` `hotfixes`; R deletes them via `remove_hotfixes()`).
 
 ## Levels (in `Progress.LEVELS` order)
-Lineups are a first pass; per-round minimums are placeholders (bucket rounds doubled) until the user playtests them.
-1. `level_01` Onboarding: paint landings. Rhea Spawn (default), Polly Gonn (blind trust), Al Gorithm (bucket).
+Lineups are a first pass; per-round minimums are set by the user from playtesting (retune after trait changes).
+1. `level_01` Onboarding: paint landings. Rhea Spawn (default), Polly Gonn (blind trust), Al Gorithm (needs a trail).
 2. `level_02` Breakables: planks side = smash, crate top = climb; coin on a crate. Bea Tah, Moe Cap, Liv Elup.
    (The standard 3-splat route ends with a leap of faith to the flag: Liv Elup, "No paint, no way", needs it painted.)
 3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back. Cass Cene, Lou Tbox, Max Levell.

@@ -211,7 +211,7 @@ Optimal (5★ territory) is `minimum + 5`, and the can holds `minimum + 15`. The
 3. Make sure **all coins plus the minimum** fit within optimal (+5). If coins need more than 5 extra
    splats, a 5★ run is impossible; move coins or raise the minimum.
 4. Remember the paint carries over: the round-2 minimum counts all the paint on the level, including what was
-   left from round 1 (a "bucket" round usually means doubling the landings that matter).
+   left from round 1 (a "Needs a trail" round usually means breadcrumbs on the long walks).
 
 ## 9. Checklist
 
