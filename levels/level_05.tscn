@@ -126,6 +126,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.782, 16.01, 0)
 move_distance = 10.0
 open_time = 3.0
 is_platform = true
+return_after = 4.0
 size = Vector3(4, 0.5, 4)
 
 [node name="Block15" parent="Geometry" unique_id=1362436523 instance=ExtResource("block")]
