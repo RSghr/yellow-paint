@@ -406,6 +406,14 @@ func known_spots() -> Array[Dictionary]:
 	return spots
 
 
+## Is there ground right under this point (a coin it could land next to)?
+func _has_floor_under(p: Vector3) -> bool:
+	var space := get_world_3d().direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(p + Vector3.UP * 0.5, p - Vector3.UP * 1.5, 1, [get_rid()])
+	var hit := space.intersect_ray(q)
+	return not hit.is_empty() and hit.normal.y > 0.7
+
+
 ## Painted things it intends to use: [{pos (where to stand), trust, host}]
 func known_tasks() -> Array[Dictionary]:
 	var by_host := {}
@@ -1036,7 +1044,9 @@ func _decide() -> void:
 		kinds.append("coin")
 		payload.append(c)
 		hot.append(false)
-		jumpable.append(curious)  # An Explorer will gamble on an unpainted jump for a coin.
+		# An Explorer will gamble on an unpainted jump for a coin, but only one with a floor under it:
+		# a coin floating over a pit is for painted jumps that pass through it, not a place to land.
+		jumpable.append(curious and _has_floor_under(c.global_position))
 	for t in known_curios():
 		nodes.append(t.pos)
 		trust.append(1)
