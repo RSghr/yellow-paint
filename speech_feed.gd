@@ -65,6 +65,7 @@ func push(speaker: String, text: String) -> void:
 		oldest.queue_free()
 
 	var t := line.create_tween()
+	t.set_ignore_time_scale(true)  # Readable at fast-forward too.
 	t.tween_property(line, "modulate:a", 1.0, 0.15)
 	t.tween_interval(line_life)
 	t.tween_property(line, "modulate:a", 0.0, 0.5)

@@ -27,6 +27,10 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node3D) -> void:
 	if taken or not body is Runner:
 		return
+	# A reset re-arms the coin in the same frame the tester is sent back to spawn: the physics step can still
+	# report the old overlap. Only a tester that is playing and actually here picks it up.
+	if body.state == Runner.State.WAITING or body.global_position.distance_to(global_position) > 2.5:
+		return
 	taken = true
 	visible = false
 	Sfx.play("coin")

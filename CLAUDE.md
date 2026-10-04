@@ -15,7 +15,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 |---|---|
 | `level_select.tscn/.gd` | Main scene = the operator's company **desktop** (built in code): icons Inlook / Level Select / Company Settings / Recycle Bin, taskbar with Start menu and clock. Quit = Start > Shut down ("...may result in your ~~contract~~ termination"). First launch = a clean desktop (the unread badge on Inlook does the talking, the player opens the mails themselves); returning from a level reopens Level Select (`Progress.open_levels_on_menu`). |
 | `desk_window.gd` | Draggable desktop window (title bar, close) used by the desktop. |
-| `inbox.gd` | Inlook's starting emails (`MAILS`, BBCode bodies) + `all_mails()` (delivered ones first). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, your ThinkBox 2009 only shows grey boxes). "workstation" = IT denying the graphics card. Read state in `Progress.read_mails`/`seen_intro`. "hr_exit" = HR's exit interview: its "Schedule meeting" button opens a DocuSigh resignation letter (sign, then confirm) that wipes the save (see Progression). |
+| `inbox.gd` | Inlook's starting emails (`MAILS`, BBCode bodies) + `all_mails()` (delivered ones first). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, your ThinkBox 2009 only shows grey boxes). "workstation" = IT denying the graphics card. "keys" = IT's quick start guide: controls (key names filled from the Input Map by `_with_keys()`, `{action}` placeholders; a line whose action doesn't exist is dropped), subtle paint, red hotfixes cost stars, 10/15 to unlock the next playtest. Caps Lock in game = "requires ThinkBox 2009 Pro" (`game.gd` `_caps_lock_joke`). Read state in `Progress.read_mails`/`seen_intro`. "hr_exit" = HR's exit interview: its "Schedule meeting" button opens a DocuSigh resignation letter (sign, then confirm) that wipes the save (see Progression). |
 | `mail_writer.gd` | Emails written during progression: Chad's new-level announcement (opening line by score bracket 15 / 14-10 / 9-5 / 4-0), his performance review when a level scores under 10, and flavor mails (toxic-workplace parody): one about a tester of the new level chosen by their traits (`TESTER_STORIES`, e.g. Explorer leaked the level, admin123) + sometimes an office one (`OFFICE_STORIES`, sent once each). Tester stories: one matching their traits (70%) or a generic "any" one. Patch notes: `patch_notes()` lists **level changes** made because of how each tester did on that level (`LEVEL_CHANGES` per notable stat). |
 | `endings.gd` | The 3 endings (`ENDINGS`: title, critic/gamer scores and verdicts, investor quotes, tester line) + `tester_quote()` / `notable_stat()` (what a tester is remembered for, from their stats). |
 | `credits.tscn/.gd` | Launch-day credits (built in code, one tween timeline, hold Space/Enter/click = x6): title card, credits roll (contractor #, roster with outlets), investor quotes, focus group quotes (from `tester_stats`), critics score then gamers score, ending name, then back to the desktop (`Progress.finish_credits()`, fade in). **Preview**: F6 on `credits.tscn` (pick `preview_ending` on the root, or keys 1/2/3 = Investors/GOTY/Mostly Fine to restart): never touches the save, shows elapsed time vs the music's length (~1:05-1:15 total). |
@@ -179,7 +179,7 @@ using raycasts, call `game.runner.start()`, and step `physics_frame`. The AI is 
 
 ## Release (Windows)
 - `export_presets.cfg`: "Windows Desktop", single .exe (PCK embedded, no console), icon `art/Logo.ico` (multi-size,
-  made from `art/Logo.png`), output `build/windows/YellowPaint.exe` (`/build/` is git-ignored). Excludes `docs/`, `tools/`, `*.md`.
+  made from `art/Logo.png`), output `windows/YellowPaint.exe` (git-ignored). Excludes `docs/`, `tools/`, `*.md`.
 - Boot splash = `art/boot_splash.png` (the desktop wallpaper rendered without icons, bg `#0C1528`): it fades into an
   identical desktop. Re-render it if the wallpaper or `paint_splat.png` changes.
 - Before exporting: `yellow_paint/debug/unlock_all_levels` must be false (it only works in debug builds anyway).
@@ -193,6 +193,11 @@ using raycasts, call `game.runner.start()`, and step `physics_frame`. The AI is 
   - The user pulls with Godot closed or reloads when prompted.
 - Godot's open editor can overwrite files changed on disk (script editor buffers). Never assume a write landed, verify.
 - Fly down is Ctrl only (C is the tester card).
+- **Fast-forward** (T, `fast_forward`, physical): during a playtest (Enter until the flag/death/R) cycles
+  `game.gd` `fast_forward_speeds` 1x / 2x / 4x (HUD "▶▶ 4x"). Sets `Engine.time_scale` AND scales
+  `physics_ticks_per_second`, so the physics step stays 1/60 and the AI plays exactly the same. Back to 1x on
+  goal, death, R / next tester and leaving. The operator (`character.gd`), the R hold bar, HUD timers and the
+  speech feed undo the time scale, so they stay real-time.
 - Input actions use **physical** keycodes (the user is on AZERTY) except menu keys (N, Tab, Esc) which use logical keycodes.
 - Controls are listed in the Settings menu (`settings_menu.gd` `CONTROLS`), not on the HUD. Add new actions there too.
 - Test scripts can live outside the project (e.g. a scratchpad) and be run with `--script /abs/path.gd`; don't reference

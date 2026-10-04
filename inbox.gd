@@ -42,6 +42,45 @@ Synergex Interactive | [i]"We put the extra A in AAAA."[/i]
 [font_size=15][color=#6b6e7a]*Fourth A pending legal review. This email and any attachments are confidential and may contain enthusiasm. If you received it by mistake, you now work here.[/color][/font_size]""",
 	},
 	{
+		id = "keys",
+		from = "IT Helpdesk",
+		address = "helpdesk@synergex-interactive.biz",
+		cc = "",
+		subject = "Your new workstation: quick start guide (please read, we are begging you)",
+		date = "Mon 7:55 AM",
+		flag = false,
+		body = """Hi,
+
+Welcome to your ThinkBox 2009. It has been reformatted for you. Most of it.
+
+[b]Controls[/b]
+[ul][b]{move}[/b] to walk, [b]{sprint}[/b] to sprint. [b]{paint}[/b] to paint, [b]{scrape}[/b] to scrape paint off (you get it back).
+[b]{start_test}[/b] starts the playtest. The tester only starts looking around when you press it.
+[b]{toggle_fly}[/b] switches gravity off. Facilities asked us to remind you this only works inside the game.
+Hold [b]{jump}[/b] to fly up. [b]{fly_down}[/b] to go down.
+[b]{toggle_spectator}[/b] switches to the camera that follows the tester automatically.
+[b]{fast_forward}[/b] fast-forwards the playtest. The dev team managed to bend spacetime so the tester behaves exactly the same. Please do not ask them how. They do not know either.
+Hold [b]{reset_runner}[/b] to restart the tester.
+[b]{toggle_ai_debug}[/b] toggles the debug view: what the tester has noticed, and how far it can jump.
+[b]{clear_paint}[/b] deletes all your paint (only before a playtest).
+[b]{toggle_tester_card}[/b] shows the tester's profile again. Read it. They are all different.
+[b]Caps Lock[/b] does something truly outlandish. It has been disabled, as the feature is part of [i]ThinkBox 2009 Pro[/i], which you do not have.[/ul]
+
+[b]About the yellow paint[/b]
+Yellow paint must be [b]subtle[/b], but it has to get the player through the level. On your grey boxes the way looks obvious. It is not. The testers see 12K moss, ray-traced puddles and about forty overlapping textures per ledge, and they have no idea where to go. One well-placed splat beats ten random ones.
+
+[b]Hotfixes[/b]
+If a playtest goes wrong, you can paint a [color=#e0402a][b]red hotfix[/b][/color] during the session. The tester will drop everything and go there. Use it in emergencies only: it breaks immersion, and your score with it.
+
+[b]Scores[/b]
+Each level is rated [b]out of 15[/b] (three testers, five stars each). A level needs at least [b]10/15[/b] before management schedules the next playtest.
+
+If you have any further questions, please open a ticket. Tickets are reviewed quarterly.
+
+IT Helpdesk
+[font_size=15][color=#6b6e7a]Have you tried turning it off and on again? Please don't, it takes forty minutes.[/color][/font_size]""",
+	},
+	{
 		id = "art",
 		from = "Art Department",
 		address = "art-direction@synergex-interactive.biz",
@@ -162,6 +201,9 @@ static func all_mails() -> Array:
 	var mails: Array = Progress.delivered_mails.duplicate()
 	mails.reverse()
 	for m in MAILS:
+		if m.id == "keys":
+			m = m.duplicate()
+			m.body = _with_keys(m.body)
 		if Progress.resignations > 0 and m.id in ["welcome", "hr_exit"]:
 			m = m.duplicate()
 			if m.id == "welcome":
@@ -171,6 +213,38 @@ static func all_mails() -> Array:
 					Progress.resignations, "" if Progress.resignations == 1 else "s"]
 		mails.append(m)
 	return mails
+
+
+## The quick start guide shows the keys of THIS keyboard (from the Input Map). {action} = its key(s);
+## {move} = the four move keys. Lines naming an action that doesn't exist are left out.
+static func _with_keys(body: String) -> String:
+	var menu: GDScript = load("res://settings_menu.gd")
+	var lines: PackedStringArray = []
+	for line in body.split("\n"):
+		var ok := true
+		var start := line.find("{")
+		while start != -1:
+			var end := line.find("}", start)
+			if end == -1:
+				break
+			var action := line.substr(start + 1, end - start - 1)
+			var keys := ""
+			if action == "move":
+				var parts: PackedStringArray = []
+				for a in ["move_forward", "move_left", "move_back", "move_right"]:
+					if InputMap.has_action(a):
+						parts.append(menu._keys_for(a))
+				keys = "".join(parts)
+			elif InputMap.has_action(action):
+				keys = menu._keys_for(action).split(" / ")[0]  # Just the main key ("Enter", not "Enter / Kp Enter").
+			if keys == "":
+				ok = false
+				break
+			line = line.substr(0, start) + keys + line.substr(end + 1)
+			start = line.find("{", start + keys.length())
+		if ok:
+			lines.append(line)
+	return "\n".join(lines)
 
 
 static func unread_count() -> int:
