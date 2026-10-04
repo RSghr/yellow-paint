@@ -463,12 +463,21 @@ func known_curios() -> Array[Dictionary]:
 		if node.kind == "button":
 			pos = node.interact_point(Vector3.ZERO, Vector3.ZERO)
 		else:
-			# The side facing it.
-			var side: Vector3 = feet() - node.global_position
-			side.y = 0
-			side = side.normalized() if side.length() > 0.01 else Vector3.FORWARD
-			var half: float = maxf(node.size.x, node.size.z) * 0.5
-			pos = node.interact_point(node.global_position + side * half, side)
+			# The face facing it, at the point of that face closest to it (same distance as a painted side).
+			var b: Basis = node.global_basis.orthonormalized()
+			var local: Vector3 = b.inverse() * (feet() - node.global_position)
+			var h: Vector3 = node.size * 0.5
+			var on_x := absf(local.x) - h.x > absf(local.z) - h.z
+			var face := Vector3(clampf(local.x, -h.x, h.x), 0, clampf(local.z, -h.z, h.z))
+			var normal := Vector3.ZERO
+			if on_x:
+				normal.x = 1.0 if local.x >= 0.0 else -1.0
+				face.x = h.x * normal.x
+			else:
+				normal.z = 1.0 if local.z >= 0.0 else -1.0
+				face.z = h.z * normal.z
+			var side: Vector3 = b * normal
+			pos = node.interact_point(node.global_position + b * face, side)
 		out.append({pos = pos, host = node})
 	return out
 
