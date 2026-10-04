@@ -132,6 +132,14 @@ var _visited: Array[Vector3] = []  ## Paint spots it has stood on.
 var _explored: Array[Vector3] = []  ## Places it wandered to (for picking new directions).
 var _furthest := Vector3.INF  ## The most recent NEW paint spot it reached: its best progress so far.
 var _retrace_to := Vector3.INF  ## After a fall: head back to this spot before exploring again.
+var _failed_jump := {}  ## The jump that went wrong last ({from, to, improvised}): retrace leads back to it.
+var _retry_jump := {}  ## Back where an improvised jump failed: try that same jump again.
+## Every place it got to, in order: paint spots it reached and where its unpainted jumps landed.
+## After a fall it retraces this trail back to where it fell from (painted links walked/jumped as usual,
+## unpainted ones jumped again as gambles).
+var _trail: Array[Vector3] = []
+var _trail_from: Array[Vector3] = []  ## For each trail stop: where the jump to it took off (INF if it walked there).
+var _trail_gamble: Array[bool] = []  ## For each trail stop: that jump was unpainted (replaying it is a gamble).
 var _shaken := false  ## Just fell: no unpainted leaps until it has looked around for a way back (wanders + patience).
 var _detoured := false  ## Went off its route for a coin or to use something: may need to return to _furthest.
 var _wanders := 0
@@ -162,6 +170,7 @@ var _gaze_left := 0.0  ## Time left on the current gaze.
 var _gaze_yaw := 0.0
 var _gaze_pitch := 0.0
 var _air_time := 0.0
+var _jump_from := Vector3.ZERO  ## Where the current jump took off.
 var _jump_flat_velocity := Vector3.ZERO  ## Kept through the jump, like holding forward.
 var _stuck_time := 0.0
 var _stuck_count := 0
@@ -242,6 +251,11 @@ func reset_to_spawn() -> void:
 	_furthest = Vector3.INF
 	_retrace_to = Vector3.INF
 	_shaken = false
+	_failed_jump = {}
+	_retry_jump = {}
+	_trail.clear()
+	_trail_from.clear()
+	_trail_gamble.clear()
 	_detoured = false
 	_coin_attention.clear()
 	_seen_coins.clear()
@@ -632,6 +646,12 @@ func _process_walk(delta: float) -> void:
 		_air_time = 0.2
 	_stuck_time = _stuck_time + delta if global_position.distance_to(_last_pos) < speed * delta * 0.3 else 0.0
 	_last_pos = global_position
+	if _stuck_time > 1.0 and _at(step.pos):
+		# Blocked right next to where it was going (a splat against a wall or pillar): close enough.
+		_stuck_time = 0.0
+		_path.pop_front()
+		_arrive(step)
+		return
 	if _stuck_time > 1.0:
 		_stuck_time = 0.0
 		_stuck_count += 1
@@ -668,15 +688,25 @@ func _process_jump(delta: float) -> void:
 			off.y = 0
 			_path.pop_front()
 			if off.length() < 1.2:
+				_home_y = feet().y  # Made it (painted or not): this is the floor it's on now.
+				if step.jump:
+					# Remember the way and the take-off, so it can make this jump again after a fall.
+					var painted: bool = step.get("paint", false)
+					_trail_add(step.pos if painted else feet(), _jump_from, not painted)
 				_arrive(step)
 				return
 			if step.get("jump", false):
 				failed_jumps += 1
+				_failed_jump = {from = _jump_from, to = step.pos, improvised = step.leap}
 			# Any landing that isn't where it meant to go might be a fall.
-			if not _check_setback() and step.leap:
-				say(["Made it! ...mostly.", "Nailed it. Sort of."].pick_random(), true)
-		else:
-			_check_setback()  # Fell off something without meaning to.
+			if not _check_setback():
+				_home_y = feet().y
+				if step.get("jump", false):
+					_trail_add(feet(), _jump_from, true)
+				if step.leap:
+					say(["Made it! ...mostly.", "Nailed it. Sort of."].pick_random(), true)
+		elif not _check_setback():  # Fell off something without meaning to?
+			_home_y = feet().y
 		_start_scan(scan_time * 0.5)
 
 
@@ -689,8 +719,8 @@ func _check_setback() -> bool:
 	_wanders = 0
 	_shaken = true
 	_lost_time = 0.0  # A full patience period on this floor before it improvises again.
-	if _furthest != Vector3.INF:
-		_retrace_to = _furthest
+	if not _trail.is_empty():
+		_retrace_to = _trail.back()  # Where it was when it fell.
 		say(["Ow. Okay, I know the way back up.", "Fell. Let's retrace my steps.", "That was a shortcut. Down."].pick_random(), true)
 	return true
 
@@ -743,8 +773,10 @@ func _on_world_changed() -> void:
 ## Reached a step of the path.
 func _arrive(step: Dictionary) -> void:
 	_stuck_count = 0
-	if step.get("kind", "") in ["task", "curio", "coin", "paint", "goal"]:
+	if step.get("kind", "") in ["task", "curio", "coin", "paint", "goal", "trail"]:
 		_lost_time = 0.0
+	if step.get("kind", "") == "trail":
+		_check_retrace_done(step.pos)
 	if step.get("kind", "") in ["task", "curio"]:
 		_start_interacting(step)
 		return
@@ -822,6 +854,7 @@ func _jump_to(step: Dictionary) -> void:
 		_air_time = 0.0
 		return
 	var from := feet()
+	_jump_from = from
 	var target: Vector3 = step.pos
 	var flat := Vector3(target.x - from.x, 0, target.z - from.z)
 	_last_jump_desperate = step.get("desperate", false)
@@ -1059,6 +1092,17 @@ func _decide() -> void:
 		payload.append(t.host)
 		hot.append(false)
 		jumpable.append(false)
+	if _retrace_to != Vector3.INF:
+		# Retracing: the places it got to without paint are stepping stones too (jumping to them is a gamble again).
+		for p in _trail:
+			if nodes.any(func(n): return n.distance_to(p) < 1.0):
+				continue
+			nodes.append(p)
+			trust.append(1)
+			kinds.append("trail")
+			payload.append(null)
+			hot.append(false)
+			jumpable.append(true)
 
 	# Dijkstra. Jumps only land on paint or the flag. Low-trust spots cost extra.
 	var n := nodes.size()
@@ -1067,6 +1111,7 @@ func _decide() -> void:
 	var via_jump: Array[bool] = []
 	var via_point: Array = []  ## Take-off point to walk to before jumping (or null).
 	var via_over: Array[bool] = []  ## That jump is beyond its real reach (Blind trust): it will fall short.
+	var via_replay: Array[bool] = []  ## Retracing: an unpainted jump it made before, made again (a gamble).
 	var done: Array[bool] = []
 	for i in n:
 		dist.append(INF)
@@ -1074,6 +1119,7 @@ func _decide() -> void:
 		via_jump.append(false)
 		via_point.append(null)
 		via_over.append(false)
+		via_replay.append(false)
 		done.append(false)
 	dist[0] = 0.0
 	for _iter in n:
@@ -1089,6 +1135,8 @@ func _decide() -> void:
 				continue
 			var link := _link(nodes[u], nodes[v], jumpable[v])
 			if link.is_empty():
+				link = _replay_link(nodes[u], nodes[v])
+			if link.is_empty():
 				continue
 			var nd: float = dist[u] + link.cost + (4.0 / trust[v] if kinds[v] == "paint" else 0.0)
 			if nd < dist[v]:
@@ -1097,6 +1145,7 @@ func _decide() -> void:
 				via_jump[v] = link.jump
 				via_point[v] = link.get("via")
 				via_over[v] = link.get("overreach", false)
+				via_replay[v] = link.get("replay", false)
 
 	var target := _pick_target(nodes, trust, kinds, dist, hot)
 	_path.clear()
@@ -1107,6 +1156,9 @@ func _decide() -> void:
 				paint = kinds[i] == "paint", kind = kinds[i], host = payload[i]})
 			if via_over[i]:
 				_path[0].overreach = true
+			if via_jump[i] and (kinds[i] == "trail" or via_replay[i]):
+				_path[0].leap = true  # It got there without paint last time: same gamble again.
+				_path[0].desperate = true
 			if kinds[i] == "coin" and via_jump[i]:
 				# No paint there: it's a gamble with this tester's improvised-jump odds.
 				_path[0].leap = true
@@ -1120,9 +1172,9 @@ func _decide() -> void:
 			# Heading for a hotfix: no doubts or look-arounds on the way, it's on a mission.
 			for step in _path:
 				step.trust = maxi(step.trust, hotfix_trust)
-		# Already standing on the first step? Skip it (otherwise it "arrives" there forever).
-		while _path.size() > 1 and not _path[0].jump and _path[0].kind == "paint" \
-				and Vector2(_path[0].pos.x - feet().x, _path[0].pos.z - feet().z).length() < 0.35:
+		# Already standing on the first step? Skip it (otherwise it "arrives" there forever). "On it" = within
+		# arm's reach on the same level: a splat painted right against a pillar can't be stood on exactly.
+		while _path.size() > 1 and _path[0].kind == "paint" and _at(_path[0].pos):
 			var here: Dictionary = _path.pop_front()
 			_record_visit(here.pos)
 		match kinds[target]:
@@ -1145,6 +1197,8 @@ func _decide() -> void:
 		_look_at(doubted, scan_time * 0.8)
 		say(["Hmm. Is that really yellow?", "It LOOKS yellow. But is it?", "I've been fooled by yellow before.",
 			"Let me think about that splat.", "Yellow... or a reflection? These graphics are too good."].pick_random())
+		return
+	if not _retry_jump.is_empty() and _try_retry_jump():
 		return
 	# Just fell and no painted way back: look around this floor first (wanders + patience), no blind leaps yet.
 	var cautious := _shaken and not (_wanders >= wander_limit and _lost_time >= patience)
@@ -1200,12 +1254,24 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 	# Retracing after a fall: go back to the furthest spot it had reached.
 	if _retrace_to != Vector3.INF:
 		for i in nodes.size():
-			if kinds[i] == "paint" and dist[i] < INF and nodes[i].distance_to(_retrace_to) < 1.0:
+			if kinds[i] in ["paint", "trail"] and dist[i] < INF and nodes[i].distance_to(_retrace_to) < 1.0:
 				return i
-		# No painted way back up from here: forget where it's been and explore whatever it can reach.
-		_retrace_to = Vector3.INF
-		_visited.clear()
-		say(["No way back up. Starting over.", "Okay. New plan: any yellow will do."].pick_random(), true)
+		# No direct way back: go to the reachable spot furthest along the route it took (and only forward,
+		# so it never bounces between two spots), then try again from there.
+		var here_k := _route_index(feet())
+		var pick := -1
+		var pick_k := here_k
+		for i in nodes.size():
+			if kinds[i] not in ["paint", "trail"] or dist[i] == INF or nodes[i].distance_to(feet()) < 0.8:
+				continue
+			var k := _route_index(nodes[i])
+			if k > pick_k:
+				pick_k = k
+				pick = i
+		if pick != -1:
+			return pick
+		# Nothing on the route within reach: explore from here as usual (carefully, see _shaken), but keep
+		# the route in mind.
 
 	for i in nodes.size():
 		if kinds[i] == "task" and dist[i] < INF:
@@ -1265,6 +1331,7 @@ func _mark_spots_underfoot() -> void:
 
 ## Remember a paint spot as reached. New spots become its "best progress" (where to retrace to after a fall).
 func _record_visit(pos: Vector3) -> void:
+	_trail_add(pos)
 	if not _is_visited(pos):
 		_visited.append(pos)
 		_furthest = pos
@@ -1272,10 +1339,60 @@ func _record_visit(pos: Vector3) -> void:
 		_detoured = false  # New progress: whatever detour it took is behind it.
 	elif pos.distance_to(_furthest) < 1.0:
 		_detoured = false  # Back where it left off.
-	if _retrace_to != Vector3.INF and pos.distance_to(_retrace_to) < 1.0:
-		_retrace_to = Vector3.INF
-		_shaken = false
+	_check_retrace_done(pos)
+
+
+## Retracing after a fall and just got back to where it fell from?
+func _check_retrace_done(pos: Vector3) -> void:
+	if _retrace_to == Vector3.INF or pos.distance_to(_retrace_to) >= 1.0:
+		return
+	_retrace_to = Vector3.INF
+	_shaken = false
+	if not _failed_jump.is_empty():
+		say(["Back where I fell. Let's try that again. Carefully.", "This is the jump that got me. Round two.",
+			"Okay. Same jump, more confidence."].pick_random())
+		if _failed_jump.improvised and _failed_jump.from.distance_to(pos) < 4.0:
+			_retry_jump = _failed_jump  # Nothing painted there: same gamble again, no wandering first.
+	else:
 		say(["Back where I was. Now, onwards.", "Right, I remember this bit."].pick_random())
+
+
+func _trail_add(p: Vector3, from := Vector3.INF, gamble := false) -> void:
+	for t in _trail:
+		if t.distance_to(p) < 1.0:
+			return
+	_trail.append(p)
+	_trail_from.append(from)
+	_trail_gamble.append(gamble)
+
+
+## Retracing: the jump it once made from trail stop k-1 to stop k can be made again the same way (walk to the
+## same take-off, same landing), even from a spot where the planner wouldn't plan it. Unpainted = a gamble again.
+func _replay_link(a: Vector3, b: Vector3) -> Dictionary:
+	if _retrace_to == Vector3.INF:
+		return {}
+	var kb := _route_index(b)
+	if kb <= 0 or _route_index(a) != kb - 1 or _trail_from[kb] == Vector3.INF:
+		return {}
+	var from: Vector3 = _trail_from[kb]
+	if a.distance_to(from) > 0.6 and not _walkable(a, from):
+		return {}
+	return {cost = a.distance_to(from) + from.distance_to(b) + 4.0, jump = true, via = from, replay = _trail_gamble[kb]}
+
+
+## Back where an improvised jump failed: walk to where it took off and jump the same way again.
+func _try_retry_jump() -> bool:
+	var jump := _retry_jump
+	_retry_jump = {}
+	var from: Vector3 = jump.from
+	_path.clear()
+	if from.distance_to(feet()) > 0.3:
+		if not _walkable(feet(), from):
+			return false
+		_path.append({pos = from, jump = false, trust = 99, leap = false, paint = false, kind = "walk"})
+	_path.append({pos = jump.to, jump = true, trust = 1, leap = true, desperate = true, paint = false, kind = "leap"})
+	_advance()
+	return true
 
 
 ## It can see paint it would follow, but the jump is beyond its reach: say so (once per spot),
@@ -1314,6 +1431,20 @@ func _doubted_spot() -> Vector3:
 		if not s.convinced and (best == Vector3.INF or feet().distance_to(s.pos) < feet().distance_to(best)):
 			best = s.pos
 	return best
+
+
+## Is it standing on (or right next to, on the same level) this point?
+func _at(p: Vector3) -> bool:
+	var f := feet()
+	return Vector2(p.x - f.x, p.z - f.z).length() < 0.8 and absf(p.y - f.y) < 0.4
+
+
+## Where this point is along the trail it took (see _trail); -1 if it isn't a place it got to.
+func _route_index(p: Vector3) -> int:
+	for k in range(_trail.size() - 1, -1, -1):
+		if _trail[k].distance_to(p) < 1.0:
+			return k
+	return -1
 
 
 func _is_visited(p: Vector3) -> bool:
