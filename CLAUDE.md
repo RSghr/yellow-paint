@@ -80,27 +80,28 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 - Traits (0 lowest, 1 default, 2 highest), shown to the player only as 1-3 stars. A tester has at most ONE trait at 0:
   - **Jumping**: Short legs / Average / Parkour → reach of EVERY jump, painted ones too (`reach_by_level` 4.5 / 5.5 / 7 m,
     `reach_up_by_level` 2.1 / 2.5 / 3.2 m → `max_jump_distance` / `max_jump_up`), plus `desperate_success_chance`
-    0 / 0.65 / 0.95 and `leap_error` for improvised jumps (Short legs always falls short). A seen painted landing that's out
-    of reach makes it say "Too far!" (`_say_too_far`, once per spot). Average = the old default, so levels built for it
-    still work for 2-3★. Short legs needs gaps of ~3.3 m (The Tower needs 5 m: Mike Rotransaction can't finish it yet).
-  - **Trust**: Needs a trail / Thoughtful / Blind trust (+ trust bonus 0/0/+2 = no hesitation, notice rate, scan and
-    hesitation times; one splat is enough to jump for everyone, `min_jump_splats_by_level` 1/1/1).
-    - 1★ "Needs a trail" (`trail_gap_by_level` 5 m): won't walk more than 5 m of unpainted floor between known spots
-      (corridors, the walk to a take-off point, the walk to the flag): long walks need breadcrumbs. Says "I need a
-      trail" (`_say_no_trail`, also for the flag) before improvising.
+    0.4 / 0.65 / 0.95 (`jump_success_by_level`) and `leap_error` for improvised jumps (Short legs: leaps of faith also
+    land only 40%, `short_legs`). A seen painted landing that's out of reach makes it say "Too far!" (`_say_too_far`,
+    once per spot). Short legs needs gaps of ~3.3 m (The Tower needs 5 m: Mike Rotransaction can't finish it yet).
+  - **Trust** (how much paint it takes to convince them): Skeptic / Thoughtful / Blind trust (+ trust bonus 0/0/+2 =
+    no hesitation, notice rate, scan and hesitation times).
+    - 1★ "Skeptic" (`conviction_time_by_level` 9 s): a paint spot must **convince** it before the planner uses it.
+      Conviction = Σ seconds it has known each splat of the spot × splats / 9 s, so 1 splat ≈ 9 s, 2 ≈ 2.2 s,
+      3 ≈ 1 s (about normal). Hotfixes and visited spots convince at once; the clock (`_clock`) is frozen while
+      WAITING. While doubting, `_doubted_spot()` makes it stare at the spot (counts as a look-around); once its
+      look-arounds and `patience` run out it may improvise instead. V shows doubted spots as orange growing posts.
     - 3★ "Blind trust" (`overreach_by_level` 1.5 m): picks the NEAREST unvisited yellow (dead ends included) instead of
       the one toward the flag, and when there's no proper way it jumps at paint up to 1.5 m beyond its reach
       (`_link` fallback, step `overreach`): it gets as far as its legs allow and usually falls. Leftover paint from
       the previous tester becomes a trap: scrape it.
   - **Exploration** (key `patience` in code): No paint, no way / Curious / Explorer.
-    - 1★ "No paint, no way": never walks off to explore (`wander_walks_by_level` false): it moves splat to splat and,
-      when it sees nothing, turns around on the spot (3 look-arounds), so each splat must be visible from where it
-      stands (or after turning). Never improvises (no desperate jumps, no leaps of faith).
-    - 2★ Curious: wanders 3 times up to 5 m, improvises after 8 s.
-    - 3★ Explorer: wanders 6 times up to 8 m, improvises after 16 s, and is **curious** (`curious_by_level`): presses
+    - 1★ "No paint, no way": short look-around walks only (`wander_min_by_level`/`wander_range_by_level` 1.5-3 m),
+      so each splat must be visible from near the last one. Never improvises (no desperate jumps, no leaps of faith).
+    - 2★ Curious: wanders 3 times, 2-5 m, improvises after 8 s.
+    - 3★ Explorer: wanders 8 times up to 9 m, improvises after 16 s, and is **curious** (`curious_by_level`): presses
       unpainted buttons and smashes unpainted breakables it has seen (`known_curios`, `_seen_things`, path kind
       "curio", tried once nothing painted is left), and jumps for a coin it sees without paint (`coin_gamble`: a
-      desperate jump with its Jumping odds, so Short legs always falls). Anything with paint is left to the paint.
+      desperate jump with its Jumping odds). Anything with paint is left to the paint.
   - Values live in runner.gd's "Traits" export arrays (index = trait level); `Runner.apply_profile()` applies them.
 
 ## AI rules (runner.gd), keep these intact
@@ -133,7 +134,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 - **Moving platforms**: while the floor under it is moving it stands still (`RIDING`), then looks around. Spots on a
   platform that is still moving are ignored until it stops (its `state_changed` triggers a rethink).
 - Priorities: unused hotfix > nearby coin (Explorer: may gamble a jump) > flag > painted interactable > unvisited paint >
-  (Explorer) unpainted button/breakable > leap of faith > wander (1★: turn on the spot) > desperate jump.
+  (Explorer) unpainted button/breakable > (Skeptic) stare at doubted paint > leap of faith > wander > desperate jump.
 
 ## Times (logged, never scored)
 - `Runner.session_time` (playtest start → flag) and `time_lost` (`_is_lost()`: confused, wander walks, look-arounds
@@ -156,7 +157,7 @@ but each splat is a **hotfix** (`PaintMark.hotfix`, counted in `game.gd` `hotfix
 
 ## Levels (in `Progress.LEVELS` order)
 Lineups are a first pass; per-round minimums are set by the user from playtesting (retune after trait changes).
-1. `level_01` Onboarding: paint landings. Rhea Spawn (default), Polly Gonn (blind trust), Al Gorithm (needs a trail).
+1. `level_01` Onboarding: paint landings. Rhea Spawn (default), Polly Gonn (blind trust), Al Gorithm (skeptic).
 2. `level_02` Breakables: planks side = smash, crate top = climb; coin on a crate. Bea Tah, Moe Cap, Liv Elup.
    (The standard 3-splat route ends with a leap of faith to the flag: Liv Elup, "No paint, no way", needs it painted.)
 3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back. Cass Cene, Lou Tbox, Max Levell.

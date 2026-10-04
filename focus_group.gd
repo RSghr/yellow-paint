@@ -3,12 +3,13 @@ class_name FocusGroup
 
 ## The roster. Each tester has three traits, 0 (lowest) to 2. 1 is the default playtester.
 ##   jump:     "Jumping": reach of EVERY jump (painted too) + how well improvised ones land.
-##             2 Parkour (7 m, 3.2 m up) | 1 Average (5.5 m, 2.5 m up) | 0 Short legs (4.5 m, 2.1 m up, improvised jumps fall short)
-##   trust:    2 Blind trust (nearest yellow first, jumps at paint slightly out of reach, no hesitation) | 1 Thoughtful
-##             | 0 Needs a trail (won't walk more than 5 m of unpainted floor between splats, slow to decide)
+##             2 Parkour (7 m, 3.2 m up) | 1 Average (5.5 m, 2.5 m up) | 0 Short legs (4.5 m, 2.1 m up, improvised jumps land 40%)
+##   trust:    how much paint it takes to convince them to follow it.
+##             2 Blind trust (believes paint instantly, nearest yellow first, jumps at paint slightly out of reach)
+##             | 1 Thoughtful | 0 Skeptic (believes a lone splat only after ~9 s of doubting; 2 splats ~2 s, 3 ≈ normal)
 ##   patience: "Exploration" on the card: how much they look around when lost, and if/when they improvise.
 ##             2 Explorer (wanders far and long, improvises late, presses/smashes unpainted things, gambles for coins)
-##             | 1 Curious | 0 No paint, no way (stays on its splat and turns around, never improvises)
+##             | 1 Curious | 0 No paint, no way (short 1.5-3 m look-around walks, never improvises)
 ## Rule: a tester has at most ONE trait at 0. The operator only sees stars, never the names of the traits' values.
 ## `outlet` (a parody of a games site/magazine) and `intro` (a hint at their archetype) show on the round card.
 const ROSTER := {
@@ -53,13 +54,13 @@ const ROSTER := {
 		intro = "Plays on his phone during cutscenes. Follows yellow instantly, won't move an inch without it."},
 	"Mike Rotransaction": {jump = 0, trust = 1, patience = 2,
 		outlet = "Freemium Times",
-		intro = "Would pay to skip any jump. Explores every corner first, then tries one anyway. It never works."},
+		intro = "Would pay to skip any jump. Explores every corner first, then tries one anyway. It rarely works."},
 }
 
 const TRAIT_LABELS := {jump = "Jumping", trust = "Trust", patience = "Exploration"}
 const TRAIT_VALUES := {  ## For the docs/editor only. The game shows stars.
 	jump = ["Short legs", "Average", "Parkour"],  ## Reach (all jumps) + how well improvised jumps land.
-	trust = ["Needs a trail", "Thoughtful", "Blind trust"],
+	trust = ["Skeptic", "Thoughtful", "Blind trust"],
 	patience = ["No paint, no way", "Curious", "Explorer"],
 }
 const DEFAULT_TESTER := "Rhea Spawn"
