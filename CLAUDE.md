@@ -108,6 +108,11 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 - **Trust** = number of seen splats within `trust_radius`. Low trust → hesitates, walks slower, quick look-around.
 - Jumps only onto paint (or toward the flag once seen: "leap of faith", deliberately inaccurate). Paint marks the **landing**; the AI walks to a take-off point itself.
 - Walks freely on continuous ground; wanders a little, then gives up ("Hello? Level designer?").
+- **Gazes** (cosmetic, `_start_gaze`/`_update_gaze`): while lost (wander walks, look-arounds between wanders, confused;
+  not while winding up a jump) it stares at its feet, up, or at a random spot every `gaze_interval` (2.5-5.5 s) for
+  `gaze_duration`, sometimes saying what it sees (`GAZE_LINES` + `ADMIRE`, `gaze_line_chance`). Only the visor tilts
+  (`_head_pitch`, pivots on the capsule dome); perception uses the head's yaw only. The look-around/confused timer
+  pauses during a gaze and wander walks slow to 30%, so it searches as much as before, it just loses more time.
 - **Desperation**: once it has done a full round of wandering AND `patience` seconds (default 8, chosen by the user) have passed without progress (reaching paint/coin/button/flag, seeing new paint, a door opening), so roughly 10-15s of being lost, it jumps at any ledge it can see
   (closer to the flag if seen, else unexplored). It's a gamble: `desperate_success_chance` (0.65) that it lands,
   regardless of distance (a miss falls well short). Paint appearing during the wind-up cancels it. Won't drop more than
