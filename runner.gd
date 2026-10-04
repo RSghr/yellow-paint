@@ -509,7 +509,7 @@ func _physics_process(delta: float) -> void:
 		if _is_lost():
 			time_lost += delta
 
-	if state != State.DEAD:
+	if state not in [State.DEAD, State.WAITING]:  # Before Enter it's only idling: it doesn't take in the paint yet.
 		_perceive_timer += delta
 		if _perceive_timer >= PERCEPTION_INTERVAL:
 			if is_on_floor() and state not in [State.WAITING, State.JUMPING]:
