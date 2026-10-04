@@ -179,7 +179,7 @@ using raycasts, call `game.runner.start()`, and step `physics_frame`. The AI is 
 
 ## Release (Windows)
 - `export_presets.cfg`: "Windows Desktop", single .exe (PCK embedded, no console), icon `art/Logo.ico` (multi-size,
-  made from `art/Logo.png`), output `build/windows/YellowPaint.exe` (`/build/` is git-ignored). Excludes `docs/`, `tools/`, `*.md`.
+  made from `art/Logo.png`), output `windows/YellowPaint.exe` (git-ignored). Excludes `docs/`, `tools/`, `*.md`.
 - Boot splash = `art/boot_splash.png` (the desktop wallpaper rendered without icons, bg `#0C1528`): it fades into an
   identical desktop. Re-render it if the wallpaper or `paint_splat.png` changes.
 - Before exporting: `yellow_paint/debug/unlock_all_levels` must be false (it only works in debug builds anyway).
