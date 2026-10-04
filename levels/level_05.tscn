@@ -86,11 +86,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.491491, 5.406154, 4.491565
 size = Vector3(12, 3, 3)
 
 [node name="Block9" parent="Geometry" unique_id=604112322 instance=ExtResource("block")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5.9695597, 8.110504, -0.0013952255)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5.9695597, 7.644065, -0.0013952255)
 size = Vector3(3, 2, 4)
 
 [node name="WallButton" parent="Geometry" unique_id=1274113368 instance=ExtResource("4_n8w53")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 7.7660246, 9.107955, -0.0013952255)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 7.7660246, 8.641516, -0.0013952255)
 target = NodePath("../Door")
 
 [node name="Door" parent="Geometry" unique_id=842539436 instance=ExtResource("5_a6hey")]
@@ -133,7 +133,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.600133, 15.756359, 0.139830
 size = Vector3(5, 1, 5)
 
 [node name="Block16" parent="Geometry" unique_id=1104095163 instance=ExtResource("block")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.888773, 14.834821, 0.01677066)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.495752, 14.834821, 0.01677066)
+size = Vector3(3, 2, 2)
 
 [node name="Interactables" type="Node3D" parent="." unique_id=410667203]
 editor_description = "Put breakable.tscn, door.tscn and wall_button.tscn instances here."
