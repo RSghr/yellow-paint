@@ -141,7 +141,7 @@ Each tester has three traits, shown to the player only as stars (never the names
 | Trait | ★☆☆ | ★★☆ (default) | ★★★ |
 |---|---|---|---|
 | Jumping (reach of **every** jump + improvised jumps) | Short legs: **4.5 m** across, **2.1 m** up; improvised jumps always fall short | Average: 5.5 m, 2.5 m up; improvised ~65% | Parkour: **7 m**, **3.2 m** up; improvised ~95% |
-| Trust | Needs a whole bucket: **2 splats** on a landing before jumping there, slow to decide | Thoughtful | Blind trust: one splat = full confidence, fast |
+| Trust | Needs a trail: won't walk more than **5 m** of unpainted floor between splats (to a take-off point, along a corridor, to the flag), slow to decide | Thoughtful | Blind trust: one splat = full confidence, fast, but goes for the **nearest** yellow (dead end or not) and jumps at paint up to 1.5 m out of reach (and falls). Scrape leftover paint before its round |
 | Exploration | No paint, no way: **never leaves its splat to explore**, only turns around on the spot, so every next splat must be visible from the last one. Never jumps unpainted (no leaps of faith either) | Curious: a few look-around walks, improvises after ~8 s | Explorer: wanders further and longer, improvises late (~16 s), and **gets curious**: presses unpainted buttons, smashes unpainted planks/crates it saw, and gambles on a jump to reach a coin (paint the coin's ledge to make it safe) |
 
 The numbers behind the stars are in `runner.gd`, export group "Traits" (one value per star level).
@@ -152,16 +152,16 @@ The numbers behind the stars are in `runner.gd`, export group "Traits" (one valu
 |---|---|---|---|---|
 | Rhea Spawn | IBN | ★★☆ Average | ★★☆ Thoughtful | ★★☆ Curious |
 | Polly Gonn | Polygone | ★★☆ Average | ★★★ Blind trust | ★★☆ Curious |
-| Al Gorithm | GameFAKs | ★★☆ Average | ★☆☆ Needs a whole bucket | ★★☆ Curious |
+| Al Gorithm | GameFAKs | ★★☆ Average | ★☆☆ Needs a trail | ★★☆ Curious |
 | Bea Tah | Early Axess Weekly | ★★☆ Average | ★★☆ Thoughtful | ★★★ Explorer |
 | Moe Cap | Game Misinformer | ★☆☆ Short legs | ★★☆ Thoughtful | ★★☆ Curious |
 | Liv Elup | Rock Paper Shortcut | ★★★ Parkour | ★★☆ Thoughtful | ★☆☆ No paint, no way |
 | Cass Cene | Cinematic Universe Digest | ★★☆ Average | ★★☆ Thoughtful | ★☆☆ No paint, no way |
 | Lou Tbox | Kotakoo | ★★★ Parkour | ★★☆ Thoughtful | ★★★ Explorer |
-| Max Levell | Eurogamble | ★★★ Parkour | ★☆☆ Needs a whole bucket | ★★☆ Curious |
+| Max Levell | Eurogamble | ★★★ Parkour | ★☆☆ Needs a trail | ★★☆ Curious |
 | Frank Rate | PC Gamerish: 240 FPS Edition | ★★★ Parkour | ★★★ Blind trust | ★★★ Explorer |
 | Dee Sync | Twitchy (streamer, 14 viewers) | ★☆☆ Short legs | ★★★ Blind trust | ★★☆ Curious |
-| Sven Tory | Destructoad | ★★☆ Average | ★☆☆ Needs a whole bucket | ★★★ Explorer |
+| Sven Tory | Destructoad | ★★☆ Average | ★☆☆ Needs a trail | ★★★ Explorer |
 | David Goodenough | The Casual Observer | ★★☆ Average | ★★★ Blind trust | ★☆☆ No paint, no way |
 | Mike Rotransaction | Freemium Times | ★☆☆ Short legs | ★★☆ Thoughtful | ★★★ Explorer |
 
@@ -196,7 +196,7 @@ refresh). Add the tester to the roster table above too.
 ### Picking a lineup
 
 Ideas: start with someone easy-going, end with the one whose weak trait the level punishes:
-- **Needs a whole bucket** on a level of long jumps: every landing needs 2 splats.
+- **Needs a trail** on a level of long runways or a far flag: every long walk needs breadcrumbs (a splat every ~5 m).
 - **No paint, no way** where the default tester would leap to the flag or gamble on a short hop: those need paint now.
 - **Short legs** combined with **Explorer**: it improvises fast and always fails, so the paint has to be there before it gets bored.
 - **Blind trust** or **Parkour + Explorer**: generous rounds, where a low minimum rewards a player who paints little.
