@@ -191,7 +191,7 @@ using raycasts, call `game.runner.start()`, and step `physics_frame`. The AI is 
 ## Workflow
 - Changes go on branches (`claude/...`) and pull requests to `master` (Claude can open and merge PRs with `gh api`).
   - **Big features or design changes** (new mechanics, trait redesigns, new systems): Claude opens the PR and the
-    **user reviews and merges** it.
+    **user reviews and merges** it. Always give the user the PR link when a PR needs their review.
   - **Bug fixes and small tweaks**: Claude opens the PR and **merges it itself** once its tests pass, then tells the user.
   - The user pulls with Godot closed or reloads when prompted.
 - Godot's open editor can overwrite files changed on disk (script editor buffers). Never assume a write landed, verify.
