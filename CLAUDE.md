@@ -35,7 +35,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
 | `level.gd` | `@tool` root script of every level: `level_name`, `intro_text`, `death_height`, `post_launch`, `music` (track name, empty = game), 3 rounds (`tester_N` dropdown + `minimum_N`); editor warnings for missing spawns/goal/bad lineup. F6 on a level scene launches it inside `game.tscn`. |
 | `levels/` | Level scenes: world only (Geometry, Interactables/Coins, Goal, `RunnerSpawn`/`OperatorSpawn` Marker3Ds). |
-| `runner.gd/.tscn` | The AI playtester (perception, trust, planning, speech). **V** = debug view: vision cone, known paint, plan, plus the **reach cylinder** (`draw_reach`, called every frame by `game.gd`): ground band = jump distance, floating band = jump height, label with the numbers. Centred on the floor the operator aims at (spectating: on the tester). Only while painting: hidden from Enter until R so the vision view stays clean. |
+| `runner.gd/.tscn` | The AI playtester (perception, trust, planning, speech). **V** = debug view: vision cone, known paint, plan, plus the **reach cylinder** (`draw_reach`, called every frame by `game.gd`): ground band = jump distance, floating band = jump height, label "Jump reach". Centred on the floor the operator aims at (spectating: on the tester). Only while painting: hidden from Enter until R so the vision view stays clean. |
 | `character.gd/.tscn` | The operator: FPS movement, jetpack (hold Space), fly mode (F), paint (LMB), scrape (RMB). |
 | `paint_manager.gd`, `paint_mark.gd` | Splats (Decals). Each mark has a `role`: `nav` (stand here), `interact` (use this), `none`. Paint limit + refunds. |
 | `door.gd` | Door / moving platform (AnimatableBody3D): slides `move_distance` along `move_direction` when opened (editor shows a cyan ghost at the end position). `is_platform`: top paint = nav and rides along (`PaintMark.attach_to`), group `mover`, `moving` while sliding. |
@@ -85,9 +85,15 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
     still work for 2-3★. Short legs needs gaps of ~3.3 m (The Tower needs 5 m: Mike Rotransaction can't finish it yet).
   - **Trust**: Needs a whole bucket / Thoughtful / Blind trust → splats needed on a landing to jump there 2/1/1,
     trust bonus 0/0/+2 (no hesitation), notice rate, scan and hesitation times.
-  - **Exploration** (key `patience` in code): No paint, no way / Curious / Explorer → wanders 3/3/6 times up to 5/5/8 m,
-    then improvises after never / 8s / 16s. "No paint, no way" still looks around but never makes an unpainted jump
-    (no desperate jumps, no leaps of faith). Explorer finds more on its own and gambles late.
+  - **Exploration** (key `patience` in code): No paint, no way / Curious / Explorer.
+    - 1★ "No paint, no way": never walks off to explore (`wander_walks_by_level` false): it moves splat to splat and,
+      when it sees nothing, turns around on the spot (3 look-arounds), so each splat must be visible from where it
+      stands (or after turning). Never improvises (no desperate jumps, no leaps of faith).
+    - 2★ Curious: wanders 3 times up to 5 m, improvises after 8 s.
+    - 3★ Explorer: wanders 6 times up to 8 m, improvises after 16 s, and is **curious** (`curious_by_level`): presses
+      unpainted buttons and smashes unpainted breakables it has seen (`known_curios`, `_seen_things`, path kind
+      "curio", tried once nothing painted is left), and jumps for a coin it sees without paint (`coin_gamble`: a
+      desperate jump with its Jumping odds, so Short legs always falls). Anything with paint is left to the paint.
   - Values live in runner.gd's "Traits" export arrays (index = trait level); `Runner.apply_profile()` applies them.
 
 ## AI rules (runner.gd), keep these intact
@@ -114,7 +120,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   walked without hesitation or look-arounds. It replans on the spot (`_urgent`). Hotfix paint on a breakable decides it.
 - **Moving platforms**: while the floor under it is moving it stands still (`RIDING`), then looks around. Spots on a
   platform that is still moving are ignored until it stops (its `state_changed` triggers a rethink).
-- Priorities: unused hotfix > nearby coin > flag > painted interactable > unvisited paint > leap of faith > wander > desperate jump.
+- Priorities: unused hotfix > nearby coin (Explorer: may gamble a jump) > flag > painted interactable > unvisited paint >
+  (Explorer) unpainted button/breakable > leap of faith > wander (1★: turn on the spot) > desperate jump.
 
 ## Times (logged, never scored)
 - `Runner.session_time` (playtest start → flag) and `time_lost` (`_is_lost()`: confused, wander walks, look-arounds

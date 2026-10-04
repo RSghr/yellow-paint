@@ -142,7 +142,7 @@ Each tester has three traits, shown to the player only as stars (never the names
 |---|---|---|---|
 | Jumping (reach of **every** jump + improvised jumps) | Short legs: **4.5 m** across, **2.1 m** up; improvised jumps always fall short | Average: 5.5 m, 2.5 m up; improvised ~65% | Parkour: **7 m**, **3.2 m** up; improvised ~95% |
 | Trust | Needs a whole bucket: **2 splats** on a landing before jumping there, slow to decide | Thoughtful | Blind trust: one splat = full confidence, fast |
-| Exploration (when lost) | No paint, no way: looks around, but **never** jumps unpainted (no leaps of faith either) | Curious: a few look-arounds, improvises after ~8 s | Explorer: wanders further and twice as long, improvises late (~16 s) |
+| Exploration | No paint, no way: **never leaves its splat to explore**, only turns around on the spot, so every next splat must be visible from the last one. Never jumps unpainted (no leaps of faith either) | Curious: a few look-around walks, improvises after ~8 s | Explorer: wanders further and longer, improvises late (~16 s), and **gets curious**: presses unpainted buttons, smashes unpainted planks/crates it saw, and gambles on a jump to reach a coin (paint the coin's ledge to make it safe) |
 
 The numbers behind the stars are in `runner.gd`, export group "Traits" (one value per star level).
 
