@@ -359,15 +359,15 @@ func _on_out_of_paint() -> void:
 	paint_label.text = "OUT OF PAINT! Scrape some (right click) to reuse it."
 
 
-## Caps Lock: "does something outlandish", but it's a ThinkBox 2009 Pro feature (see the IT quick start mail).
+## Caps Lock: would toggle green paint, but that's a ThinkBox 2009 Pro+ feature (see the IT quick start mail).
 func _caps_lock_joke() -> void:
 	if _out_of_paint_timer > 0.0:
 		return
 	_out_of_paint_timer = 2.5
 	Sfx.play("out_of_paint", 0.0)
 	paint_label.add_theme_color_override("font_color", Color(1, 0.25, 0.2))
-	paint_label.text = ["This feature requires ThinkBox 2009 Pro.", "Caps Lock is a premium feature. Upgrade to ThinkBox 2009 Pro.",
-		"Nice try. ThinkBox 2009 Pro only."].pick_random()
+	paint_label.text = ["Green paint requires ThinkBox 2009 Pro+.", "Green paint is a ThinkBox 2009 Pro+ feature. It was out of budget.",
+		"Nice try. Green paint is ThinkBox 2009 Pro+ only."].pick_random()
 
 
 func _on_scrape_denied() -> void:
