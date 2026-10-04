@@ -26,6 +26,11 @@ func _ready() -> void:
 	_cap_material.emission_enabled = true
 	_cap.material_override = _cap_material
 	_update_look()
+	# An elevator that comes back on its own (Door.return_after) re-arms this button.
+	for path in [target] + extra_targets:
+		var node := get_node_or_null(path)
+		if node and node.has_signal("returned"):
+			node.returned.connect(reset_state)
 
 
 func paint_role(_normal: Vector3) -> String:

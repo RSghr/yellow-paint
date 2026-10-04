@@ -86,6 +86,9 @@ Behaviour that matters for layout:
   won't jump onto a platform that's still moving (it waits for it to stop). Two setups that work:
   - **Elevator**: platform flush with the floor, button standing on it (the tester stands on the platform to press
 	it), and paint on the platform top. The tester walks on, presses, rides up, then looks around from the top.
+	Set **`return_after`** (seconds) so it comes back down once nobody is on it: the button re-arms, and a tester
+	who falls back down can call it again instead of being stuck (it lands on the tester rather than crushing it).
+	0 = it stays up, and only a reset (R) brings it down.
   - **Bridge**: platform off to the side, slides into a gap when the button is pressed. Paint its top where it rests;
 	the paint comes along, and the tester jumps onto it once it has arrived.
   - Make the platform's top a hair **higher** than any block around it (e.g. +0.01), otherwise your paint can land on

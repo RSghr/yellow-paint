@@ -38,7 +38,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `runner.gd/.tscn` | The AI playtester (perception, trust, planning, speech). **V** = debug view: vision cone, known paint, plan, plus the **reach cylinder** (`draw_reach`, called every frame by `game.gd`): ground band = jump distance, floating band = jump height, label "Jump reach". Centred on the floor the operator aims at (spectating: on the tester). Only while painting: hidden from Enter until R so the vision view stays clean. |
 | `character.gd/.tscn` | The operator: FPS movement, jetpack (hold Space), fly mode (F), paint (LMB), scrape (RMB). |
 | `paint_manager.gd`, `paint_mark.gd` | Splats (Decals). Each mark has a `role`: `nav` (stand here), `interact` (use this), `none`. Paint limit + refunds. |
-| `door.gd` | Door / moving platform (AnimatableBody3D): slides `move_distance` along `move_direction` when opened (editor shows a cyan ghost at the end position). `is_platform`: top paint = nav and rides along (`PaintMark.attach_to`), group `mover`, `moving` while sliding. |
+| `door.gd` | Door / moving platform (AnimatableBody3D): slides `move_distance` along `move_direction` when opened (editor shows a cyan ghost at the end position). `is_platform`: top paint = nav and rides along (`PaintMark.attach_to`), group `mover`, `moving` while sliding. **Elevator** `return_after` (s, 0 = stays): once up and nobody on top for that long it slides back, emits `returned`, and the buttons targeting it re-arm (`WallButton` connects to it), so a tester who fell can call it again. Coming down onto a tester (group `playtester`) it puts them on top instead of pushing them through the floor (`_scoop_playtester`). The Tower's Door2: 4 s. |
 | `breakable.gd`, `door.gd`, `wall_button.gd`, `coin.gd` | Interactables. A button opens `target` + every `extra_targets` path; a target without `open()` (e.g. a "Maze" Node3D) opens every door inside it. Blocks and doors parented under a door move with it, colliders included (nested doors turn off `sync_to_physics`). Group `interactable` objects implement `paint_role(normal)`, `interact_point()`, `interact()`, `is_used()`, `kind`, `state_changed`. Group `resettable` implements `reset_state()`. |
 | `block.gd` + `debug_block.tscn` | Static level block, resized via `size` (never scale physics bodies). Grid shader for readable distances. |
 | `paint_gauge.gd` | HUD paint bar with min/optimal ticks. |
@@ -165,7 +165,8 @@ Lineups are a first pass; per-round minimums are set by the user from playtestin
    (The standard 3-splat route ends with a leap of faith to the flag: Liv Elup, "No paint, no way", needs it painted.)
 3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back. Cass Cene, Lou Tbox, Max Levell.
 4. `level_04` The Gauntlet: everything combined. Frank Rate, Dee Sync, Sven Tory.
-5. `level_05` The Tower: the user's vertical spiral level. Door2 is an elevator platform (button on it, rises 10m). David Goodenough, Mike Rotransaction, Rhea Spawn.
+5. `level_05` The Tower: the user's vertical spiral level. Door2 is an elevator platform (button next to it, rises 10m,
+   comes back down after 4 s with nobody on it: `return_after`). David Goodenough, Mike Rotransaction, Rhea Spawn.
 6. `level_06` Victory lap (**post-launch**, the $4.99 DLC): a straight road blocked by a wall. Its button raises the wall
    AND `Geometry/Maze` (every maze wall is a door, sunk 3.6 m into the block), so the route has to be painted blind.
    Liv Elup, Lou Tbox, Sven Tory.

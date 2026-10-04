@@ -181,6 +181,7 @@ var _reach_label: Label3D
 
 func _ready() -> void:
 	_spawn = global_transform
+	add_to_group("playtester")
 	_home_y = feet().y
 	_paint = get_tree().get_first_node_in_group("paint_manager")
 	_goal = get_tree().get_first_node_in_group("goal")
