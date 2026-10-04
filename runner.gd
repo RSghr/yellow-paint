@@ -156,6 +156,10 @@ var _glance_yaw := 0.0
 var _body_turn := 0.0  ## Remaining yaw for turning around during a look-around.
 var _look_point := Vector3.ZERO
 var _look_timer := 0.0
+var _gaze_timer := 2.0  ## Time until the next gaze while lost.
+var _gaze_left := 0.0  ## Time left on the current gaze.
+var _gaze_yaw := 0.0
+var _gaze_pitch := 0.0
 var _air_time := 0.0
 var _jump_flat_velocity := Vector3.ZERO  ## Kept through the jump, like holding forward.
 var _stuck_time := 0.0
@@ -165,6 +169,10 @@ var _last_pos := Vector3.ZERO
 @onready var _speech: Label3D = $Speech
 @onready var _body: Node3D = $Body
 @onready var _head: Node3D = $Body/Head
+@onready var _visor: Node3D = $Body/Head/Visor
+@onready var _visor_rest: Vector3 = _visor.position
+const VISOR_PIVOT := Vector3(0, -0.12, 0)  ## Centre of the capsule's top dome, in Head space.
+var _head_pitch := 0.0  ## Up/down look (cosmetic: perception only uses the head's yaw).
 var _debug_mesh: MeshInstance3D
 var _reach_mesh: MeshInstance3D  ## V: the jump reach cylinder (drawn every frame by draw_reach()).
 var _reach_label: Label3D
@@ -246,8 +254,11 @@ func reset_to_spawn() -> void:
 	_too_far_said.clear()
 	_home_y = _spawn.origin.y - FEET_OFFSET
 	_head.rotation = Vector3.ZERO
+	_head_pitch = 0.0
 	_body.rotation = Vector3.ZERO
 	_body_turn = 0.0
+	_gaze_left = 0.0
+	_gaze_timer = 2.0
 	state = State.WAITING
 	say("Ready when you are, boss.", true)
 
@@ -304,6 +315,39 @@ const ADMIRE := [
 	"Every leaf is moving. Every single leaf.",
 ]
 @export_range(0.0, 1.0) var admire_chance := 0.12  ## Chance to comment on the (real) graphics after a look-around.
+
+
+## Gazes: while lost (wandering, looking around between wanders, confused) it stares at the scenery now
+## and then, at its feet, up at the walls and sky, or at some random spot, and sometimes says what it sees.
+## Purely cosmetic: perception ignores head pitch, and the look-around / confused timers pause during a gaze,
+## so it still sweeps as much as before. It just takes longer, and that time counts as lost.
+const GAZE_LINES := {
+	down = [
+		"Look at the cracks in these tiles. Each one is different.",
+		"Is that... a tiny beetle? They modelled a BEETLE.",
+		"The puddle reflects the clouds. Moving clouds.",
+		"Even the gravel has normal maps.",
+		"Hand-placed pebbles. Thousands of them.",
+		"My shadow has soft edges. SOFT EDGES.",
+	],
+	up = [
+		"The clouds are volumetric. I could stare at them all day.",
+		"Look at the light coming through those arches.",
+		"Birds! Flocking birds! With individual feathers!",
+		"The ceiling has frescoes. Someone painted a ceiling.",
+		"Is that a second sun? Lore.",
+	],
+	spot = [
+		"Wait, look at that statue over there.",
+		"Ooh. What's that shiny thing?",
+		"Look at the ivy on that wall. Physically simulated ivy.",
+		"That banner is waving in the wind. Real cloth physics.",
+		"I want to live in that little house over there.",
+	],
+}
+@export var gaze_interval := Vector2(2.5, 5.5)  ## Seconds between gazes while lost (random in this range).
+@export var gaze_duration := Vector2(1.2, 2.4)  ## How long each gaze lasts.
+@export_range(0.0, 1.0) var gaze_line_chance := 0.35  ## Chance it says what it's looking at.
 
 
 ## A remark about how beautiful the game looks (from the tester's point of view).
@@ -545,6 +589,8 @@ func _process_walk(delta: float) -> void:
 		return
 
 	var speed := confident_speed if step.trust >= 3 else walk_speed
+	if _gaze_left > 0.0:
+		speed *= 0.3  # Ambles while staring at the scenery.
 	var dir := to_target.normalized()
 	velocity.x = dir.x * speed
 	velocity.z = dir.z * speed
@@ -1524,17 +1570,59 @@ func _look_at(point: Vector3, duration: float) -> void:
 	_look_timer = duration
 
 
+## Starts staring at something: its feet, up high, or a random spot around it.
+func _start_gaze() -> void:
+	_gaze_left = randf_range(gaze_duration.x, gaze_duration.y)
+	_gaze_timer = randf_range(gaze_interval.x, gaze_interval.y)
+	var kind: String = ["down", "down", "up", "spot", "spot"].pick_random()
+	match kind:
+		"down":
+			_gaze_yaw = deg_to_rad(randf_range(-25, 25))
+			_gaze_pitch = deg_to_rad(randf_range(-60, -40))
+		"up":
+			_gaze_yaw = deg_to_rad(randf_range(-50, 50))
+			_gaze_pitch = deg_to_rad(randf_range(30, 50))
+		_:
+			_gaze_yaw = deg_to_rad(randf_range(50, 100)) * (1 if randf() < 0.5 else -1)
+			_gaze_pitch = deg_to_rad(randf_range(-20, 15))
+	if randf() < gaze_line_chance:
+		say(GAZE_LINES[kind].pick_random() if randf() < 0.7 else ADMIRE.pick_random())
+
+
+## Is it staring at the scenery right now? (Only while lost, and never over something it's looking at.)
+func is_gazing() -> bool:
+	return _gaze_left > 0.0
+
+
+func _update_gaze(delta: float) -> void:
+	if not _is_lost() or state == State.HESITATING or _look_timer > 0.0 or _urgent or not is_on_floor():
+		_gaze_left = 0.0
+		return
+	if _gaze_left > 0.0:
+		_gaze_left -= delta
+		if state in [State.SCANNING, State.CONFUSED]:
+			_timer -= delta  # The look-around waits: admiring isn't searching.
+		return
+	_gaze_timer -= delta
+	if _gaze_timer <= 0.0:
+		_start_gaze()
+
+
 func _update_head(delta: float) -> void:
 	var target_yaw := 0.0
+	var target_pitch := 0.0
 	_look_timer -= delta
+	_update_gaze(delta)
 	if _look_timer > 0.0:
 		var local := _body.global_basis.inverse() * (_look_point - _head.global_position)
 		target_yaw = clampf(atan2(-local.x, -local.z), deg_to_rad(-110), deg_to_rad(110))
+		target_pitch = clampf(atan2(local.y, Vector2(local.x, local.z).length()), deg_to_rad(-50), deg_to_rad(40))
+	elif _gaze_left > 0.0:
+		target_yaw = _gaze_yaw
+		target_pitch = _gaze_pitch  # Any turn-around waits until it's done staring.
 	elif state == State.SCANNING or state == State.CONFUSED or state == State.WAITING:
-		if state != State.WAITING and absf(_body_turn) > 0.001:
-			var turn := clampf(_body_turn, -3.0 * delta, 3.0 * delta)
-			_body.rotate_y(turn)
-			_body_turn -= turn
+		if state != State.WAITING:
+			_turn_body(delta)
 		var period := _scan_duration if state == State.SCANNING else 3.0
 		target_yaw = sin(_timer / period * TAU) * deg_to_rad(75)
 	elif state == State.INTERACTING:
@@ -1547,6 +1635,19 @@ func _update_head(delta: float) -> void:
 			_glance_timer = randf_range(0.4, 0.8) if _glance_yaw != 0.0 else randf_range(1.0, 2.2)
 		target_yaw = _glance_yaw
 	_head.rotation.y = lerp_angle(_head.rotation.y, target_yaw, minf(1.0, 7.0 * delta))
+	_head_pitch = lerp_angle(_head_pitch, target_pitch, minf(1.0, 4.0 * delta))
+	# Only the visor tilts (the head node stays level, so nothing that uses its basis changes). It pivots
+	# around the centre of the capsule's dome so it slides over the surface instead of sinking into it.
+	var tilt := Basis(Vector3.RIGHT, _head_pitch)
+	_visor.position = VISOR_PIVOT + tilt * (_visor_rest - VISOR_PIVOT)
+	_visor.basis = tilt
+
+
+func _turn_body(delta: float) -> void:
+	if absf(_body_turn) > 0.001:
+		var turn := clampf(_body_turn, -3.0 * delta, 3.0 * delta)
+		_body.rotate_y(turn)
+		_body_turn -= turn
 
 
 # --- Debug view ------------------------------------------------------------
