@@ -68,9 +68,9 @@ const PERCEPTION_INTERVAL := 0.1
 @export var jump_success_by_level: Array[float] = [0.4, 0.65, 0.95]  ## desperate_success_chance: odds that an improvised jump lands (Short legs: leaps of faith too).
 @export var leap_error_by_level: Array[float] = [0.7, 0.7, 0.25]  ## Leap-of-faith aim error in metres.
 @export_subgroup("Trust (Skeptic / Thoughtful / Blind trust)")
-## Skeptic: seconds before it believes a spot with ONE splat it has seen (n splats: this / n², so 3 splats ≈ 1 s,
+## Skeptic: seconds before it believes a spot with ONE splat it has seen (n splats: this / n², so 3 splats ≈ 0.5 s,
 ## about normal). Until then it won't use the spot: it stares at it, doubts, and may end up improvising. 0 = instant.
-@export var conviction_time_by_level: Array[float] = [9.0, 0.0, 0.0]
+@export var conviction_time_by_level: Array[float] = [5.0, 0.0, 0.0]
 ## Blind trust: heads for the NEAREST yellow (dead end or not), and will jump at paint up to this much further
 ## than it can actually reach (and fall short). 0 = never.
 @export var overreach_by_level: Array[float] = [0.0, 0.0, 1.5]

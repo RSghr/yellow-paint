@@ -85,9 +85,9 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
     once per spot). Short legs needs gaps of ~3.3 m (The Tower needs 5 m: Mike Rotransaction can't finish it yet).
   - **Trust** (how much paint it takes to convince them): Skeptic / Thoughtful / Blind trust (+ trust bonus 0/0/+2 =
     no hesitation, notice rate, scan and hesitation times).
-    - 1★ "Skeptic" (`conviction_time_by_level` 9 s): a paint spot must **convince** it before the planner uses it.
-      Conviction = Σ seconds it has known each splat of the spot × splats / 9 s, so 1 splat ≈ 9 s, 2 ≈ 2.2 s,
-      3 ≈ 1 s (about normal). Hotfixes and visited spots convince at once; the clock (`_clock`) is frozen while
+    - 1★ "Skeptic" (`conviction_time_by_level` 5 s): a paint spot must **convince** it before the planner uses it.
+      Conviction = Σ seconds it has known each splat of the spot × splats / 5 s, so 1 splat ≈ 5 s, 2 ≈ 1.3 s,
+      3 ≈ 0.5 s (about normal). Hotfixes and visited spots convince at once; the clock (`_clock`) is frozen while
       WAITING. While doubting, `_doubted_spot()` makes it stare at the spot (counts as a look-around); once its
       look-arounds and `patience` run out it may improvise instead. V shows doubted spots as orange growing posts.
     - 3★ "Blind trust" (`overreach_by_level` 1.5 m): picks the NEAREST unvisited yellow (dead ends included) instead of

@@ -6,7 +6,7 @@ class_name FocusGroup
 ##             2 Parkour (7 m, 3.2 m up) | 1 Average (5.5 m, 2.5 m up) | 0 Short legs (4.5 m, 2.1 m up, improvised jumps land 40%)
 ##   trust:    how much paint it takes to convince them to follow it.
 ##             2 Blind trust (believes paint instantly, nearest yellow first, jumps at paint slightly out of reach)
-##             | 1 Thoughtful | 0 Skeptic (believes a lone splat only after ~9 s of doubting; 2 splats ~2 s, 3 ≈ normal)
+##             | 1 Thoughtful | 0 Skeptic (believes a lone splat only after ~5 s of doubting; 2 splats ~1.3 s, 3 ≈ normal)
 ##   patience: "Exploration" on the card: how much they look around when lost, and if/when they improvise.
 ##             2 Explorer (wanders far and long, improvises late, presses/smashes unpainted things, gambles for coins)
 ##             | 1 Curious | 0 No paint, no way (short 1.5-3 m look-around walks, never improvises)
