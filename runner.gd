@@ -65,13 +65,12 @@ const PERCEPTION_INTERVAL := 0.1
 @export_subgroup("Jumping (Short legs / Average / Parkour)")
 @export var reach_by_level: Array[float] = [4.5, 5.5, 7.0]  ## max_jump_distance: how far ANY jump goes (painted ones too).
 @export var reach_up_by_level: Array[float] = [2.1, 2.5, 3.2]  ## max_jump_up: how high a ledge it can jump onto.
-@export var jump_success_by_level: Array[float] = [0.0, 0.65, 0.95]  ## desperate_success_chance. 0 = always falls short (leaps of faith too).
+@export var jump_success_by_level: Array[float] = [0.4, 0.65, 0.95]  ## desperate_success_chance: odds that an improvised jump lands (Short legs: leaps of faith too).
 @export var leap_error_by_level: Array[float] = [0.7, 0.7, 0.25]  ## Leap-of-faith aim error in metres.
-@export_subgroup("Trust (Needs a trail / Thoughtful / Blind trust)")
-@export var min_jump_splats_by_level: Array[int] = [1, 1, 1]  ## Splats needed on a landing before it will jump there.
-## Longest walk it accepts on unpainted floor between two known spots (metres). -1 = no limit.
-## "Needs a trail": long walks (to a take-off point, along a corridor, to the flag) need breadcrumbs.
-@export var trail_gap_by_level: Array[float] = [5.0, -1.0, -1.0]
+@export_subgroup("Trust (Skeptic / Thoughtful / Blind trust)")
+## Skeptic: seconds before it believes a spot with ONE splat it has seen (n splats: this / n², so 3 splats ≈ 0.5 s,
+## about normal). Until then it won't use the spot: it stares at it, doubts, and may end up improvising. 0 = instant.
+@export var conviction_time_by_level: Array[float] = [5.0, 0.0, 0.0]
 ## Blind trust: heads for the NEAREST yellow (dead end or not), and will jump at paint up to this much further
 ## than it can actually reach (and fall short). 0 = never.
 @export var overreach_by_level: Array[float] = [0.0, 0.0, 1.5]
@@ -81,19 +80,18 @@ const PERCEPTION_INTERVAL := 0.1
 @export var hesitation_by_level: Array[float] = [1.3, 0.9, 0.5]  ## hesitation_per_doubt.
 @export_subgroup("Exploration (No paint, no way / Curious / Explorer)")  # "patience" in the code and roster.
 @export var patience_by_level: Array[float] = [-1.0, 8.0, 16.0]  ## Seconds lost (after its wanders) before improvising. -1 = never improvises (no desperate jumps, no leaps of faith).
-@export var wander_limit_by_level: Array[int] = [3, 3, 6]  ## Look-around walks before it gives up and waits.
-@export var wander_range_by_level: Array[float] = [5.0, 5.0, 8.0]
-## False = it never walks off to explore: it only turns around on the spot looking for the next splat.
-@export var wander_walks_by_level: Array[bool] = [false, true, true]
+@export var wander_limit_by_level: Array[int] = [3, 3, 8]  ## Look-around walks before it gives up and waits.
+@export var wander_range_by_level: Array[float] = [3.0, 5.0, 9.0]  ## How far each look-around walk can go (metres).
+@export var wander_min_by_level: Array[float] = [1.5, 2.0, 2.0]  ## Shortest look-around walk (metres).
 ## True = curious: presses unpainted buttons and smashes unpainted planks it sees, and gambles on a jump for a coin.
-@export var curious_by_level: Array[bool] = [false, false, true]  ## How far each look-around walk can go (metres).
+@export var curious_by_level: Array[bool] = [false, false, true]
 
-var min_jump_splats := 1
-var trail_gap := -1.0  ## See trail_gap_by_level.
+var conviction_time := 0.0  ## See conviction_time_by_level.
+var short_legs := false  ## Jumping 1★: leaps of faith only land desperate_success_chance of the time too.
+var wander_min := 2.0
 var overreach := 0.0  ## See overreach_by_level. > 0 also means "Blind trust": nearest yellow first.
 var trust_bonus := 0
 var improvises := true  ## False = "No paint, no way": never jumps anywhere unpainted.
-var wander_walks := true  ## False: looks around on the spot instead of walking off to explore.
 var curious := false  ## Explorer: tries unpainted buttons/planks and jumps for coins.
 var profile := {jump = 1, trust = 1, patience = 1}
 
@@ -127,6 +125,8 @@ var _goal_known := false
 
 # Perception memory
 var _attention := {}  ## mark instance id -> how much it has looked at it (1.0 = noticed)
+var _noticed_at := {}  ## mark instance id -> _clock when it noticed it (Skeptic conviction).
+var _clock := 0.0  ## Playtest clock (frozen while WAITING).
 var _seen := {}  ## mark instance id -> true
 var _visited: Array[Vector3] = []  ## Paint spots it has stood on.
 var _explored: Array[Vector3] = []  ## Places it wandered to (for picking new directions).
@@ -233,6 +233,7 @@ func reset_to_spawn() -> void:
 	velocity = Vector3.ZERO
 	_path.clear()
 	_attention.clear()
+	_noticed_at.clear()
 	_seen.clear()
 	_visited.clear()
 	_explored.clear()
@@ -271,8 +272,8 @@ func apply_profile(tester: String, p: Dictionary) -> void:
 	max_jump_up = reach_up_by_level[p.jump]
 	desperate_success_chance = jump_success_by_level[p.jump]
 	leap_error = leap_error_by_level[p.jump]
-	min_jump_splats = min_jump_splats_by_level[p.trust]
-	trail_gap = trail_gap_by_level[p.trust]
+	short_legs = p.jump == 0
+	conviction_time = conviction_time_by_level[p.trust]
 	overreach = overreach_by_level[p.trust]
 	trust_bonus = trust_bonus_by_level[p.trust]
 	notice_rate = notice_rate_by_level[p.trust]
@@ -282,7 +283,7 @@ func apply_profile(tester: String, p: Dictionary) -> void:
 	improvises = patience >= 0.0
 	wander_limit = wander_limit_by_level[p.patience]
 	wander_range = wander_range_by_level[p.patience]
-	wander_walks = wander_walks_by_level[p.patience]
+	wander_min = wander_min_by_level[p.patience]
 	curious = curious_by_level[p.patience]
 
 
@@ -387,16 +388,21 @@ func known_spots() -> Array[Dictionary]:
 			continue  # It's going to smash this, not stand on it.
 		var trust := 0
 		var hot := false
+		var looked := 0.0  ## Total seconds it has known each splat of this spot.
 		for other in seen:
 			if other.role == "nav" and other.global_position.distance_to(mark.global_position) <= trust_radius:
 				trust += 1
 				hot = hot or other.hotfix
-		var splats := trust
+				looked += _clock - _noticed_at.get(other.get_instance_id(), -INF)
+		# Skeptic: conviction builds up over time, faster with more splats (n splats: conviction_time / n²).
+		var conviction := 1.0
+		if conviction_time > 0.0 and not hot and not _is_visited(mark.stand_point):
+			conviction = clampf(looked * trust / conviction_time, 0.0, 1.0)
 		trust += trust_bonus
 		if hot:
 			trust = maxi(trust, hotfix_trust)  # The operator stepped in mid-run: that's an order.
 		spots.append({pos = mark.stand_point, trust = trust, host = mark.host, hotfix = hot,
-			jumpable = hot or splats >= min_jump_splats})
+			conviction = conviction, convinced = conviction >= 1.0})
 	return spots
 
 
@@ -495,6 +501,8 @@ func known_coins() -> Array[Coin]:
 func _physics_process(delta: float) -> void:
 	_speech_cooldown -= delta
 	_timer += delta
+	if state != State.WAITING:
+		_clock += delta
 	if state not in [State.WAITING, State.CELEBRATING, State.DEAD]:
 		_lost_time += delta  # Reset whenever it makes progress; wandering doesn't count.
 		session_time += delta
@@ -755,7 +763,7 @@ func _advance() -> void:
 			Sfx.play("desperate", 0.0)
 			if step.get("coin_gamble", false):
 				say(["No paint? That coin is worth it.", "I can make that. Probably. COIN!", "Money first, safety second."].pick_random(), true)
-			elif desperate_success_chance <= 0.0:
+			elif short_legs:
 				say(["I've never made a jump in my life. Here goes!", "How hard can jumping be?",
 					"I don't really do jumps. But okay!"].pick_random(), true)
 			else:
@@ -811,8 +819,8 @@ func _jump_to(step: Dictionary) -> void:
 		else:
 			target += flat.normalized() * randf_range(-0.2, 0.3)
 	elif step.leap and flat.length() > 0.01:
-		if desperate_success_chance <= 0.0:
-			target = from.lerp(target, randf_range(0.45, 0.65))  # Short legs: never makes an unpainted jump.
+		if short_legs and randf() >= desperate_success_chance:
+			target = from.lerp(target, randf_range(0.45, 0.65))  # Short legs: unpainted jumps usually fall short.
 		else:
 			target += flat.normalized() * randf_range(-leap_error, leap_error * 0.6)
 	if step.get("overreach", false):
@@ -879,6 +887,7 @@ func _perceive(dt: float) -> void:
 			# A hotfix grabs its attention at once, even outside its view cone (it still needs line of sight).
 			if mark.hotfix and _can_see(space, eye, look, -1.0, target):
 				_seen[id] = true
+				_noticed_at[id] = _clock
 				_on_noticed(mark, 1)
 				continue
 			if not _can_see(space, eye, look, cos_half, target):
@@ -893,6 +902,7 @@ func _perceive(dt: float) -> void:
 			_attention[id] = _attention.get(id, 0.0) + gain
 			if _attention[id] >= 1.0:
 				_seen[id] = true
+				_noticed_at[id] = _clock
 				_on_noticed(mark, blob)
 
 	# Coins are shiny: no paint needed, and quick to notice.
@@ -975,9 +985,9 @@ func _on_noticed(mark: PaintMark, blob: int) -> void:
 			say(["That's a LOT of yellow. Must be important.", "So. Much. Yellow."].pick_random())
 		elif blob == 2:
 			say(["Yellow! Over there!", "Ooh, yellow."].pick_random())
-		elif min_jump_splats > 1:
-			say(["One splat? I'll need more than that.", "That's barely yellow. Not jumping on that.",
-				"One drop. Call me when there's a bucket."].pick_random())
+		elif conviction_time > 0.0:
+			say(["One splat? Could be a coincidence.", "Is that yellow, or just... a stain?",
+				"One drop of yellow. I'll think about it."].pick_random())
 		elif trust_bonus > 0:
 			say(["Yellow! Say no more.", "Paint! I'm in.", "If it's yellow, it's right."].pick_random())
 		else:
@@ -996,14 +1006,16 @@ func _decide() -> void:
 	var kinds: Array[String] = ["me"]
 	var payload: Array = [null]
 	var hot: Array[bool] = [false]  ## Hotfix paint: goes to the front of the queue.
-	var jumpable: Array[bool] = [false]  ## Enough paint there for this tester to jump onto it.
+	var jumpable: Array[bool] = [false]  ## It will jump onto it (paint, the flag, an Explorer's coin).
 	for s in known_spots():
+		if not s.convinced:
+			continue  # Skeptic: not sure about that one yet.
 		nodes.append(s.pos)
 		trust.append(s.trust)
 		kinds.append("paint")
 		payload.append(null)
 		hot.append(s.hotfix)
-		jumpable.append(s.jumpable)
+		jumpable.append(true)
 	if _goal_known:
 		nodes.append(_goal.global_position)
 		trust.append(5)
@@ -1109,9 +1121,15 @@ func _decide() -> void:
 		_advance()
 		return
 
-	# "Needs a trail": it can see where to go but won't walk there on grey. Say so first.
-	if _say_no_trail():
+	# Skeptic: it has seen paint but doesn't believe it yet. It stares at it (that counts as a look-around)
+	# until it does, or until it has been lost long enough to improvise instead.
+	var doubted := _doubted_spot()
+	if doubted != Vector3.INF and not (improvises and _lost_time >= patience and _wanders >= wander_limit):
+		_wanders += 1
 		_start_scan(scan_time)
+		_look_at(doubted, scan_time * 0.8)
+		say(["Hmm. Is that really yellow?", "It LOOKS yellow. But is it?", "I've been fooled by yellow before.",
+			"Let me think about that splat.", "Yellow... or a reflection? These graphics are too good."].pick_random())
 		return
 	if improvises and _goal_known and _try_leap_of_faith():
 		return
@@ -1268,34 +1286,15 @@ func _say_too_far() -> bool:
 	return false
 
 
-## "Needs a trail": it can see paint it could walk to, but not without a trail of yellow in between.
-func _say_no_trail() -> bool:
-	if trail_gap <= 0.0:
-		return false
-	var me := feet()
-	var targets: Array[Vector3] = []
+## Skeptic: the nearest spot it has seen but isn't convinced about yet (INF if none).
+func _doubted_spot() -> Vector3:
+	if conviction_time <= 0.0:
+		return Vector3.INF
+	var best := Vector3.INF
 	for s in known_spots():
-		targets.append(s.pos)
-	if _goal_known:
-		targets.append(_goal.global_position)
-	for pos in targets:
-		var key := pos.snapped(Vector3.ONE * 0.5)
-		if _is_visited(pos) or _too_far_said.has(key):
-			continue
-		if not _link(me, pos).is_empty():
-			continue
-		var old := trail_gap
-		trail_gap = -1.0
-		var without_limit := _link(me, pos)
-		trail_gap = old
-		if without_limit.is_empty():
-			continue
-		_too_far_said[key] = true
-		_look_at(pos, 1.0)
-		say(["That's a long walk without any yellow.", "I need a trail. Breadcrumbs. Yellow ones.",
-			"Walk all that way on grey? No thank you."].pick_random(), true)
-		return true
-	return false
+		if not s.convinced and (best == Vector3.INF or feet().distance_to(s.pos) < feet().distance_to(best)):
+			best = s.pos
+	return best
 
 
 func _is_visited(p: Vector3) -> bool:
@@ -1425,15 +1424,6 @@ func _find_takeoff(space: PhysicsDirectSpaceState3D, from: Vector3, dir: Vector3
 ## Mooch around the current platform looking for yellow.
 func _wander() -> void:
 	_wanders += 1
-	if not wander_walks:
-		# "No paint, no way": it won't leave its splat to explore. It turns around on the spot in case
-		# the next splat is behind it or around a corner.
-		_path.clear()
-		_start_scan(scan_time * 1.6)
-		_body_turn = deg_to_rad(randf_range(110, 170)) * (1 if _wanders % 2 == 1 else -1)
-		say(["Where's the next splat?", "I'm not moving until I see yellow.", "Is there yellow behind me?",
-			"Looking. Not walking. Looking."].pick_random())
-		return
 	var space := get_world_3d().direct_space_state
 	# Try a ring of spots and prefer the one furthest from anywhere it has already been.
 	var best := Vector3.INF
@@ -1442,7 +1432,7 @@ func _wander() -> void:
 	for attempt in 12:
 		var angle := attempt * TAU / 12.0
 		var dir := Vector3(cos(angle), 0, sin(angle))
-		var target := origin + dir * randf_range(2.0, maxf(wander_range, 2.5))
+		var target := origin + dir * randf_range(wander_min, maxf(wander_range, wander_min + 0.5))
 		# Stays on roughly the same level: it won't wander down slopes on its own.
 		var y = _ground_y(space, target, origin.y, 0.3)
 		if y == null or absf(y - _home_y) > 0.3:
@@ -1493,8 +1483,6 @@ func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_
 	if flat < 0.05 and absf(d.y) < 0.3:
 		return {cost = 0.0, jump = false}
 	if _walkable(a, b):
-		if trail_gap > 0.0 and flat > trail_gap:
-			return {}  # "Needs a trail": too far to walk without yellow.
 		return {cost = flat, jump = false}
 	if not allow_jump or d.y > reach_up + 1.5 or d.y < -max_drop - 1.5:
 		return {}
@@ -1517,8 +1505,6 @@ func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_
 		var j: Vector3 = b - launch
 		if j.y > reach_up or j.y < -max_drop:
 			continue
-		if trail_gap > 0.0 and Vector2(launch.x - a.x, launch.z - a.z).length() > trail_gap:
-			continue  # "Needs a trail": the walk to the take-off point is too long without yellow.
 		if not _walkable(a, launch) or not _jump_clear(launch, b):
 			continue
 		return {cost = a.distance_to(launch) + r + 2.0, jump = true, via = launch}
@@ -1764,11 +1750,17 @@ func _draw_debug() -> void:
 		im.surface_set_color(Color(0.3, 0.9, 1.0, 0.6))
 		im.surface_add_vertex(eye)
 		im.surface_add_vertex(eye + look.rotated(Vector3.UP, half * side) * 6.0)
-	# Known paint: post height = trust. Partially noticed paint: short red tick.
+	# Known paint: post height = trust. Skeptic not convinced yet: orange post growing to full height.
+	# Partially noticed paint: short red tick.
 	for s in known_spots():
-		im.surface_set_color(Color(0.2, 1.0, 0.4))
-		im.surface_add_vertex(s.pos)
-		im.surface_add_vertex(s.pos + Vector3.UP * (0.4 * s.trust))
+		if s.convinced:
+			im.surface_set_color(Color(0.2, 1.0, 0.4))
+			im.surface_add_vertex(s.pos)
+			im.surface_add_vertex(s.pos + Vector3.UP * (0.4 * s.trust))
+		else:
+			im.surface_set_color(Color(1.0, 0.55, 0.1))
+			im.surface_add_vertex(s.pos)
+			im.surface_add_vertex(s.pos + Vector3.UP * (1.2 * s.conviction))
 	if _paint:
 		for mark in _paint.get_marks():
 			var a: float = _attention.get(mark.get_instance_id(), 0.0)
