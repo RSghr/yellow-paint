@@ -44,12 +44,12 @@ Synergex Interactive | [i]"We put the extra A in AAAA."[/i]
 	{
 		id = "keys",
 		from = "IT Helpdesk",
-		address = "helpdesk@synergex-interactive.biz",
+		address = "noreply-helpdesk@synergex-interactive.biz",
 		cc = "",
 		subject = "Your new workstation: quick start guide (please read, we are begging you)",
 		date = "Mon 7:55 AM",
 		flag = false,
-		body = """Hi,
+		body = """Dear user,
 
 Welcome to your ThinkBox 2009. It has been reformatted for you. Most of it.
 
@@ -64,7 +64,7 @@ Hold [b]{reset_runner}[/b] to restart the tester.
 [b]{toggle_ai_debug}[/b] toggles the debug view: what the tester has noticed, and how far it can jump.
 [b]{clear_paint}[/b] deletes all your paint (only before a playtest).
 [b]{toggle_tester_card}[/b] shows the tester's profile again. Read it. They are all different.
-[b]Caps Lock[/b] does something truly outlandish. It has been disabled, as the feature is part of [i]ThinkBox 2009 Pro[/i], which you do not have.[/ul]
+[b]Caps Lock[/b] toggles [color=#3cb043][b]green paint[/b][/color]. It is disabled, as the feature is part of [i]ThinkBox 2009 Pro+[/i], which was out of our budget.[/ul]
 
 [b]About the yellow paint[/b]
 Yellow paint must be [b]subtle[/b], but it has to get the player through the level. On your grey boxes the way looks obvious. It is not. The testers see 12K moss, ray-traced puddles and about forty overlapping textures per ledge, and they have no idea where to go. One well-placed splat beats ten random ones.
@@ -77,8 +77,7 @@ Each level is rated [b]out of 15[/b] (three testers, five stars each). A level n
 
 If you have any further questions, please open a ticket. Tickets are reviewed quarterly.
 
-IT Helpdesk
-[font_size=15][color=#6b6e7a]Have you tried turning it off and on again? Please don't, it takes forty minutes.[/color][/font_size]""",
+IT Helpdesk | [i]"Have you tried turning it off and on again? (Please don't. It took us three days to set up.)"[/i]""",
 	},
 	{
 		id = "art",
