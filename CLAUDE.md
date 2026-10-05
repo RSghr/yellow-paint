@@ -119,9 +119,11 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   `gaze_duration`, sometimes saying what it sees (`GAZE_LINES` + `ADMIRE`, `gaze_line_chance`). Only the visor tilts
   (`_head_pitch`, pivots on the capsule dome); perception uses the head's yaw only. The look-around/confused timer
   pauses during a gaze and wander walks slow to 30%, so it searches as much as before, it just loses more time.
-- **Look back** (Curious / Explorer, `_look_back`): truly lost (look-around walks used up) → before any gamble it walks back
-  to the last splat it reached (`_furthest`), looks around carefully there (`_careful_look`: long turning scan) and gets a
-  fresh round of wanders. Once per splat (`_looked_back_at`). Fixes "missed one splat by bad luck → back to the start".
+- **Look back** (`_look_back`, periodic): while lost, after every `look_back_every_by_level` [1, 2, 4] look-around walks
+  (lower Exploration = more often) it walks back to the last splat it reached (`_furthest`) and looks around carefully
+  there (`_careful_look`: long turning scan), then keeps searching from there. Counter `_walks_since_look`, reset on
+  new paint. Going back to a splat it already knew isn't progress (patience keeps running; a NEW splat resets it in
+  `_record_visit`). Fixes "missed one splat behind a corner → lost / back to the start".
 - **Desperation**: once it has done a full round of wandering AND `patience` seconds (default 8, chosen by the user) have passed without progress (reaching paint/coin/button/flag, seeing new paint, a door opening), so roughly 10-15s of being lost, it jumps at any ledge it can see
   (closer to the flag if seen, else unexplored). It's a gamble: `desperate_success_chance` (0.65) that it lands,
   regardless of distance (a miss falls well short). Never back to where it has been (trail/visited), and never down

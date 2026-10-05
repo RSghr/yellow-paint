@@ -85,6 +85,9 @@ const PERCEPTION_INTERVAL := 0.1
 @export var wander_min_by_level: Array[float] = [1.5, 2.0, 2.0]  ## Shortest look-around walk (metres).
 ## True = curious: presses unpainted buttons and smashes unpainted planks it sees, and gambles on a jump for a coin.
 @export var curious_by_level: Array[bool] = [false, false, true]
+## While lost, after this many look-around walks it goes back to the last splat it reached and looks again carefully
+## (it may just have missed the next splat behind a corner). Lower = more often. 0 = never.
+@export var look_back_every_by_level: Array[int] = [1, 2, 4]
 
 var conviction_time := 0.0  ## See conviction_time_by_level.
 var short_legs := false  ## Jumping 1★: leaps of faith only land desperate_success_chance of the time too.
@@ -93,6 +96,7 @@ var overreach := 0.0  ## See overreach_by_level. > 0 also means "Blind trust": n
 var trust_bonus := 0
 var improvises := true  ## False = "No paint, no way": never jumps anywhere unpainted.
 var curious := false  ## Explorer: tries unpainted buttons/planks and jumps for coins.
+var look_back_every := 2  ## See look_back_every_by_level.
 var profile := {jump = 1, trust = 1, patience = 1}
 
 @export_group("Speech")
@@ -141,7 +145,7 @@ var _trail: Array[Vector3] = []
 var _trail_from: Array[Vector3] = []  ## For each trail stop: where the jump to it took off (INF if it walked there).
 var _trail_gamble: Array[bool] = []  ## For each trail stop: that jump was unpainted (replaying it is a gamble).
 var _look_back := false  ## Truly lost: heading back to the last splat it reached to look again from there.
-var _looked_back_at := Vector3.INF  ## The splat it last went back to (once per splat).
+var _walks_since_look := 0  ## Look-around walks since it last went back to the last splat.
 var _shaken := false  ## Just fell: no unpainted leaps until it has looked around for a way back (wanders + patience).
 var _detoured := false  ## Went off its route for a coin or to use something: may need to return to _furthest.
 var _wanders := 0
@@ -256,7 +260,7 @@ func reset_to_spawn() -> void:
 	_failed_jump = {}
 	_retry_jump = {}
 	_look_back = false
-	_looked_back_at = Vector3.INF
+	_walks_since_look = 0
 	_trail.clear()
 	_trail_from.clear()
 	_trail_gamble.clear()
@@ -306,6 +310,7 @@ func apply_profile(tester: String, p: Dictionary) -> void:
 	wander_range = wander_range_by_level[p.patience]
 	wander_min = wander_min_by_level[p.patience]
 	curious = curious_by_level[p.patience]
+	look_back_every = look_back_every_by_level[p.patience]
 
 
 func celebrate() -> void:
@@ -784,8 +789,8 @@ func _on_world_changed() -> void:
 ## Reached a step of the path.
 func _arrive(step: Dictionary) -> void:
 	_stuck_count = 0
-	if step.get("kind", "") in ["task", "curio", "coin", "paint", "goal", "trail"]:
-		_lost_time = 0.0
+	if step.get("kind", "") in ["task", "curio", "coin", "goal", "trail"]:
+		_lost_time = 0.0  # Progress. (Paint counts when it's a NEW spot: see _record_visit.)
 	if step.get("kind", "") == "trail":
 		_check_retrace_done(step.pos)
 	if step.get("kind", "") in ["task", "curio"]:
@@ -1225,22 +1230,6 @@ func _decide() -> void:
 	var cautious := _shaken and not (_wanders >= wander_limit and _lost_time >= patience)
 	if improvises and _goal_known and not cautious and _try_leap_of_faith():
 		return
-	# Truly lost (Curious / Explorer): before any gamble, go back to the last splat it reached and look again
-	# carefully from there, with a fresh round of look-around walks (it may just have missed the next splat).
-	if improvises and _wanders >= wander_limit and _retrace_to == Vector3.INF and _furthest != Vector3.INF \
-			and _looked_back_at.distance_to(_furthest) > 0.5:
-		_looked_back_at = _furthest
-		say(["Let me go back to the last yellow and look again.", "Back to the last splat. I must have missed something.",
-			"Okay. Last known yellow. Start from there."].pick_random(), true)
-		if _at(_furthest):
-			_careful_look()
-			return
-		_look_back = true
-		_decide()
-		if _look_back:  # No way back to it: carry on as usual.
-			_look_back = false
-			_careful_look()
-		return
 	# Out of ideas for `patience` seconds AND it has finished a full round of looking around
 	# (that's usually when it spots paint it missed): gamble on a jump instead of sulking.
 	if improvises and _lost_time >= patience and _wanders >= wander_limit and _try_desperate_jump():
@@ -1262,11 +1251,9 @@ func _decide() -> void:
 		"So beautiful. So unpainted.", "Stunning level. No idea where to go."].pick_random(), true)
 
 
-## Back at the last splat after being lost: a long look around (turning), then a fresh round of wanders.
+## Back at the last splat after being lost: a long, careful look around (turning).
 func _careful_look() -> void:
 	_look_back = false
-	_wanders = 0
-	_lost_time = 0.0
 	_start_scan(scan_time * 2.0)
 	_body_turn = deg_to_rad(randf_range(140, 200)) * (1 if randf() < 0.5 else -1)
 
@@ -1390,6 +1377,8 @@ func _record_visit(pos: Vector3) -> void:
 		_visited.append(pos)
 		_furthest = pos
 		_shaken = false  # New ground: it's over the fall.
+		_walks_since_look = 0
+		_lost_time = 0.0  # A new splat is progress (walking back to one it already knew isn't).
 		_detoured = false  # New progress: whatever detour it took is behind it.
 	elif pos.distance_to(_furthest) < 1.0:
 		_detoured = false  # Back where it left off.
@@ -1651,6 +1640,22 @@ func _find_takeoff(space: PhysicsDirectSpaceState3D, from: Vector3, dir: Vector3
 
 ## Mooch around the current platform looking for yellow.
 func _wander() -> void:
+	# Every few look-around walks (fewer for low Exploration): back to the last splat it reached for a careful look.
+	if look_back_every > 0 and _walks_since_look >= look_back_every and _furthest != Vector3.INF \
+			and _retrace_to == Vector3.INF:
+		_walks_since_look = 0
+		if randf() < 0.5:
+			say(["Let me go back to the last yellow and look again.", "Back to the last splat. I must have missed something.",
+				"Okay. Last known yellow. Start from there.", "Retracing to the last yellow. Carefully this time."].pick_random())
+		if _at(_furthest):
+			_careful_look()
+			return
+		_look_back = true
+		_decide()
+		if not _look_back:
+			return  # Heading back to it.
+		_look_back = false  # No way back to it from here: just keep looking around.
+	_walks_since_look += 1
 	_wanders += 1
 	var space := get_world_3d().direct_space_state
 	# Try a ring of spots and prefer the one furthest from anywhere it has already been.
