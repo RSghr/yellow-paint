@@ -1,0 +1,3707 @@
+{
+ "events": [
+  {
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "kind": "start",
+   "t": 0.0
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "kind": "state",
+   "t": 0.02,
+   "to": "SCANNING"
+  },
+  {
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "kind": "plan",
+   "path": [],
+   "t": 0.02
+  },
+  {
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "kind": "said",
+   "t": 1.8,
+   "text": "Sightseeing. Not lost. Sightseeing."
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "kind": "state",
+   "t": 1.82,
+   "to": "WALKING"
+  },
+  {
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "wander",
+     "pos": [
+      -0.16,
+      0.0,
+      2.03
+     ]
+    }
+   ],
+   "t": 1.82
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    -0.32,
+    0.0,
+    1.86
+   ],
+   "kind": "state",
+   "t": 2.55,
+   "to": "SCANNING"
+  },
+  {
+   "feet": [
+    -0.32,
+    0.0,
+    1.86
+   ],
+   "kind": "plan",
+   "path": [],
+   "t": 2.55
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "kind": "said",
+   "t": 7.75,
+   "text": "Going to do the yellow thing."
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "kind": "state",
+   "t": 7.77,
+   "to": "WALKING"
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "walk",
+     "pos": [
+      3.39,
+      0.0,
+      1.28
+     ]
+    },
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      7.7,
+      0.0,
+      0.42
+     ]
+    },
+    {
+     "jump": false,
+     "kind": "task",
+     "pos": [
+      13.6,
+      0.0,
+      -2.6
+     ]
+    }
+   ],
+   "t": 7.77
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    3.22,
+    0.0,
+    1.32
+   ],
+   "kind": "state",
+   "t": 8.42,
+   "to": "HESITATING"
+  },
+  {
+   "feet": [
+    3.22,
+    0.0,
+    1.32
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      7.7,
+      0.0,
+      0.42
+     ]
+    },
+    {
+     "jump": false,
+     "kind": "task",
+     "pos": [
+      13.6,
+      0.0,
+      -2.6
+     ]
+    }
+   ],
+   "t": 8.42
+  },
+  {
+   "extra": {
+    "from": [
+     3.9,
+     0.0,
+     1.3
+    ],
+    "step": {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      7.7,
+      0.0,
+      0.42
+     ]
+    }
+   },
+   "feet": [
+    3.9,
+    0.0,
+    1.3
+   ],
+   "kind": "state",
+   "t": 9.32,
+   "to": "JUMPING"
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    7.67,
+    0.0,
+    0.42
+   ],
+   "kind": "state",
+   "t": 10.17,
+   "to": "SCANNING"
+  },
+  {
+   "feet": [
+    7.67,
+    0.0,
+    0.42
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "task",
+     "pos": [
+      13.6,
+      0.0,
+      -2.6
+     ]
+    }
+   ],
+   "t": 10.17
+  },
+  {
+   "feet": [
+    7.67,
+    0.0,
+    0.42
+   ],
+   "kind": "said",
+   "t": 10.97,
+   "text": "I see what I'm supposed to do."
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    7.67,
+    0.0,
+    0.42
+   ],
+   "kind": "state",
+   "t": 10.98,
+   "to": "WALKING"
+  },
+  {
+   "feet": [
+    13.39,
+    0.0,
+    -2.49
+   ],
+   "kind": "said",
+   "t": 12.82,
+   "text": "*boop*"
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    13.39,
+    0.0,
+    -2.49
+   ],
+   "kind": "state",
+   "t": 12.83,
+   "to": "INTERACTING"
+  },
+  {
+   "feet": [
+    13.39,
+    0.0,
+    -2.49
+   ],
+   "kind": "plan",
+   "path": [],
+   "t": 12.83
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    13.6,
+    0.0,
+    -2.54
+   ],
+   "kind": "state",
+   "t": 13.53,
+   "to": "SCANNING"
+  },
+  {
+   "feet": [
+    13.6,
+    0.0,
+    -2.54
+   ],
+   "kind": "said",
+   "t": 14.42,
+   "text": "Back to where I left off."
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    13.6,
+    0.0,
+    -2.54
+   ],
+   "kind": "state",
+   "t": 14.43,
+   "to": "WALKING"
+  },
+  {
+   "feet": [
+    13.6,
+    0.0,
+    -2.54
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      7.7,
+      0.0,
+      0.42
+     ]
+    }
+   ],
+   "t": 14.43
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    7.92,
+    0.0,
+    0.31
+   ],
+   "kind": "state",
+   "t": 16.28,
+   "to": "SCANNING"
+  },
+  {
+   "feet": [
+    7.92,
+    0.0,
+    0.31
+   ],
+   "kind": "plan",
+   "path": [],
+   "t": 16.28
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "kind": "said",
+   "t": 16.78,
+   "text": "Is that... money?"
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "kind": "state",
+   "t": 21.5,
+   "to": "WALKING"
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "coin",
+     "pos": [
+      20.0,
+      0.0,
+      1.5
+     ]
+    }
+   ],
+   "t": 21.5
+  },
+  {
+   "feet": [
+    9.98,
+    0.0,
+    0.57
+   ],
+   "kind": "said",
+   "t": 21.92,
+   "text": "Hm? Was that yellow?"
+  },
+  {
+   "feet": [
+    19.84,
+    0.0,
+    1.49
+   ],
+   "kind": "said",
+   "t": 23.75,
+   "text": "Coin get."
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    19.84,
+    0.0,
+    1.49
+   ],
+   "kind": "state",
+   "t": 23.77,
+   "to": "SCANNING"
+  },
+  {
+   "feet": [
+    19.84,
+    0.0,
+    1.49
+   ],
+   "kind": "plan",
+   "path": [],
+   "t": 23.77
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "kind": "said",
+   "t": 28.97,
+   "text": "Going to do the yellow thing."
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "kind": "state",
+   "t": 28.98,
+   "to": "WALKING"
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "walk",
+     "pos": [
+      23.37,
+      0.0,
+      0.85
+     ]
+    },
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      27.86,
+      0.5,
+      -0.16
+     ]
+    },
+    {
+     "jump": false,
+     "kind": "walk",
+     "pos": [
+      28.65,
+      0.5,
+      -2.38
+     ]
+    },
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      30.0,
+      0.5,
+      -6.14
+     ]
+    },
+    {
+     "jump": false,
+     "kind": "task",
+     "pos": [
+      30.5,
+      0.5,
+      -7.1
+     ]
+    }
+   ],
+   "t": 28.98
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    23.14,
+    0.0,
+    0.9
+   ],
+   "kind": "state",
+   "t": 29.48,
+   "to": "HESITATING"
+  },
+  {
+   "feet": [
+    23.14,
+    0.0,
+    0.9
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      27.86,
+      0.5,
+      -0.16
+     ]
+    },
+    {
+     "jump": false,
+     "kind": "walk",
+     "pos": [
+      28.65,
+      0.5,
+      -2.38
+     ]
+    },
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      30.0,
+      0.5,
+      -6.14
+     ]
+    },
+    {
+     "jump": false,
+     "kind": "task",
+     "pos": [
+      30.5,
+      0.5,
+      -7.1
+     ]
+    }
+   ],
+   "t": 29.48
+  },
+  {
+   "extra": {
+    "from": [
+     23.81,
+     0.0,
+     0.88
+    ],
+    "step": {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      27.86,
+      0.5,
+      -0.16
+     ]
+    }
+   },
+   "feet": [
+    23.81,
+    0.0,
+    0.88
+   ],
+   "kind": "state",
+   "t": 30.38,
+   "to": "JUMPING"
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    27.8,
+    0.5,
+    -0.15
+   ],
+   "kind": "state",
+   "t": 31.33,
+   "to": "SCANNING"
+  },
+  {
+   "feet": [
+    27.8,
+    0.5,
+    -0.15
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "walk",
+     "pos": [
+      28.65,
+      0.5,
+      -2.38
+     ]
+    },
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      30.0,
+      0.5,
+      -6.14
+     ]
+    },
+    {
+     "jump": false,
+     "kind": "task",
+     "pos": [
+      30.5,
+      0.5,
+      -7.1
+     ]
+    }
+   ],
+   "t": 31.33
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    27.8,
+    0.5,
+    -0.15
+   ],
+   "kind": "state",
+   "t": 32.15,
+   "to": "WALKING"
+  },
+  {
+   "feet": [
+    27.8,
+    0.5,
+    -0.15
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "walk",
+     "pos": [
+      28.62,
+      0.5,
+      -2.39
+     ]
+    },
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      30.0,
+      0.5,
+      -6.14
+     ]
+    },
+    {
+     "jump": false,
+     "kind": "coin",
+     "pos": [
+      29.6,
+      0.5,
+      -6.2
+     ]
+    }
+   ],
+   "t": 32.15
+  },
+  {
+   "feet": [
+    28.56,
+    0.5,
+    -2.21
+   ],
+   "kind": "said",
+   "t": 32.55,
+   "text": "I guess that counts as yellow."
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    28.56,
+    0.5,
+    -2.21
+   ],
+   "kind": "state",
+   "t": 32.57,
+   "to": "HESITATING"
+  },
+  {
+   "feet": [
+    28.56,
+    0.5,
+    -2.21
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      30.0,
+      0.5,
+      -6.14
+     ]
+    },
+    {
+     "jump": false,
+     "kind": "coin",
+     "pos": [
+      29.6,
+      0.5,
+      -6.2
+     ]
+    }
+   ],
+   "t": 32.57
+  },
+  {
+   "extra": {
+    "from": [
+     28.63,
+     0.5,
+     -2.84
+    ],
+    "step": {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      30.0,
+      0.5,
+      -6.14
+     ]
+    }
+   },
+   "feet": [
+    28.63,
+    0.5,
+    -2.84
+   ],
+   "kind": "state",
+   "t": 33.47,
+   "to": "JUMPING"
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    29.99,
+    0.5,
+    -6.12
+   ],
+   "kind": "state",
+   "t": 34.32,
+   "to": "SCANNING"
+  },
+  {
+   "feet": [
+    29.99,
+    0.5,
+    -6.12
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "coin",
+     "pos": [
+      29.6,
+      0.5,
+      -6.2
+     ]
+    }
+   ],
+   "t": 34.32
+  },
+  {
+   "feet": [
+    29.99,
+    0.5,
+    -6.12
+   ],
+   "kind": "said",
+   "t": 35.12,
+   "text": "Going to do the yellow thing."
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    29.99,
+    0.5,
+    -6.12
+   ],
+   "kind": "state",
+   "t": 35.13,
+   "to": "WALKING"
+  },
+  {
+   "feet": [
+    29.99,
+    0.5,
+    -6.12
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "task",
+     "pos": [
+      30.5,
+      0.5,
+      -7.1
+     ]
+    }
+   ],
+   "t": 35.13
+  },
+  {
+   "feet": [
+    30.39,
+    0.5,
+    -6.89
+   ],
+   "kind": "said",
+   "t": 35.38,
+   "text": "Pressing the obvious button."
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    30.39,
+    0.5,
+    -6.89
+   ],
+   "kind": "state",
+   "t": 35.4,
+   "to": "INTERACTING"
+  },
+  {
+   "feet": [
+    30.39,
+    0.5,
+    -6.89
+   ],
+   "kind": "plan",
+   "path": [],
+   "t": 35.4
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    30.44,
+    0.5,
+    -7.11
+   ],
+   "kind": "state",
+   "t": 36.1,
+   "to": "SCANNING"
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    30.44,
+    0.5,
+    -7.11
+   ],
+   "kind": "state",
+   "t": 37.0,
+   "to": "WALKING"
+  },
+  {
+   "feet": [
+    30.44,
+    0.5,
+    -7.11
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "walk",
+     "pos": [
+      31.2,
+      0.5,
+      -6.11
+     ]
+    },
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      34.23,
+      0.5,
+      -2.12
+     ]
+    }
+   ],
+   "t": 37.0
+  },
+  {
+   "feet": [
+    30.72,
+    0.5,
+    -6.74
+   ],
+   "kind": "said",
+   "t": 37.08,
+   "text": "Ooh, is that the end?"
+  },
+  {
+   "feet": [
+    30.72,
+    0.5,
+    -6.74
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "walk",
+     "pos": [
+      31.2,
+      0.5,
+      -6.11
+     ]
+    },
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      34.23,
+      0.5,
+      -2.12
+     ]
+    },
+    {
+     "jump": false,
+     "kind": "goal",
+     "pos": [
+      40.5,
+      0.5,
+      0.0
+     ]
+    }
+   ],
+   "t": 37.1
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    31.05,
+    0.5,
+    -6.3
+   ],
+   "kind": "state",
+   "t": 37.22,
+   "to": "HESITATING"
+  },
+  {
+   "feet": [
+    31.05,
+    0.5,
+    -6.3
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      34.23,
+      0.5,
+      -2.12
+     ]
+    },
+    {
+     "jump": false,
+     "kind": "goal",
+     "pos": [
+      40.5,
+      0.5,
+      0.0
+     ]
+    }
+   ],
+   "t": 37.22
+  },
+  {
+   "extra": {
+    "from": [
+     31.3,
+     0.5,
+     -5.86
+    ],
+    "step": {
+     "jump": true,
+     "kind": "paint",
+     "paint": true,
+     "pos": [
+      34.23,
+      0.5,
+      -2.12
+     ]
+    }
+   },
+   "feet": [
+    31.3,
+    0.5,
+    -5.86
+   ],
+   "kind": "state",
+   "t": 38.12,
+   "to": "JUMPING"
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    34.2,
+    0.5,
+    -2.16
+   ],
+   "kind": "state",
+   "t": 38.97,
+   "to": "SCANNING"
+  },
+  {
+   "feet": [
+    34.2,
+    0.5,
+    -2.16
+   ],
+   "kind": "plan",
+   "path": [
+    {
+     "jump": false,
+     "kind": "goal",
+     "pos": [
+      40.5,
+      0.5,
+      0.0
+     ]
+    }
+   ],
+   "t": 38.97
+  },
+  {
+   "feet": [
+    34.2,
+    0.5,
+    -2.16
+   ],
+   "kind": "said",
+   "t": 39.77,
+   "text": "I know where I'm going!"
+  },
+  {
+   "extra": {
+
+   },
+   "feet": [
+    34.2,
+    0.5,
+    -2.16
+   ],
+   "kind": "state",
+   "t": 39.78,
+   "to": "WALKING"
+  },
+  {
+   "feet": [
+    39.32,
+    0.5,
+    -0.4
+   ],
+   "kind": "said",
+   "t": 40.77,
+   "text": "I did it! All by myself!"
+  },
+  {
+   "feet": [
+    39.32,
+    0.5,
+    -0.4
+   ],
+   "kind": "end",
+   "outcome": "finish",
+   "t": 40.77
+  }
+ ],
+ "godot_time": "2026-10-05T20:13:23",
+ "level": "res://levels/level_03.tscn",
+ "level_name": "Buttons",
+ "outcome": "finish",
+ "paint": [
+  {
+   "host": "",
+   "hotfix": false,
+   "normal": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "pos": [
+    7.7,
+    0.0,
+    0.42
+   ],
+   "role": "nav",
+   "stand": [
+    7.7,
+    0.0,
+    0.42
+   ]
+  },
+  {
+   "host": "Interactables/Button1",
+   "hotfix": false,
+   "normal": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "pos": [
+    14.27,
+    1.14,
+    -2.45
+   ],
+   "role": "interact",
+   "stand": [
+    14.27,
+    1.14,
+    -2.45
+   ]
+  },
+  {
+   "host": "",
+   "hotfix": false,
+   "normal": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "pos": [
+    27.86,
+    0.5,
+    -0.16
+   ],
+   "role": "nav",
+   "stand": [
+    27.86,
+    0.5,
+    -0.16
+   ]
+  },
+  {
+   "host": "",
+   "hotfix": false,
+   "normal": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "pos": [
+    29.5,
+    0.5,
+    -6.14
+   ],
+   "role": "nav",
+   "stand": [
+    30.0,
+    0.5,
+    -6.14
+   ]
+  },
+  {
+   "host": "Interactables/Button2",
+   "hotfix": false,
+   "normal": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "pos": [
+    30.46,
+    1.62,
+    -7.73
+   ],
+   "role": "interact",
+   "stand": [
+    30.46,
+    1.62,
+    -7.73
+   ]
+  },
+  {
+   "host": "",
+   "hotfix": false,
+   "normal": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "pos": [
+    34.23,
+    0.5,
+    -2.62
+   ],
+   "role": "nav",
+   "stand": [
+    34.23,
+    0.5,
+    -2.12
+   ]
+  }
+ ],
+ "profile": {
+  "intro": "Believes games should be movies. Will stand perfectly still until something tells her where to go.",
+  "jump": 1,
+  "outlet": "Cinematic Universe Digest",
+  "patience": 0,
+  "trust": 1
+ },
+ "round": 1,
+ "runner_start": [
+  -2.0,
+  0.9,
+  0.0
+ ],
+ "samples": [
+  {
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.0,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 0.02,
+   "trail": 0,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.3,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 0.28,
+   "trail": 0,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.6,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 0.55,
+   "trail": 0,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 0.82,
+   "trail": 0,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.1,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 1.08,
+   "trail": 0,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.4,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 1.35,
+   "trail": 0,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    -2.0,
+    0.0,
+    0.0
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.6,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 1.62,
+   "trail": 0,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    -1.84,
+    0.0,
+    0.17
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.9,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 1.88,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -1.22,
+    0.0,
+    0.86
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.1,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 2.15,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.59,
+    0.0,
+    1.56
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.4,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 2.42,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.1,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 2.68,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.4,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 2.95,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.7,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 3.22,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.2,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 3.48,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.5,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 3.75,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 4.02,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.0,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 4.28,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.3,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 4.55,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.5,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 4.82,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 5.08,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.1,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 5.35,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.3,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 5.62,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.6,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 5.88,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.9,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 6.15,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 3.1,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 6.42,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 3.4,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 6.68,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 3.7,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 6.95,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 3.9,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 7.22,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 4.2,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 7.48,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    -0.2,
+    0.0,
+    2.01
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 4.5,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 7.75,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    1.15,
+    0.0,
+    1.73
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 4.7,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 8.02,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    2.59,
+    0.0,
+    1.45
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.0,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 8.28,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    3.74,
+    0.0,
+    1.3
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.3,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 8.55,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    3.9,
+    0.0,
+    1.3
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.5,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 8.82,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    3.9,
+    0.0,
+    1.3
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.8,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 9.08,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    4.05,
+    0.13,
+    1.26
+   ],
+   "floor": false,
+   "home_y": 0.0,
+   "lost": 6.1,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 9.35,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    5.23,
+    0.79,
+    0.99
+   ],
+   "floor": false,
+   "home_y": 0.0,
+   "lost": 6.3,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 9.62,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    6.41,
+    0.76,
+    0.72
+   ],
+   "floor": false,
+   "home_y": 0.0,
+   "lost": 6.6,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 9.88,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    7.6,
+    0.03,
+    0.44
+   ],
+   "floor": false,
+   "home_y": 0.0,
+   "lost": 6.9,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 10.15,
+   "trail": 0,
+   "wanders": 1
+  },
+  {
+   "feet": [
+    7.67,
+    0.0,
+    0.42
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.2,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 10.42,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.67,
+    0.0,
+    0.42
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.5,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 10.68,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.67,
+    0.0,
+    0.42
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 10.95,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    8.4,
+    0.0,
+    0.05
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.1,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 11.22,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    9.23,
+    0.0,
+    -0.37
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.3,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 11.48,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    10.06,
+    0.0,
+    -0.79
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.6,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 11.75,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    10.89,
+    0.0,
+    -1.22
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.8,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 12.02,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    11.72,
+    0.0,
+    -1.64
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.1,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 12.28,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    12.56,
+    0.0,
+    -2.07
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.4,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 12.55,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    13.39,
+    0.0,
+    -2.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.6,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 12.82,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    13.6,
+    0.0,
+    -2.54
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.2,
+   "shaken": false,
+   "state": "INTERACTING",
+   "t": 13.08,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    13.6,
+    0.0,
+    -2.54
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.5,
+   "shaken": false,
+   "state": "INTERACTING",
+   "t": 13.35,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    13.6,
+    0.0,
+    -2.54
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.1,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 13.62,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    13.6,
+    0.0,
+    -2.54
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.0,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 13.88,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    13.6,
+    0.0,
+    -2.54
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.3,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 14.15,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    13.6,
+    0.0,
+    -2.54
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.5,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 14.42,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    12.87,
+    0.0,
+    -2.18
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.2,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 14.68,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    12.04,
+    0.0,
+    -1.76
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.4,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 14.95,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    11.21,
+    0.0,
+    -1.34
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.7,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 15.22,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    10.37,
+    0.0,
+    -0.92
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.0,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 15.48,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    9.54,
+    0.0,
+    -0.5
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.2,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 15.75,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    8.7,
+    0.0,
+    -0.08
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.5,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 16.02,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.92,
+    0.0,
+    0.31
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 16.28,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.0,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 16.55,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.3,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 16.82,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.6,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 17.08,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 17.35,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 3.1,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 17.62,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 3.4,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 17.88,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 3.6,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 18.15,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 3.9,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 18.42,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 4.2,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 18.68,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 4.4,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 18.95,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 4.7,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 19.22,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.0,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 19.48,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.2,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 19.75,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.5,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 20.02,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 20.28,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 6.0,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 20.55,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 6.3,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 20.82,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 6.6,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 21.08,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    7.7,
+    0.0,
+    0.36
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 6.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 21.35,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    8.34,
+    0.0,
+    0.42
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 7.1,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 21.62,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    9.8,
+    0.0,
+    0.55
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 7.4,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 21.88,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    11.17,
+    0.0,
+    0.68
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.2,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 22.15,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    12.63,
+    0.0,
+    0.81
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.5,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 22.42,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    14.09,
+    0.0,
+    0.95
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.8,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 22.68,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    15.55,
+    0.0,
+    1.09
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.0,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 22.95,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    17.01,
+    0.0,
+    1.22
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.3,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 23.22,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    18.38,
+    0.0,
+    1.35
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.1,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 23.48,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    19.84,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.4,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 23.75,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.54,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.2,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 24.02,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.5,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 24.28,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 0.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 24.55,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.1,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 24.82,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.3,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 25.08,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.6,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 25.35,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 1.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 25.62,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.1,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 25.88,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.4,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 26.15,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.6,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 26.42,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 2.9,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 26.68,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 3.2,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 26.95,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 3.4,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 27.22,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 3.7,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 27.48,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 4.0,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 27.75,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 4.2,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 28.02,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 4.5,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 28.28,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 4.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 28.55,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    20.55,
+    0.0,
+    1.49
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.0,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 28.82,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    21.08,
+    0.0,
+    1.37
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.3,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 29.08,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    22.51,
+    0.0,
+    1.04
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.6,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 29.35,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    23.65,
+    0.0,
+    0.88
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 5.8,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 29.62,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    23.81,
+    0.0,
+    0.88
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 6.1,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 29.88,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    23.81,
+    0.0,
+    0.88
+   ],
+   "floor": true,
+   "home_y": 0.0,
+   "lost": 6.4,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 30.15,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    23.95,
+    0.17,
+    0.84
+   ],
+   "floor": false,
+   "home_y": 0.0,
+   "lost": 6.6,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 30.42,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    25.07,
+    1.11,
+    0.55
+   ],
+   "floor": false,
+   "home_y": 0.0,
+   "lost": 6.9,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 30.68,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    26.19,
+    1.35,
+    0.27
+   ],
+   "floor": false,
+   "home_y": 0.0,
+   "lost": 7.2,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 30.95,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    27.31,
+    0.89,
+    -0.02
+   ],
+   "floor": false,
+   "home_y": 0.0,
+   "lost": 7.4,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 31.22,
+   "trail": 1,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    27.8,
+    0.5,
+    -0.15
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.1,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 31.48,
+   "trail": 2,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    27.8,
+    0.5,
+    -0.15
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.4,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 31.75,
+   "trail": 2,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    27.8,
+    0.5,
+    -0.15
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.7,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 32.02,
+   "trail": 2,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    28.06,
+    0.5,
+    -0.84
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 1.0,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 32.28,
+   "trail": 2,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    28.56,
+    0.5,
+    -2.21
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 1.2,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 32.55,
+   "trail": 2,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    28.63,
+    0.5,
+    -2.84
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 1.5,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 32.82,
+   "trail": 2,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    28.63,
+    0.5,
+    -2.84
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 1.7,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 33.08,
+   "trail": 2,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    28.63,
+    0.5,
+    -2.84
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 2.0,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 33.35,
+   "trail": 2,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    28.87,
+    1.01,
+    -3.42
+   ],
+   "floor": false,
+   "home_y": 0.5,
+   "lost": 2.3,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 33.62,
+   "trail": 2,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    29.3,
+    1.37,
+    -4.44
+   ],
+   "floor": false,
+   "home_y": 0.5,
+   "lost": 2.5,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 33.88,
+   "trail": 2,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    29.72,
+    1.03,
+    -5.47
+   ],
+   "floor": false,
+   "home_y": 0.5,
+   "lost": 2.8,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 34.15,
+   "trail": 2,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    29.99,
+    0.5,
+    -6.12
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.1,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 34.42,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    29.99,
+    0.5,
+    -6.12
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.4,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 34.68,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    29.99,
+    0.5,
+    -6.12
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.6,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 34.95,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    30.12,
+    0.5,
+    -6.37
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.9,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 35.22,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    30.44,
+    0.5,
+    -7.07
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.1,
+   "shaken": false,
+   "state": "INTERACTING",
+   "t": 35.48,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    30.44,
+    0.5,
+    -7.11
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.3,
+   "shaken": false,
+   "state": "INTERACTING",
+   "t": 35.75,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    30.44,
+    0.5,
+    -7.11
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.6,
+   "shaken": false,
+   "state": "INTERACTING",
+   "t": 36.02,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    30.44,
+    0.5,
+    -7.11
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.2,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 36.28,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    30.44,
+    0.5,
+    -7.11
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.4,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 36.55,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    30.44,
+    0.5,
+    -7.11
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.7,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 36.82,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    30.72,
+    0.5,
+    -6.74
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 1.0,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 37.08,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    31.3,
+    0.5,
+    -5.92
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.3,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 37.35,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    31.3,
+    0.5,
+    -5.86
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.5,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 37.62,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    31.3,
+    0.5,
+    -5.86
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.8,
+   "shaken": false,
+   "state": "HESITATING",
+   "t": 37.88,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    31.42,
+    0.63,
+    -5.72
+   ],
+   "floor": false,
+   "home_y": 0.5,
+   "lost": 1.1,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 38.15,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    32.33,
+    1.3,
+    -4.55
+   ],
+   "floor": false,
+   "home_y": 0.5,
+   "lost": 1.3,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 38.42,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    33.24,
+    1.26,
+    -3.39
+   ],
+   "floor": false,
+   "home_y": 0.5,
+   "lost": 1.6,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 38.68,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    34.15,
+    0.53,
+    -2.23
+   ],
+   "floor": false,
+   "home_y": 0.5,
+   "lost": 1.9,
+   "shaken": false,
+   "state": "JUMPING",
+   "t": 38.95,
+   "trail": 3,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    34.2,
+    0.5,
+    -2.16
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.2,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 39.22,
+   "trail": 4,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    34.2,
+    0.5,
+    -2.16
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.5,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 39.48,
+   "trail": 4,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    34.2,
+    0.5,
+    -2.16
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 0.8,
+   "shaken": false,
+   "state": "SCANNING",
+   "t": 39.75,
+   "trail": 4,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    35.42,
+    0.5,
+    -1.74
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 1.1,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 40.02,
+   "trail": 4,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    36.8,
+    0.5,
+    -1.27
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 1.3,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 40.28,
+   "trail": 4,
+   "wanders": 0
+  },
+  {
+   "feet": [
+    38.19,
+    0.5,
+    -0.79
+   ],
+   "floor": true,
+   "home_y": 0.5,
+   "lost": 1.6,
+   "shaken": false,
+   "state": "WALKING",
+   "t": 40.55,
+   "trail": 4,
+   "wanders": 0
+  }
+ ],
+ "session_time": 40.77,
+ "tester": "Cass Cene",
+ "trail": [
+  [
+   7.7,
+   0.0,
+   0.42
+  ],
+  [
+   27.86,
+   0.5,
+   -0.16
+  ],
+  [
+   30.0,
+   0.5,
+   -6.14
+  ],
+  [
+   34.23,
+   0.5,
+   -2.12
+  ]
+ ],
+ "trail_from": [
+  [
+   3.9,
+   0.0,
+   1.3
+  ],
+  [
+   23.81,
+   0.0,
+   0.88
+  ],
+  [
+   28.63,
+   0.5,
+   -2.84
+  ],
+  [
+   31.3,
+   0.5,
+   -5.86
+  ]
+ ],
+ "visited": [
+  [
+   7.7,
+   0.0,
+   0.42
+  ],
+  [
+   27.86,
+   0.5,
+   -0.16
+  ],
+  [
+   30.0,
+   0.5,
+   -6.14
+  ],
+  [
+   34.23,
+   0.5,
+   -2.12
+  ]
+ ]
+}

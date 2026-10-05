@@ -14,11 +14,11 @@ script = ExtResource("lvl_script")
 level_name = "The Tower"
 intro_text = "Manage to reach the the top and collect all the coins!"
 tester_1 = "David Goodenough"
-minimum_1 = 18
+minimum_1 = 20
 tester_2 = "Mike Rotransaction"
-minimum_2 = 16
+minimum_2 = 18
 tester_3 = "Rhea Spawn"
-minimum_3 = 20
+minimum_3 = 19
 
 [node name="RunnerSpawn" type="Marker3D" parent="." unique_id=187521223]
 editor_description = "Where the playtester starts. Keep it 0.9 above the floor (its origin is at its middle)."
