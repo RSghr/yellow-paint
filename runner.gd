@@ -140,6 +140,8 @@ var _retry_jump := {}  ## Back where an improvised jump failed: try that same ju
 var _trail: Array[Vector3] = []
 var _trail_from: Array[Vector3] = []  ## For each trail stop: where the jump to it took off (INF if it walked there).
 var _trail_gamble: Array[bool] = []  ## For each trail stop: that jump was unpainted (replaying it is a gamble).
+var _look_back := false  ## Truly lost: heading back to the last splat it reached to look again from there.
+var _looked_back_at := Vector3.INF  ## The splat it last went back to (once per splat).
 var _shaken := false  ## Just fell: no unpainted leaps until it has looked around for a way back (wanders + patience).
 var _detoured := false  ## Went off its route for a coin or to use something: may need to return to _furthest.
 var _wanders := 0
@@ -253,6 +255,8 @@ func reset_to_spawn() -> void:
 	_shaken = false
 	_failed_jump = {}
 	_retry_jump = {}
+	_look_back = false
+	_looked_back_at = Vector3.INF
 	_trail.clear()
 	_trail_from.clear()
 	_trail_gamble.clear()
@@ -612,6 +616,12 @@ func _idle_physics(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
 	move_and_slide()
+	if not is_on_floor() and velocity.y < -2.0 and state in [State.SCANNING, State.HESITATING, State.CONFUSED, State.INTERACTING]:
+		# Slipped off an edge while standing around (or winding up a jump): it's a fall, not a plan.
+		_path.clear()
+		_jump_flat_velocity = Vector3(velocity.x, 0, velocity.z)
+		state = State.JUMPING
+		_air_time = 0.2
 
 
 func _process_walk(delta: float) -> void:
@@ -788,6 +798,9 @@ func _arrive(step: Dictionary) -> void:
 		_record_visit(step.pos)
 		_wanders = 0
 		_home_y = feet().y
+		if _look_back and step.pos.distance_to(_furthest) < 1.0 and _path.is_empty():
+			_careful_look()  # Back at the last splat: look again, carefully.
+			return
 	if _path.is_empty():
 		_start_scan(scan_time * 0.7)  # End of what it knew: look around.
 	elif step.trust <= 1 or _rethink:
@@ -855,6 +868,11 @@ func _jump_to(step: Dictionary) -> void:
 		_air_time = 0.0
 		return
 	var from := feet()
+	if step.pos.y - from.y > max_jump_up + 0.6 and not step.get("overreach", false):
+		# Not where it planned to jump from (it slipped, or something moved): that's not a jump, rethink.
+		_path.clear()
+		_start_scan(scan_time * 0.5)
+		return
 	_jump_from = from
 	var target: Vector3 = step.pos
 	var flat := Vector3(target.x - from.x, 0, target.z - from.z)
@@ -1188,6 +1206,8 @@ func _decide() -> void:
 					"Unpainted? Sounds like a secret."].pick_random(), true)
 		_advance()
 		return
+	if _look_back:
+		return  # Looking for a way back to the last splat (see below): there's none, the caller carries on.
 
 	# Skeptic: it has seen paint but doesn't believe it yet. It stares at it (that counts as a look-around)
 	# until it does, or until it has been lost long enough to improvise instead.
@@ -1204,6 +1224,22 @@ func _decide() -> void:
 	# Just fell and no painted way back: look around this floor first (wanders + patience), no blind leaps yet.
 	var cautious := _shaken and not (_wanders >= wander_limit and _lost_time >= patience)
 	if improvises and _goal_known and not cautious and _try_leap_of_faith():
+		return
+	# Truly lost (Curious / Explorer): before any gamble, go back to the last splat it reached and look again
+	# carefully from there, with a fresh round of look-around walks (it may just have missed the next splat).
+	if improvises and _wanders >= wander_limit and _retrace_to == Vector3.INF and _furthest != Vector3.INF \
+			and _looked_back_at.distance_to(_furthest) > 0.5:
+		_looked_back_at = _furthest
+		say(["Let me go back to the last yellow and look again.", "Back to the last splat. I must have missed something.",
+			"Okay. Last known yellow. Start from there."].pick_random(), true)
+		if _at(_furthest):
+			_careful_look()
+			return
+		_look_back = true
+		_decide()
+		if _look_back:  # No way back to it: carry on as usual.
+			_look_back = false
+			_careful_look()
 		return
 	# Out of ideas for `patience` seconds AND it has finished a full round of looking around
 	# (that's usually when it spots paint it missed): gamble on a jump instead of sulking.
@@ -1226,6 +1262,15 @@ func _decide() -> void:
 		"So beautiful. So unpainted.", "Stunning level. No idea where to go."].pick_random(), true)
 
 
+## Back at the last splat after being lost: a long look around (turning), then a fresh round of wanders.
+func _careful_look() -> void:
+	_look_back = false
+	_wanders = 0
+	_lost_time = 0.0
+	_start_scan(scan_time * 2.0)
+	_body_turn = deg_to_rad(randf_range(140, 200)) * (1 if randf() < 0.5 else -1)
+
+
 ## Priorities: hotfixes > a nearby coin > the flag > painted things to use > unvisited paint.
 func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String], dist: Array[float],
 		hot: Array[bool]) -> int:
@@ -1241,6 +1286,12 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 	if best != -1:
 		_retrace_to = Vector3.INF
 		return best
+
+	# Truly lost: back to the last splat it reached (see _decide).
+	if _look_back:
+		for i in nodes.size():
+			if kinds[i] == "paint" and dist[i] < INF and nodes[i].distance_to(_furthest) < 1.0:
+				return i
 
 	for i in nodes.size():
 		if kinds[i] == "coin" and dist[i] <= coin_detour and (best == -1 or dist[i] < dist[best]):
@@ -1369,6 +1420,25 @@ func _trail_add(p: Vector3, from := Vector3.INF, gamble := false) -> void:
 	_trail_gamble.append(gamble)
 
 
+## A take-off point a step back from `from` (away from `to`), on the same floor, so a replayed jump doesn't
+## start right on the edge it once slipped from.
+func _safe_takeoff(from: Vector3, to: Vector3) -> Vector3:
+	var back := Vector3(from.x - to.x, 0, from.z - to.z)
+	if back.length() < 0.01:
+		return from
+	back = back.normalized()
+	var space := get_world_3d().direct_space_state
+	var floor_y = _ground_y(space, from, from.y, 0.45)
+	if floor_y == null:
+		return from
+	for k in [0.7, 0.5, 0.3]:
+		var p: Vector3 = from + back * k
+		var y = _ground_y(space, p, floor_y, 0.2)
+		if y != null:
+			return Vector3(p.x, y, p.z)
+	return Vector3(from.x, floor_y, from.z)
+
+
 ## Retracing: the jump it once made from trail stop k-1 to stop k can be made again the same way (walk to the
 ## same take-off, same landing), even from a spot where the planner wouldn't plan it. Unpainted = a gamble again.
 func _replay_link(a: Vector3, b: Vector3) -> Dictionary:
@@ -1377,7 +1447,7 @@ func _replay_link(a: Vector3, b: Vector3) -> Dictionary:
 	var kb := _route_index(b)
 	if kb <= 0 or _route_index(a) != kb - 1 or _trail_from[kb] == Vector3.INF:
 		return {}
-	var from: Vector3 = _trail_from[kb]
+	var from: Vector3 = _safe_takeoff(_trail_from[kb], b)
 	if a.distance_to(from) > 0.6 and not _walkable(a, from):
 		return {}
 	return {cost = a.distance_to(from) + from.distance_to(b) + 4.0, jump = true, via = from, replay = _trail_gamble[kb]}
@@ -1387,7 +1457,7 @@ func _replay_link(a: Vector3, b: Vector3) -> Dictionary:
 func _try_retry_jump() -> bool:
 	var jump := _retry_jump
 	_retry_jump = {}
-	var from: Vector3 = jump.from
+	var from: Vector3 = _safe_takeoff(jump.from, jump.to)
 	_path.clear()
 	if from.distance_to(feet()) > 0.3:
 		if not _walkable(feet(), from):
@@ -1533,6 +1603,8 @@ func _try_desperate_jump() -> bool:
 			# A gamble is for getting somewhere new: never back where it has already been, and not downhill.
 			if _trail.any(func(t): return t.distance_to(landing) < 2.0) or _is_visited(landing):
 				break
+			if not _trail.is_empty() and landing.y < origin.y - 0.5:
+				break  # Down is where it came from: never a gamble worth taking.
 			var score: float = -maxf(0.0, origin.y - landing.y) * 6.0
 			if _goal_known:
 				score -= landing.distance_to(_goal.global_position)
