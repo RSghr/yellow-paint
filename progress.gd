@@ -31,6 +31,9 @@ var best_stars := {}  ## "level_01" -> best total stars over the 3 rounds, out o
 ## "level_04" -> {"Rhea Spawn" -> {tests, finishes, deaths, retries, failed_jumps, lost, played, hotfixes_seen, hotfixes}}
 ## (key "" = stats from before they were split per level). tester_totals() adds the levels up per tester.
 var playtest_stats := {}
+## The rounds behind each level's saved best score: {level_key: {tester: stats}} (STAT_KEYS). The patch notes and
+## credits only talk about these (retries, resets and abandoned runs are never mentioned).
+var best_runs := {}
 ## Release: "" = in development, "credits" = greenlit (ending + patch notes mails sent, credits not seen yet),
 ## "shipped" = Patch 1.1 (replay everything, no stakes, post-launch levels open).
 var ship_state := ""
@@ -289,17 +292,17 @@ func log_tester(tester: String, data: Dictionary) -> void:
 	_save()
 
 
-## Each tester's record, levels added up: {"Rhea Spawn": {tests, deaths...}}.
+## Each tester's numbers in the best runs (best_runs), levels added up: {"Rhea Spawn": {tests, failed_jumps...}}.
 ## `keys` limits it to some levels (level keys like "level_04"); empty = every level.
 func tester_totals(keys: Array = []) -> Dictionary:
 	var out := {}
-	for key in playtest_stats:
+	for key in best_runs:
 		if not keys.is_empty() and key not in keys:
 			continue
-		for tester in playtest_stats[key]:
+		for tester in best_runs[key]:
 			var t: Dictionary = out.get(tester, {})
 			for k in STAT_KEYS:
-				t[k] = t.get(k, 0) + playtest_stats[key][tester].get(k, 0)
+				t[k] = t.get(k, 0) + best_runs[key][tester].get(k, 0)
 			out[tester] = t
 	return out
 
@@ -314,10 +317,10 @@ func patch_note_keys() -> Array:
 func level_stats() -> Array:
 	var out := []
 	for key in patch_note_keys():
-		if playtest_stats.has(key):
+		if best_runs.has(key):
 			for info in LEVELS:
 				if _key(info.path) == key:
-					out.append({name = info.name, testers = playtest_stats[key]})
+					out.append({name = info.name, testers = best_runs[key]})
 	return out
 
 
@@ -326,12 +329,24 @@ func best(path: String) -> int:
 
 
 ## `stars` = the level's total (3 rounds, out of 15). Returns true if this is a new best.
-func record(path: String, stars: int) -> bool:
-	if stars <= best(path):
+## `runs` = [{tester, stats}] of the rounds that made this total: kept as the level's best runs.
+func record(path: String, stars: int, runs: Array = []) -> bool:
+	var key := _key(path)
+	if stars < best(path) or (stars == best(path) and best_runs.has(key)):
 		return false
-	best_stars[_key(path)] = stars
+	if level_override != "":
+		return false  # F6 test runs don't count.
+	var level := {}
+	for r in runs:
+		var s: Dictionary = level.get(r.tester, {})
+		for k in STAT_KEYS:
+			s[k] = s.get(k, 0) + r.stats.get(k, 0)
+		level[r.tester] = s
+	best_runs[key] = level
+	var is_new := stars > best(path)
+	best_stars[key] = maxi(stars, best(path))
 	_save()
-	return true
+	return is_new
 
 
 ## Log a finished round's time. Returns the previous best session time (-1 if none).
@@ -380,6 +395,7 @@ func resign() -> void:
 	best_stars = {}
 	best_times = {}
 	playtest_stats = {}
+	best_runs = {}
 	ship_state = ""
 	ending = ""
 	new_mail_ping = false
@@ -430,6 +446,7 @@ func _load() -> void:
 	delivered_mails = cfg.get_value("story", "delivered_mails", [])
 	best_times = cfg.get_value("times", "best", {})
 	playtest_stats = cfg.get_value("stats", "per_level", {})
+	best_runs = cfg.get_value("stats", "best_runs", {})
 	if playtest_stats.is_empty() and cfg.has_section_key("stats", "testers"):
 		playtest_stats = {"": cfg.get_value("stats", "testers", {})}  # Older save: no level info.
 	ship_state = cfg.get_value("release", "state", "")
@@ -446,6 +463,7 @@ func _save() -> void:
 	cfg.set_value("story", "delivered_mails", delivered_mails)
 	cfg.set_value("times", "best", best_times)
 	cfg.set_value("stats", "per_level", playtest_stats)
+	cfg.set_value("stats", "best_runs", best_runs)
 	cfg.set_value("release", "state", ship_state)
 	cfg.set_value("release", "ending", ending)
 	for key in best_stars:

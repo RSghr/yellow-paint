@@ -5,7 +5,7 @@ extends RefCounted
 ##   performance(...)   - from Chad, when a level is finished under the unlock threshold.
 ##   greenlight(...)    - from Chad, once every level scored 10+: the last greenlight before shipping.
 ##   ending_mail(...)   - from Chad after the greenlight, depends on the ending (endings.gd).
-##   patch_notes(...)   - the day-one patch notes: level changes because of how each tester did there (Progress.playtest_stats).
+##   patch_notes(...)   - the day-one patch notes: level changes because of how each tester did there in the best runs (Progress.best_runs).
 ##   patch_mail(...)    - from Chad after the credits: early access went well, Patch 1.1.
 ##   flavor_for(...)    - "flavor" mails: a parody of a toxic workplace. One is about a tester of the
 ##                        new level (their traits decide what kind of trouble they got into), and
@@ -180,11 +180,11 @@ static func patch_notes(ending: String, totals: Dictionary, levels: Array) -> Di
 	if changes == "":
 		changes = "[ul]No playtest data was found. We changed nothing and are shipping anyway.[/ul]\n"
 
-	var table := "[table=6][cell][b]Tester[/b]   [/cell][cell][b]Tests[/b]   [/cell][cell][b]Falls[/b]   [/cell][cell][b]Missed jumps[/b]   [/cell][cell][b]Time lost[/b]   [/cell][cell][b]Hotfixes seen[/b][/cell]"
+	var table := "[table=5][cell][b]Tester[/b]   [/cell][cell][b]Rounds[/b]   [/cell][cell][b]Missed jumps[/b]   [/cell][cell][b]Time lost[/b]   [/cell][cell][b]Hotfixes seen[/b][/cell]"
 	for n in names:
 		var st: Dictionary = totals[n]
-		table += "[cell]%s   [/cell][cell]%d[/cell][cell]%d[/cell][cell]%d[/cell][cell]%s[/cell][cell]%d[/cell]" % [
-			n, st.get("tests", 0), st.get("deaths", 0), st.get("failed_jumps", 0), _t(st.get("lost", 0.0)), st.get("hotfixes_seen", 0)]
+		table += "[cell]%s   [/cell][cell]%d[/cell][cell]%d[/cell][cell]%s[/cell][cell]%d[/cell]" % [
+			n, st.get("tests", 0), st.get("failed_jumps", 0), _t(st.get("lost", 0.0)), st.get("hotfixes_seen", 0)]
 	table += "[/table]"
 
 	var known: PackedStringArray = []
@@ -206,7 +206,7 @@ static func patch_notes(ending: String, totals: Dictionary, levels: Array) -> Di
 
 [b]GENERAL[/b]
 [ul]Shipped.
-Focus testers ran [b]%d[/b] playtests, spent a combined [b]%s[/b] lost (\"admiring the scenery\"), and fell [b]%d[/b] times.
+In their best runs, focus testers spent a combined [b]%s[/b] lost (\"admiring the scenery\") and missed [b]%d[/b] jumps.
 %s[/ul]
 
 [b]LEVEL CHANGES[/b] (based on focus group feedback)
@@ -219,8 +219,10 @@ Focus testers ran [b]%d[/b] playtests, spent a combined [b]%s[/b] lost (\"admiri
 
 The HYPERION LEGENDS Live Team
 [i]"Patching it live since day one."[/i]""" % [
-		int(total.get("tests", 0)), _t(total.get("lost", 0.0)), int(total.get("deaths", 0)),
-		("The %d emergency red splats painted during playtests are now a permanent part of the art direction. Legal would like to know who painted them." % int(total.get("hotfixes", 0)))
+		_t(total.get("lost", 0.0)), int(total.get("failed_jumps", 0)),
+		("The emergency red splat painted during the final playtests is now a permanent part of the art direction. Legal would like to know who painted it."
+			if int(total.get("hotfixes", 0)) == 1 else
+			"The %d emergency red splats painted during the final playtests are now a permanent part of the art direction. Legal would like to know who painted them." % int(total.get("hotfixes", 0)))
 			if total.get("hotfixes", 0) > 0 else "Zero hotfixes were applied during playtests. Legal is suspicious.",
 		changes, table, "\n".join(known)]
 	var m := _mail("HYPERION LEGENDS Live Team", "liveops@synergex-interactive.biz",
@@ -264,8 +266,13 @@ const LEVEL_CHANGES := {
 static func _level_change(name: String, s: Dictionary) -> String:
 	var stat := ENDINGS.notable_stat(s)
 	var n: int = int(s.get(stat, 0)) if stat != "clean" else 0
-	return (LEVEL_CHANGES[stat].pick_random() as String).replace("{name}", name) \
+	var line := (LEVEL_CHANGES[stat].pick_random() as String).replace("{name}", name) \
 		.replace("{n}", str(n)).replace("{time}", _t(s.get("lost", 0.0)))
+	if n == 1:  # "1 red splats ... are" -> "1 red splat ... is"
+		line = line.replace("1 red splats", "1 red splat").replace(" are now", " is now") \
+			.replace("1 emergency hotfixes", "1 emergency hotfix").replace("1 times", "once") \
+			.replace("1 jumps", "1 jump").replace("1 landings", "1 landing")
+	return line
 
 
 ## After the credits. `extra_level` = the post-launch level's name ("" if the game has none).
