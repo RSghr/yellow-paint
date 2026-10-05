@@ -67,9 +67,7 @@ func show_round(data: Dictionary) -> void:
 	rows.append(_row("Paint", "%d  (optimal %d or less)" % [data.paint_used, data.optimal], result.paint_penalty,
 		"immersion broken"))
 	rows.append(_row("Coins", "%d / %d" % [data.coins, data.coin_total], result.coin_penalty, "missed"))
-	var free_used: int = data.get("free_hotfixes", 0)
-	rows.append(_row("Hotfixes", str(data.hotfixes) + ("  (%d free)" % free_used if free_used > 0 else ""),
-		result.hotfix_penalty, "patched mid-playtest"))
+	rows.append(_row("Hotfixes", data.get("hotfix_tally", str(data.hotfixes)), result.hotfix_penalty, "over budget"))
 	if data.has("session"):
 		rows.append(_time_row(data.session, data.lost, data.get("prev_best", -1.0)))
 	for r in rows:

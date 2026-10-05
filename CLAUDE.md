@@ -159,7 +159,12 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 - **Wander walks** stop short of walls (a wall at 3 m no longer rules out a 2 m walk), 24 directions, and prefer
   open directions (`wander_open_bias`). After a coin/button detour, the walk back to `_furthest` survives replans
   (`_heading_back`).
-- Coins are seen without paint but only walked to (`coin_detour` path cost).
+- Coins are seen without paint but only walked to (`coin_detour` path cost). **Nobody in the fiction calls them coins**:
+  the operator's ThinkBox draws coins, the testers see loot, crafting components, collectibles, ammo (runner lines,
+  quotes, mails). The patch notes admit crafting was never added. The HUD/results card ("Coins") is the operator's view.
+- **AAAA flavor**: the game is a bit of every genre (open-world map icons, survival hunger bar, RPG loot, lore carved in
+  the architecture, and some testers sulk they weren't the ones sent to read the lore). Keep it to the occasional
+  `ADMIRE`/`GAZE_LINES` line and the patch notes' known issues: subtle.
 - Breakables: side paint = smash, top paint = climb; more paint wins, ties are a remembered guess.
 - **Hotfixes** (red splats painted mid-playtest) are an order: noticed instantly with line of sight in any direction
   (no view cone, no attention build-up), trusted at `hotfix_trust` (5), top priority, and the whole route to one is
@@ -181,11 +186,16 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 Per round: start at 5★. Paint penalty relative to the round minimum m (`paint_step_ratios` [0.2, 0.4, 0.5],
 `steps_for()` / `paint_steps()`): -1 from m+20%, -2 from m+40%, -3 from m+50% (rounded up, each step at least one
 splat after the previous one: m=3 → 4/5/6, m=20 → 24/28/30, m=50 → 60/70/75). Optimal = first step - 1.
-The minimum is measured on a run that collects every coin. Can size = -3 step + max(5, first step - m).
+The minimum is measured on a run that collects every coin. Can size = max(2 × optimal, -3 step + 1), so the bar is
+half green.
 Coins: all → 0, more than half → -1, half or fewer → -2, none → -3.
 Hotfixes (splats painted during a playtest): each level has `free_hotfixes` (2) shared by its 3 rounds, used up in
 round order by each round's finishing run (`round_hotfixes`, `free_hotfixes_left()`); the rest cost 1-3 → -1, 4+ → -2.
-The HUD and results card show the free ones. They come from outside the can (no limit,
+HUD and results card show the level's tally "Hotfixes: 3/2" (`hotfix_tally()`: used on this level / budget).
+Chad's mails get a PS about them (`MailWriter.hotfix_note`: within budget = tolerated, over = noticed; over budget
+with nothing else to send = a "hotfix budget" mail, once per level). Patch notes: `_hotfix_summary` (none / all
+within each level's budget / N over budget; `MailWriter.HOTFIX_BUDGET`). Tester quotes: `HOTFIX_QUOTES[0]` sometimes
+when only free ones were used. They come from outside the can (no limit,
 not in `splats_used`, no paint penalty) and are **removed on R**. From Enter until R the can is in **Hotfix mode**:
 can, crosshair, HUD and new splats turn red (`PaintManager.hotfix_color`); hotfix splats are bigger, pop in and pulse.
 Minimum 1★. Hotfix quotes in `FocusGroup.HOTFIX_QUOTES`; the tester reacts when it notices one.

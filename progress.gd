@@ -138,10 +138,20 @@ func level_finished(total: int, rounds: Array = []) -> String:
 	if level_override != "" or ship_state != "":
 		return ""  # After the greenlight there are no stakes: no more mails from Chad about scores.
 	var lost_note := MAIL_WRITER.lost_note(rounds)
+	var ps := lost_note  ## Chad's PSs: lost testers, hotfixes.
+	var hotfix_note := MAIL_WRITER.hotfix_note(rounds)
+	var hotfix_count := 0
+	var hotfix_budget := 2
+	for r in rounds:
+		hotfix_count += int(r.get("hotfixes", 0))
+		hotfix_budget = int(r.get("hotfix_budget", hotfix_budget))
+	var over_budget := hotfix_count > hotfix_budget
+	if hotfix_note != "":
+		ps = hotfix_note if ps == "" else ps + "\n\n" + hotfix_note
 	# Every playtest is good enough: Chad needs the last greenlight (once). Comes first: any unlock
 	# announcement still unsent at this point (debug unlock) is old news.
 	if ready_to_ship() and not _has_mail("greenlight"):
-		_deliver(MAIL_WRITER.greenlight(lost_note), "greenlight")
+		_deliver(MAIL_WRITER.greenlight(ps), "greenlight")
 		_save()
 		return ""
 	# Did this result open a new level? (The first one earned whose mail hasn't been sent.)
@@ -155,7 +165,7 @@ func level_finished(total: int, rounds: Array = []) -> String:
 		if _has_mail(unlock_id):
 			continue
 		var testers := level_testers(info.path)
-		_deliver(MAIL_WRITER.announcement(info.name, total, testers, lost_note), unlock_id)
+		_deliver(MAIL_WRITER.announcement(info.name, total, testers, ps), unlock_id)
 		var used: Array = delivered_mails.map(func(m): return m.get("template", ""))
 		var flavors: Array = MAIL_WRITER.flavor_for(testers, used)
 		for f in flavors.size():
@@ -167,8 +177,15 @@ func level_finished(total: int, rounds: Array = []) -> String:
 		var bracket := "15" if total >= 15 else ("10" if total >= 10 else ("5" if total >= 5 else "0"))
 		var perf_id := "perf_%s_%s" % [_key(current_path()), bracket]
 		if not _has_mail(perf_id):
-			_deliver(MAIL_WRITER.performance(LEVELS[current].name, total, UNLOCK_STARS, lost_note,
+			_deliver(MAIL_WRITER.performance(LEVELS[current].name, total, UNLOCK_STARS, ps,
 				current == final_level()), perf_id)
+			_save()
+			return ""
+	# Nothing else to say, but over the hotfix budget: Chad noticed (once per level).
+	if over_budget:
+		var hotfix_id := "hotfix_" + _key(current_path())
+		if not _has_mail(hotfix_id):
+			_deliver(MAIL_WRITER.hotfix_mail(LEVELS[current].name, hotfix_note), hotfix_id)
 			_save()
 			return ""
 	# Nothing else to say, but a tester was lost for half the session or more: Chad noticed (once per level).

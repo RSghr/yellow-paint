@@ -26,7 +26,7 @@ const RESULTS_CARD := preload("res://results_card.gd")
 ## Paint penalty steps, as a fraction of the round minimum: reaching minimum * (1 + step) costs 1, 2, 3 stars.
 ## Each step is at least one splat more than the one before (so the first one is at least minimum + 1).
 @export var paint_step_ratios: Array[float] = [0.2, 0.4, 0.5]
-@export var free_hotfixes := 2  ## Hotfixes per level (all 3 rounds together) that don't cost stars.
+@export var free_hotfixes := 2  ## Hotfixes per level (all 3 rounds together) that don't cost stars. Chad's mails use MailWriter.HOTFIX_BUDGET.
 @export var retry_hold_time := 1.0  ## Seconds R must be held to retry (avoids accidental resets).
 ## T during a playtest cycles through these speeds. Physics ticks scale with it, so the AI plays exactly the same.
 @export var fast_forward_speeds: Array[float] = [1.0, 2.0, 4.0]
@@ -181,17 +181,28 @@ func optimal_paint() -> int:
 	return paint_steps()[0] - 1
 
 
+## The can: twice the 5★ amount, so the bar shows the penalty zones and some room beyond (at least one splat
+## past the -3★ step).
 func paint_limit() -> int:
-	var steps := paint_steps()
-	return steps[-1] + maxi(5, steps[0] - current_round().minimum)
+	return maxi(optimal_paint() * 2, paint_steps()[-1] + 1)
 
 
 ## Free hotfixes still available to this round (the earlier rounds' finishing runs used theirs first).
 func free_hotfixes_left() -> int:
+	return maxi(0, free_hotfixes - _earlier_hotfixes())
+
+
+## Hotfixes of the earlier rounds' finishing runs.
+func _earlier_hotfixes() -> int:
 	var used := 0
 	for i in round_index:
 		used += round_hotfixes[i]
-	return maxi(0, free_hotfixes - used)
+	return used
+
+
+## "3/2": hotfixes used on this level so far (earlier rounds + this run) / the level's free budget.
+func hotfix_tally() -> String:
+	return "%d/%d" % [_earlier_hotfixes() + hotfixes, free_hotfixes]
 
 
 func _process(delta: float) -> void:
@@ -421,12 +432,8 @@ func _coin_total() -> int:
 
 func _update_coin_label() -> void:
 	coin_label.text = "Coins: %d / %d" % [coins_collected, _coin_total()]
-	var free := free_hotfixes_left()
-	if hotfixes > 0:
-		coin_label.text += "      Hotfixes: %d" % hotfixes
-		coin_label.text += "  (%d free)" % mini(hotfixes, free) if free > 0 else "  (no free ones left)"
-	elif _playtest_running:
-		coin_label.text += "      Free hotfixes: %d" % free
+	if hotfixes > 0 or _playtest_running or _earlier_hotfixes() > 0:
+		coin_label.text += "      Hotfixes: %s" % hotfix_tally()
 
 
 ## Painting during a playtest is allowed, but it's a "hotfix": counted and called out.
@@ -440,11 +447,11 @@ func _on_splat_added(mark: PaintMark) -> void:
 	var free := free_hotfixes_left()
 	var note := ""
 	if hotfixes <= free:
-		note = "  (free: %d left this level)" % (free - hotfixes)
+		note = "  (within budget: %s)" % hotfix_tally()
 	elif hotfixes - free >= 4:
-		note = "  (the focus group is starting to notice)"
+		note = "  (%s: the focus group is starting to notice)" % hotfix_tally()
 	else:
-		note = "  (no free hotfixes left: this one costs stars)"
+		note = "  (%s: over budget, costs stars)" % hotfix_tally()
 	paint_label.text = "HOTFIX #%d applied mid-playtest%s" % [hotfixes, note]
 
 
@@ -513,7 +520,8 @@ func _on_goal() -> void:
 	# Times are logged (best per round, to beat later) but never affect the stars.
 	var session := runner.session_time
 	var lost := runner.time_lost
-	round_times[round_index] = {tester = runner.tester_name, session = session, lost = lost}
+	round_times[round_index] = {tester = runner.tester_name, session = session, lost = lost, hotfixes = hotfixes,
+		hotfix_budget = free_hotfixes}
 	round_runs[round_index] = {tester = runner.tester_name, stats = {
 		tests = 1, finishes = 1, failed_jumps = runner.failed_jumps, lost = lost, played = session,
 		hotfixes_seen = runner.hotfixes_seen, hotfixes = hotfixes}}
@@ -522,7 +530,7 @@ func _on_goal() -> void:
 	var data := {
 		round_index = round_index, round_count = Level.ROUNDS, tester = runner.tester_name, result = result,
 		paint_used = paint.splats_used, optimal = optimal_paint(), coins = coins_collected,
-		coin_total = _coin_total(), hotfixes = hotfixes, free_hotfixes = result.free_hotfixes,
+		coin_total = _coin_total(), hotfixes = hotfixes, hotfix_tally = hotfix_tally(),
 		quote = FocusGroup.quote_for(result, lost / session if session > 0.0 else 0.0),
 		session = session, lost = lost, prev_best = prev_best,
 	}

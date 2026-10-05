@@ -28,7 +28,7 @@ Welcome to the [b]Level Readability Department[/b] at Synergex Interactive! As d
 Use as little paint as possible. The art team spent four years on those textures and says yellow paint "ruins the immersion". You will have to take their word for it.
 Every star the testers give us goes straight into a slide for the investors. They like five stars. They have asked us not to show them fewer than five stars.
 Each tester is different. Read their profile. Some of them will need a lot of help. Some of them will jump off anything. All of them write reviews.
-If something goes wrong during a session, you [i]can[/i] push a hotfix. Please don't. The testers notice, and so does Legal.
+If something goes wrong during a session, you [i]can[/i] push a hotfix. Management approved a budget of two per playtest. Please don't use it. The testers notice, and so does Legal.
 Paint is expensive. Use it like it comes out of your salary. (It does.)[/ul]
 
 We are all extremely excited. Let's make this the most intuitive game ever made, together!
