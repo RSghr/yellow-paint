@@ -687,7 +687,8 @@ func _process_jump(delta: float) -> void:
 			var off: Vector3 = step.pos - feet()
 			off.y = 0
 			_path.pop_front()
-			if off.length() < 1.2:
+			# Made it = landed where it aimed: close in plan AND at about that height (not 8 m under a coin).
+			if off.length() < 1.2 and feet().y > step.pos.y - 0.8:
 				_home_y = feet().y  # Made it (painted or not): this is the floor it's on now.
 				if step.jump:
 					# Remember the way and the take-off, so it can make this jump again after a fall.
@@ -1325,7 +1326,9 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 func _mark_spots_underfoot() -> void:
 	var f := feet()
 	for spot in known_spots():
-		if spot.pos.distance_to(f) < 1.0:
+		# Standing on it, or right next to it on the same floor (e.g. it landed a jump just beside the splat).
+		var flat := Vector2(spot.pos.x - f.x, spot.pos.z - f.z).length()
+		if flat < 1.5 and absf(spot.pos.y - f.y) < 0.4:
 			_record_visit(spot.pos)
 
 
@@ -1527,14 +1530,17 @@ func _try_desperate_jump() -> bool:
 			landing = hit.position if land_y == null else Vector3(landing.x, land_y, landing.z)
 			if _walkable(origin, landing) or not _jump_clear(edge, landing):
 				break  # Same ground (no jump needed), or something in the way.
-			var score: float
+			# A gamble is for getting somewhere new: never back where it has already been, and not downhill.
+			if _trail.any(func(t): return t.distance_to(landing) < 2.0) or _is_visited(landing):
+				break
+			var score: float = -maxf(0.0, origin.y - landing.y) * 6.0
 			if _goal_known:
-				score = -landing.distance_to(_goal.global_position)
+				score -= landing.distance_to(_goal.global_position)
 			else:
 				var novelty := landing.distance_to(_spawn.origin)
 				for v in _visited + _explored:
 					novelty = minf(novelty, landing.distance_to(v))
-				score = novelty
+				score += novelty
 			score += randf() * 1.5 - edge.distance_to(landing) * 0.3
 			if score > best_score:
 				best_score = score

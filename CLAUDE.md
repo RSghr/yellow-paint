@@ -117,7 +117,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   pauses during a gaze and wander walks slow to 30%, so it searches as much as before, it just loses more time.
 - **Desperation**: once it has done a full round of wandering AND `patience` seconds (default 8, chosen by the user) have passed without progress (reaching paint/coin/button/flag, seeing new paint, a door opening), so roughly 10-15s of being lost, it jumps at any ledge it can see
   (closer to the flag if seen, else unexplored). It's a gamble: `desperate_success_chance` (0.65) that it lands,
-  regardless of distance (a miss falls well short). Paint appearing during the wind-up cancels it. Won't drop more than
+  regardless of distance (a miss falls well short). Never back to where it has been (trail/visited), and landings lower
+  than its floor are heavily penalised. Paint appearing during the wind-up cancels it. Won't drop more than
   `max_unpainted_drop` (2.6m) unpainted. Level minimums stay defined as what's *reliable*.
 - Take-off points always keep `takeoff_margin` (0.6m) from the edge, and it can never start a jump while airborne
   (if it slips off, it just falls). `desperate_success_chance` is a probability (0-1).
@@ -128,7 +129,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   can be made again the same way (`_replay_link`: same take-off, same landing; unpainted ones are gambles again). If
   the end isn't reachable it goes to the reachable trail stop furthest along (forward only, `_route_index`), and if
   none is, it explores as usual. Back where it fell, an improvised jump that failed is tried again at once
-  (`_failed_jump` → `_retry_jump`, "Round two"). `_shaken`: no leap of faith toward the flag until it has done its
+  (`_failed_jump` → `_retry_jump`, "Round two"). A landing only counts as "made it" if it's near the target in plan
+  AND at its height (not 8 m under a coin). A splat on the same floor within 1.5 m counts as visited. `_shaken`: no leap of faith toward the flag until it has done its
   wanders AND `patience` on the new floor. A target within 0.8 m on the same level counts as reached (`_at`: a splat
   painted against a pillar can't be stood on exactly).
 - **Return after a detour**: after going for a coin or using a button/breakable (`_detoured`), if it has nothing new to
