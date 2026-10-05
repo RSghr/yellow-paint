@@ -163,6 +163,7 @@ var _lost_time := 0.0  ## Seconds since it last made progress (reached paint/coi
 var _last_jump_desperate := false
 var _too_far_said := {}  ## Spots it already complained were out of reach (cleared on reset).
 var _scan_looks: Array[Vector3] = []  ## Corridor openings still to check during this look-around.
+var _link_cache := {}  ## "a|b|jump" -> _link() result between two known spots (cleared when doors move, on reset).
 var _corner_cache := {}  ## "a|b" -> walk point around one corner (or INF): cleared when doors move or on reset.
 var _coin_attention := {}  ## coin instance id -> attention
 var _seen_coins := {}
@@ -289,6 +290,7 @@ func reset_to_spawn() -> void:
 	_last_jump_desperate = false
 	_too_far_said.clear()
 	_corner_cache.clear()
+	_link_cache.clear()
 	_home_y = _spawn.origin.y - FEET_OFFSET
 	_head.rotation = Vector3.ZERO
 	_head_pitch = 0.0
@@ -302,6 +304,7 @@ func reset_to_spawn() -> void:
 
 ## Become one of the focus testers: name + traits (see FocusGroup.ROSTER and the "Traits" exports).
 func apply_profile(tester: String, p: Dictionary) -> void:
+	_link_cache.clear()  # Reach changes with the profile.
 	tester_name = tester
 	profile = p
 	max_jump_distance = reach_by_level[p.jump]
@@ -793,6 +796,7 @@ func _on_world_changed() -> void:
 	# A door opened or something broke: what it can reach has changed.
 	_rethink = true
 	_corner_cache.clear()
+	_link_cache.clear()
 	_lost_time = 0.0
 	if state == State.CONFUSED:
 		_timer = 4.0
@@ -1179,7 +1183,7 @@ func _decide() -> void:
 		for v in n:
 			if done[v]:
 				continue
-			var link := _link(nodes[u], nodes[v], jumpable[v])
+			var link := _link(nodes[u], nodes[v], jumpable[v]) if u == 0 else _cached_link(nodes[u], nodes[v], jumpable[v])
 			if link.is_empty():
 				link = _replay_link(nodes[u], nodes[v])
 			if link.is_empty():
@@ -1781,6 +1785,16 @@ func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_
 			continue
 		return {cost = a.distance_to(launch) + r + 2.0, jump = true, via = launch}
 	return {}
+
+
+## _link() between two fixed spots, remembered: the world only changes when a door moves (cache cleared then).
+## Without it, every replan re-checked every pair of splats (dozens of raycasts each): a path painted end to end
+## made each replan take a quarter of a second, and hotfixes replan on the spot.
+func _cached_link(a: Vector3, b: Vector3, allow_jump: bool) -> Dictionary:
+	var key := "%s|%s|%s" % [a.snapped(Vector3.ONE * 0.05), b.snapped(Vector3.ONE * 0.05), allow_jump]
+	if not _link_cache.has(key):
+		_link_cache[key] = _link(a, b, allow_jump)
+	return _link_cache[key]
 
 
 ## A point to walk to first so that a -> point -> b is two straight walks on the same floor (one corner),
