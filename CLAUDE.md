@@ -115,10 +115,13 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   `gaze_duration`, sometimes saying what it sees (`GAZE_LINES` + `ADMIRE`, `gaze_line_chance`). Only the visor tilts
   (`_head_pitch`, pivots on the capsule dome); perception uses the head's yaw only. The look-around/confused timer
   pauses during a gaze and wander walks slow to 30%, so it searches as much as before, it just loses more time.
+- **Look back** (Curious / Explorer, `_look_back`): truly lost (look-around walks used up) → before any gamble it walks back
+  to the last splat it reached (`_furthest`), looks around carefully there (`_careful_look`: long turning scan) and gets a
+  fresh round of wanders. Once per splat (`_looked_back_at`). Fixes "missed one splat by bad luck → back to the start".
 - **Desperation**: once it has done a full round of wandering AND `patience` seconds (default 8, chosen by the user) have passed without progress (reaching paint/coin/button/flag, seeing new paint, a door opening), so roughly 10-15s of being lost, it jumps at any ledge it can see
   (closer to the flag if seen, else unexplored). It's a gamble: `desperate_success_chance` (0.65) that it lands,
-  regardless of distance (a miss falls well short). Never back to where it has been (trail/visited), and landings lower
-  than its floor are heavily penalised. Paint appearing during the wind-up cancels it. Won't drop more than
+  regardless of distance (a miss falls well short). Never back to where it has been (trail/visited), and never down
+  once it has made progress (down = where it came from). Paint appearing during the wind-up cancels it. Won't drop more than
   `max_unpainted_drop` (2.6m) unpainted. Level minimums stay defined as what's *reliable*.
 - Take-off points always keep `takeoff_margin` (0.6m) from the edge, and it can never start a jump while airborne
   (if it slips off, it just falls). `desperate_success_chance` is a probability (0-1).
@@ -132,7 +135,9 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   (`_failed_jump` → `_retry_jump`, "Round two"). A landing only counts as "made it" if it's near the target in plan
   AND at its height (not 8 m under a coin). A splat on the same floor within 1.5 m counts as visited. `_shaken`: no leap of faith toward the flag until it has done its
   wanders AND `patience` on the new floor. A target within 0.8 m on the same level counts as reached (`_at`: a splat
-  painted against a pillar can't be stood on exactly).
+  painted against a pillar can't be stood on exactly). Slipping off an edge while standing around or winding up a jump
+  is a fall too (`_idle_physics`), a jump whose target is out of reach from where it really stands is cancelled, and
+  replayed/retried jumps take off a step back from the edge (`_safe_takeoff`).
 - **Return after a detour**: after going for a coin or using a button/breakable (`_detoured`), if it has nothing new to
   try it walks back once to `_furthest` and looks again from there. Plain wandering does NOT count as a detour.
 - It only plans **straight-line walks** between points (no navmesh): it can't plan a walk around a pillar or corner.
