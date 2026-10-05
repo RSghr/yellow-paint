@@ -18,6 +18,7 @@ var _sample_timer := 0.0
 var _last_state := ""
 var _last_plan := ""
 var _last_retrace := Vector3.INF
+var _hotfix_ids := {}  ## Hotfix marks already logged.
 
 
 func begin() -> void:
@@ -32,6 +33,7 @@ func begin() -> void:
 	_last_state = ""
 	_last_plan = ""
 	_last_retrace = Vector3.INF
+	_hotfix_ids = {}
 	var marks := []
 	for m in game.paint.get_marks():
 		marks.append({pos = _v(m.global_position), normal = _v(m.normal), role = m.role,
@@ -60,6 +62,12 @@ func _physics_process(delta: float) -> void:
 			extra = {from = _v(r._jump_from), step = _step(r._path[0])}
 		_event("state", {to = st, extra = extra})
 		_last_state = st
+	# Hotfixes are painted after the start: log each one when it appears (the replay can add it at that time).
+	for m in game.paint.get_marks():
+		if m.hotfix and not _hotfix_ids.has(m.get_instance_id()):
+			_hotfix_ids[m.get_instance_id()] = true
+			_event("hotfix", {pos = _v(m.global_position), normal = _v(m.normal), role = m.role,
+				host = String(game.level.get_path_to(m.host)) if is_instance_valid(m.host) else ""})
 	var plan := JSON.stringify(r._path.map(_step))
 	if plan != _last_plan:
 		_last_plan = plan
