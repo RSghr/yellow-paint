@@ -163,6 +163,7 @@ var _lost_time := 0.0  ## Seconds since it last made progress (reached paint/coi
 var _last_jump_desperate := false
 var _too_far_said := {}  ## Spots it already complained were out of reach (cleared on reset).
 var _scan_looks: Array[Vector3] = []  ## Corridor openings still to check during this look-around.
+var _crumbs: Array[Vector3] = []  ## Where it has walked since the last NEW splat (every 2.5 m): its way back there.
 var _link_cache := {}  ## "a|b|jump" -> _link() result between two known spots (cleared when doors move, on reset).
 var _corner_cache := {}  ## "a|b" -> walk point around one corner (or INF): cleared when doors move or on reset.
 var _coin_attention := {}  ## coin instance id -> attention
@@ -264,6 +265,7 @@ func reset_to_spawn() -> void:
 	_seen.clear()
 	_visited.clear()
 	_explored.clear()
+	_crumbs.clear()
 	_furthest = Vector3.INF
 	_retrace_to = Vector3.INF
 	_shaken = false
@@ -562,6 +564,7 @@ func _physics_process(delta: float) -> void:
 		if _perceive_timer >= PERCEPTION_INTERVAL:
 			if is_on_floor() and state not in [State.WAITING, State.JUMPING]:
 				_mark_spots_underfoot()
+				_drop_crumb()
 			_perceive(_perceive_timer)
 			_perceive_timer = 0.0
 			if debug_view:
@@ -1142,6 +1145,18 @@ func _decide() -> void:
 		payload.append(t.host)
 		hot.append(false)
 		jumpable.append(false)
+	if _look_back:
+		# Going back to the last splat: the way it walked from there is a way back, even around corners it
+		# couldn't plan (it found the next splat by wandering). Walk-only stepping stones.
+		for p in _crumbs:
+			if nodes.any(func(q): return q.distance_to(p) < 1.0):
+				continue
+			nodes.append(p)
+			trust.append(99)
+			kinds.append("crumb")
+			payload.append(null)
+			hot.append(false)
+			jumpable.append(false)
 	if _retrace_to != Vector3.INF:
 		# Retracing: the places it got to without paint are stepping stones too (jumping to them is a gamble again).
 		for p in _trail:
@@ -1183,7 +1198,12 @@ func _decide() -> void:
 		for v in n:
 			if done[v]:
 				continue
-			var link := _link(nodes[u], nodes[v], jumpable[v]) if u == 0 else _cached_link(nodes[u], nodes[v], jumpable[v])
+			var link: Dictionary
+			if kinds[u] == "crumb" or kinds[v] == "crumb":
+				# Breadcrumbs: plain straight walks only (cheap, and that's how it got from one to the next).
+				link = {cost = nodes[u].distance_to(nodes[v]), jump = false} if _walkable(nodes[u], nodes[v]) else {}
+			else:
+				link = _link(nodes[u], nodes[v], jumpable[v]) if u == 0 else _cached_link(nodes[u], nodes[v], jumpable[v])
 			if link.is_empty():
 				link = _replay_link(nodes[u], nodes[v])
 			if link.is_empty():
@@ -1238,7 +1258,7 @@ func _decide() -> void:
 		_advance()
 		return
 	if _look_back:
-		return  # Looking for a way back to the last splat (see below): there's none, the caller carries on.
+		return  # Looking for a way back to the last splat: there's none (empty _path), the caller carries on.
 
 	# Skeptic: it has seen paint but doesn't believe it yet. It stares at it (that counts as a look-around)
 	# until it does, or until it has been lost long enough to improvise instead.
@@ -1404,6 +1424,8 @@ func _record_visit(pos: Vector3) -> void:
 	if not _is_visited(pos):
 		_visited.append(pos)
 		_furthest = pos
+		_crumbs.clear()  # The way back to the last splat starts here.
+		_crumbs.append(pos)
 		_shaken = false  # New ground: it's over the fall.
 		_walks_since_look = 0
 		_lost_time = 0.0  # A new splat is progress (walking back to one it already knew isn't).
@@ -1681,9 +1703,10 @@ func _wander() -> void:
 			_careful_look()
 			return
 		_look_back = true
+		_path.clear()
 		_decide()
-		if not _look_back:
-			return  # Heading back to it.
+		if not _path.is_empty():
+			return  # Heading back to it (_look_back stays on until it gets there).
 		_look_back = false  # No way back to it from here: just keep looking around.
 	_walks_since_look += 1
 	_wanders += 1
@@ -1785,6 +1808,19 @@ func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_
 			continue
 		return {cost = a.distance_to(launch) + r + 2.0, jump = true, via = launch}
 	return {}
+
+
+## Leaves a breadcrumb where it stands if none is within 2.5 m (same floor as the last splat), for the way back to the last splat.
+func _drop_crumb() -> void:
+	if _furthest == Vector3.INF:
+		return
+	var f := feet()
+	if _crumbs.size() >= 60 or absf(f.y - _furthest.y) > 0.3:
+		return
+	for c in _crumbs:
+		if c.distance_to(f) < 2.5:
+			return  # Already has one around here: the crumbs cover where it went, not every step.
+	_crumbs.append(f)
 
 
 ## _link() between two fixed spots, remembered: the world only changes when a door moves (cache cleared then).

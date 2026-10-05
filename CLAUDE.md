@@ -124,6 +124,9 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   there (`_careful_look`: long turning scan), then keeps searching from there. Counter `_walks_since_look`, reset on
   new paint. Going back to a splat it already knew isn't progress (patience keeps running; a NEW splat resets it in
   `_record_visit`). Fixes "missed one splat behind a corner → lost / back to the start".
+  The way back uses **breadcrumbs** (`_crumbs`, `_drop_crumb`: a point every 2.5 m of ground covered since the last
+  new splat, max 60, walk-only nodes added to the planner only during a look-back), so it can return to a splat it
+  only reached by wandering round corners. `_wander` knows the look-back worked when `_decide()` leaves a `_path`.
 - **Desperation**: once it has done a full round of wandering AND `patience` seconds (default 8, chosen by the user) have passed without progress (reaching paint/coin/button/flag, seeing new paint, a door opening), so roughly 10-15s of being lost, it jumps at any ledge it can see
   (closer to the flag if seen, else unexplored). It's a gamble: `desperate_success_chance` (0.65) that it lands,
   regardless of distance (a miss falls well short). Never back to where it has been (trail/visited), and never down
