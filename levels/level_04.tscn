@@ -14,11 +14,11 @@ level_name = "The Gauntlet"
 intro_text = "Everything at once: gaps, planks, a locked door and a crate.
 Paint a route, then press Enter to start the playtest."
 tester_1 = "Frank Rate"
-minimum_1 = 7
+minimum_1 = 4
 tester_2 = "Dee Sync"
-minimum_2 = 7
+minimum_2 = 10
 tester_3 = "Sven Tory"
-minimum_3 = 14
+minimum_3 = 10
 
 [node name="RunnerSpawn" type="Marker3D" parent="." unique_id=1121332307]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 0)
