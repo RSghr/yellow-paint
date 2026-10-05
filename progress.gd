@@ -151,6 +151,7 @@ func level_finished(total: int, rounds: Array = []) -> String:
 	# Every playtest is good enough: Chad needs the last greenlight (once). Comes first: any unlock
 	# announcement still unsent at this point (debug unlock) is old news.
 	if ready_to_ship() and not _has_mail("greenlight"):
+		_deliver_story("greenlight")  # Before the greenlight, so Chad's button stays on top.
 		_deliver(MAIL_WRITER.greenlight(ps), "greenlight")
 		_save()
 		return ""
@@ -167,7 +168,14 @@ func level_finished(total: int, rounds: Array = []) -> String:
 		var testers := level_testers(info.path)
 		_deliver(MAIL_WRITER.announcement(info.name, total, testers, ps), unlock_id)
 		var used: Array = delivered_mails.map(func(m): return m.get("template", ""))
-		var flavors: Array = MAIL_WRITER.flavor_for(testers, used)
+		# The Nth main level unlocked has its own story mails (mail_writer.gd STORY_SCHEDULE): those replace
+		# the random office mail.
+		var ordinal := 0
+		for j in range(TUTORIAL_COUNT, i + 1):
+			if not LEVELS[j].post_launch:
+				ordinal += 1
+		var story_sent := _deliver_story("unlock_%d" % ordinal)
+		var flavors: Array = MAIL_WRITER.flavor_for(testers, used, not story_sent)
 		for f in flavors.size():
 			_deliver(flavors[f], "%s_flavor_%d" % [unlock_id, f])
 		_save()
@@ -179,6 +187,10 @@ func level_finished(total: int, rounds: Array = []) -> String:
 		if not _has_mail(perf_id):
 			_deliver(MAIL_WRITER.performance(LEVELS[current].name, total, UNLOCK_STARS, ps,
 				current == final_level()), perf_id)
+			if randf() < 0.5:  # Office life goes on while you redo your playtests.
+				var office := MAIL_WRITER.office_mail(delivered_mails.map(func(m): return m.get("template", "")))
+				if not office.is_empty():
+					_deliver(office, "%s_office" % perf_id)
 			_save()
 			return ""
 	# Nothing else to say, but over the hotfix budget: Chad noticed (once per level).
@@ -195,6 +207,16 @@ func level_finished(total: int, rounds: Array = []) -> String:
 			_deliver(MAIL_WRITER.lost_mail(LEVELS[current].name, lost_note), lost_id)
 			_save()
 	return ""
+
+
+## Delivers the story mails of an event that weren't sent yet. True if any was.
+func _deliver_story(event: String) -> bool:
+	var sent := false
+	for st in MAIL_WRITER.story_for(event):
+		if not _has_mail(st.id):
+			_deliver(st.mail, st.id)
+			sent = true
+	return sent
 
 
 func _deliver(mail: Dictionary, id: String) -> void:
@@ -287,6 +309,7 @@ func finish_credits() -> void:
 			extra = info.name
 			break
 	_deliver(MAIL_WRITER.patch_mail(ending, extra), "patch_1_1")
+	_deliver_story("patch")
 	_save()
 
 

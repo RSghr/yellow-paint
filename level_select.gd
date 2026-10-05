@@ -515,6 +515,8 @@ func _open_inlook(select := "") -> void:
 		pane.add_child(HSeparator.new())
 		var body := RichTextLabel.new()
 		body.bbcode_enabled = true
+		body.meta_underlined = true
+		body.meta_clicked.connect(func(meta): OS.shell_open(str(meta)))  # [url] links open in the browser.
 		body.text = mail.body
 		body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		body.add_theme_color_override("default_color", INK)
