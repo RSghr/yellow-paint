@@ -7,10 +7,12 @@ extends Node3D
 ## The level result is the 3 round scores added up, out of 15.
 ##
 ## Round scoring: start at 5 stars, subtract paint, coin and hotfix penalties (minimum 1 star).
-##   Paint (optimal = round minimum + optimal_margin):  <= optimal: 0 | 1-5 over: -1 | 6-10 over: -2 | more: -3
+##   Paint, relative to the round minimum m (paint_steps()): each step is a % of m, at least 1 splat more than
+##   the step before:  under m + 20%: 0 | m + 20%: -1 | m + 40%: -2 | m + 50%: -3   (so 5★ = "optimal" = step 1 - 1)
 ##   Coins:  all: 0 | more than half: -1 | half or fewer: -2 | none: -3
-##   Hotfixes (splats painted DURING the playtest, outside the can, removed on R):  0: 0 | 1-3: -1 | 4+: -2
-## The can holds optimal + limit_margin splats. Scraping refunds paint.
+##   Hotfixes (splats painted DURING the playtest, outside the can, removed on R): the level has
+##   free_hotfixes (2) shared by its 3 rounds, used up in order. The rest cost:  1-3: -1 | 4+: -2
+## The can holds the -3 step + max(5, step 1) splats. Scraping refunds paint.
 
 const RUNNER_SCENE := preload("res://runner.tscn")
 const OPERATOR_SCENE := preload("res://character.tscn")
@@ -21,8 +23,10 @@ const SPEECH_FEED := preload("res://speech_feed.gd")
 const RESULTS_CARD := preload("res://results_card.gd")
 
 @export_group("Scoring")
-@export var optimal_margin := 5  ## Optimal = round minimum + this. Enough slack to also grab the coins.
-@export var limit_margin := 10  ## Can size = optimal + this.
+## Paint penalty steps, as a fraction of the round minimum: reaching minimum * (1 + step) costs 1, 2, 3 stars.
+## Each step is at least one splat more than the one before (so the first one is at least minimum + 1).
+@export var paint_step_ratios: Array[float] = [0.2, 0.4, 0.5]
+@export var free_hotfixes := 2  ## Hotfixes per level (all 3 rounds together) that don't cost stars. Chad's mails use MailWriter.HOTFIX_BUDGET.
 @export var retry_hold_time := 1.0  ## Seconds R must be held to retry (avoids accidental resets).
 ## T during a playtest cycles through these speeds. Physics ticks scale with it, so the AI plays exactly the same.
 @export var fast_forward_speeds: Array[float] = [1.0, 2.0, 4.0]
@@ -34,6 +38,7 @@ var coins_collected := 0
 var _finished := false
 var _playtest_running := false  ## From Enter until R: scraping is locked so paint can't be recycled mid-run.
 var hotfixes := 0  ## Splats painted during this playtest run.
+var round_hotfixes: Array[int] = [0, 0, 0]  ## Hotfixes of each round's finishing run (they use up free_hotfixes in order).
 var _out_of_paint_timer := 0.0
 var spectator: Camera3D
 var spectating := false
@@ -129,7 +134,7 @@ func _start_round(index: int) -> void:
 	var r := current_round()
 	runner.apply_profile(r.tester, FocusGroup.profile(r.tester))
 	paint.paint_limit = paint_limit()
-	paint_gauge.setup(r.minimum, optimal_paint(), paint_limit())
+	paint_gauge.setup(r.minimum, paint_steps(), paint_limit())
 	_reset_run()
 	level_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN  # Right-aligned in the corner: grow leftwards.
 	level_label.text = "%s%s" % [
@@ -157,12 +162,47 @@ func _toggle_spectator() -> void:
 	$HUD/SpectatorLabel.text = "Watching %s  (A to go back, mouse to orbit, wheel to zoom)" % runner.tester_name
 
 
+## Splat counts where the paint penalty goes to -1, -2, -3 stars for this round (see paint_step_ratios).
+func paint_steps() -> Array[int]:
+	return steps_for(current_round().minimum, paint_step_ratios)
+
+
+static func steps_for(minimum: int, ratios: Array[float]) -> Array[int]:
+	var steps: Array[int] = []
+	var prev := minimum
+	for ratio in ratios:
+		prev = maxi(prev + 1, minimum + ceili(minimum * ratio - 0.0001))
+		steps.append(prev)
+	return steps
+
+
+## The most paint that still costs nothing (5★ territory).
 func optimal_paint() -> int:
-	return current_round().minimum + optimal_margin
+	return paint_steps()[0] - 1
 
 
+## The can: twice the 5★ amount, so the bar shows the penalty zones and some room beyond (at least one splat
+## past the -3★ step).
 func paint_limit() -> int:
-	return optimal_paint() + limit_margin
+	return maxi(optimal_paint() * 2, paint_steps()[-1] + 1)
+
+
+## Free hotfixes still available to this round (the earlier rounds' finishing runs used theirs first).
+func free_hotfixes_left() -> int:
+	return maxi(0, free_hotfixes - _earlier_hotfixes())
+
+
+## Hotfixes of the earlier rounds' finishing runs.
+func _earlier_hotfixes() -> int:
+	var used := 0
+	for i in round_index:
+		used += round_hotfixes[i]
+	return used
+
+
+## "3/2": hotfixes used on this level so far (earlier rounds + this run) / the level's free budget.
+func hotfix_tally() -> String:
+	return "%d/%d" % [_earlier_hotfixes() + hotfixes, free_hotfixes]
 
 
 func _process(delta: float) -> void:
@@ -185,6 +225,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_playtest_running = true
 		paint.scrape_locked = true
 		paint.hotfix_mode = true
+		_update_coin_label()  # Shows the free hotfixes left while the playtest runs.
 		if not _attempt_open and not _finished and runner.state != Runner.State.DEAD:
 			_attempt_open = true
 			_round_tested = true
@@ -391,8 +432,8 @@ func _coin_total() -> int:
 
 func _update_coin_label() -> void:
 	coin_label.text = "Coins: %d / %d" % [coins_collected, _coin_total()]
-	if hotfixes > 0:
-		coin_label.text += "      Hotfixes: %d" % hotfixes
+	if hotfixes > 0 or _playtest_running or _earlier_hotfixes() > 0:
+		coin_label.text += "      Hotfixes: %s" % hotfix_tally()
 
 
 ## Painting during a playtest is allowed, but it's a "hotfix": counted and called out.
@@ -403,20 +444,25 @@ func _on_splat_added(mark: PaintMark) -> void:
 	_update_coin_label()
 	_out_of_paint_timer = 1.5  # Reuses the timed paint-label message.
 	paint_label.add_theme_color_override("font_color", Color(1, 0.55, 0.1))
-	paint_label.text = "HOTFIX #%d applied mid-playtest%s" % [hotfixes,
-		"" if hotfixes < 4 else "  (the focus group is starting to notice)"]
+	var free := free_hotfixes_left()
+	var note := ""
+	if hotfixes <= free:
+		note = "  (within budget: %s)" % hotfix_tally()
+	elif hotfixes - free >= 4:
+		note = "  (%s: the focus group is starting to notice)" % hotfix_tally()
+	else:
+		note = "  (%s: over budget, costs stars)" % hotfix_tally()
+	paint_label.text = "HOTFIX #%d applied mid-playtest%s" % [hotfixes, note]
 
 
-## Returns {stars, paint_penalty, coin_penalty, hotfix_penalty}.
-static func score(paint_used: int, optimal: int, coins: int, coin_total: int, hotfix_count := 0) -> Dictionary:
-	var over := paint_used - optimal
+## steps: splat counts where the paint penalty becomes 1, 2, 3 (steps_for()). free: hotfixes that cost nothing.
+## Returns {stars, paint_penalty, coin_penalty, hotfix_penalty, free_hotfixes}.
+static func score(paint_used: int, steps: Array[int], coins: int, coin_total: int, hotfix_count := 0,
+		free := 0) -> Dictionary:
 	var paint_penalty := 0
-	if over > 10:
-		paint_penalty = 3
-	elif over > 5:
-		paint_penalty = 2
-	elif over > 0:
-		paint_penalty = 1
+	for step in steps:
+		if paint_used >= step:
+			paint_penalty += 1
 	var coin_penalty := 0
 	if coin_total > 0 and coins < coin_total:
 		if coins == 0:
@@ -425,16 +471,18 @@ static func score(paint_used: int, optimal: int, coins: int, coin_total: int, ho
 			coin_penalty = 2
 		else:
 			coin_penalty = 1
+	var paid := maxi(0, hotfix_count - free)
 	var hotfix_penalty := 0
-	if hotfix_count >= 4:
+	if paid >= 4:
 		hotfix_penalty = 2
-	elif hotfix_count >= 1:
+	elif paid >= 1:
 		hotfix_penalty = 1
 	return {
 		stars = clampi(5 - paint_penalty - coin_penalty - hotfix_penalty, 1, 5),
 		paint_penalty = paint_penalty,
 		coin_penalty = coin_penalty,
 		hotfix_penalty = hotfix_penalty,
+		free_hotfixes = mini(hotfix_count, free),
 	}
 
 
@@ -464,13 +512,16 @@ func _on_goal() -> void:
 	_set_speed(0)  # Results at normal speed.
 	_close_attempt("finish")
 	_finished = true
-	var result := score(paint.splats_used, optimal_paint(), coins_collected, _coin_total(), hotfixes)
+	var result := score(paint.splats_used, paint_steps(), coins_collected, _coin_total(), hotfixes,
+		free_hotfixes_left())
 	round_stars[round_index] = result.stars
+	round_hotfixes[round_index] = hotfixes
 	Sfx.play("goal", 0.0)
 	# Times are logged (best per round, to beat later) but never affect the stars.
 	var session := runner.session_time
 	var lost := runner.time_lost
-	round_times[round_index] = {tester = runner.tester_name, session = session, lost = lost}
+	round_times[round_index] = {tester = runner.tester_name, session = session, lost = lost, hotfixes = hotfixes,
+		hotfix_budget = free_hotfixes}
 	round_runs[round_index] = {tester = runner.tester_name, stats = {
 		tests = 1, finishes = 1, failed_jumps = runner.failed_jumps, lost = lost, played = session,
 		hotfixes_seen = runner.hotfixes_seen, hotfixes = hotfixes}}
@@ -479,7 +530,7 @@ func _on_goal() -> void:
 	var data := {
 		round_index = round_index, round_count = Level.ROUNDS, tester = runner.tester_name, result = result,
 		paint_used = paint.splats_used, optimal = optimal_paint(), coins = coins_collected,
-		coin_total = _coin_total(), hotfixes = hotfixes,
+		coin_total = _coin_total(), hotfixes = hotfixes, hotfix_tally = hotfix_tally(),
 		quote = FocusGroup.quote_for(result, lost / session if session > 0.0 else 0.0),
 		session = session, lost = lost, prev_best = prev_best,
 	}

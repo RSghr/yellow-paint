@@ -13,6 +13,7 @@ extends RefCounted
 ## Edit the texts freely. Placeholders: {name} {outlet} {level} {total} {testers}.
 
 const CHAD := ["Chad Bossworth", "c.bossworth@synergex-interactive.biz"]
+const HOTFIX_BUDGET := 2  ## Free hotfixes per level (keep in sync with game.gd free_hotfixes).
 const ENDINGS := preload("res://endings.gd")
 
 ## Chad's opening line about your last level, by total stars (out of 15).
@@ -94,6 +95,45 @@ static func lost_note(rounds: Array) -> String:
 	]
 	return lines.pick_random().replace("{name}", worst.tester).replace("{lost}", lost) \
 		.replace("{session}", session).replace("{pct}", str(roundi(worst_ratio * 100)))
+
+
+## Chad's remark about the hotfixes of the level's 3 runs. rounds: [{hotfixes, hotfix_budget}]. "" if none.
+## Within the budget it's tolerated; over it, he notices.
+static func hotfix_note(rounds: Array) -> String:
+	var n := 0
+	var budget := 2
+	for r in rounds:
+		n += int(r.get("hotfixes", 0))
+		budget = int(r.get("hotfix_budget", budget))
+	if n == 0:
+		return ""
+	var lines: Array
+	if n <= budget:
+		lines = [
+			"PS: {n} {hotfixes} this session. Within budget. Finance sent a thumbs-up emoji, which they have never done before.",
+			"PS: You used {n} of your {budget} approved hotfixes. That's what they're for. Don't make it a personality.",
+			"PS: {n} {hotfixes}, all within budget. Legal looked at them and said nothing. From Legal, that's a hug.",
+		]
+	else:
+		lines = [
+			"PS: {n} hotfixes. The budget was {budget}. Legal would like to know where the other {over} came from.",
+			"PS: {n} hotfixes against an approved budget of {budget}. The testers have started calling the level \"haunted\". Marketing loves it. I don't.",
+			"PS: {over} hotfixes over budget. Finance has opened a ticket. The ticket has a ticket.",
+		]
+	return (lines.pick_random() as String).replace("{n}", str(n)).replace("{budget}", str(budget)) \
+		.replace("{over}", str(n - budget)).replace("{hotfixes}", "hotfix" if n == 1 else "hotfixes")
+
+
+## Over the hotfix budget with nothing else to say: Chad writes anyway (once per level).
+static func hotfix_mail(level_name: String, note: String) -> Dictionary:
+	var body := "Hi,
+
+Quick one about [b]%s[/b].
+
+%s
+
+Chad" % [level_name, note.trim_prefix("PS: ")]
+	return _mail(CHAD[0], CHAD[1], "RE: %s (hotfix budget)" % level_name, body, false)
 
 
 static func lost_mail(level_name: String, note: String) -> Dictionary:
@@ -200,6 +240,13 @@ static func patch_notes(ending: String, totals: Dictionary, levels: Array) -> Di
 			known.append("Some ledges are yellow and some are not. Nobody can explain the pattern, including us.")
 	known.append("Yellow paint can be seen on top of the hand-sculpted moss. The Art Department has been informed. The Art Department is not okay.")
 	known.append("The Level Readability workstation still renders the game as grey boxes. IT says this is a feature.")
+	known.append("Crafting was never added. The 1,400 crafting components scattered across the world remain fully collectible.")
+	known.append([
+		"Ammo can be collected, but there are no guns yet. Guns are planned for Season 2.",
+		"The hunger bar was removed in v0.9. Some players report still feeling hungry.",
+		"Some players skipped the 600 pages of lore carved into the architecture. They will be found.",
+		"The 214 map icons on the starting hill are now 213. Nobody noticed which one.",
+	].pick_random())
 
 	var body := """[b]HYPERION LEGENDS: ETERNAL DAWN - v1.0.0 Day-One Patch[/b]
 [font_size=15][color=#6b6e7a]Download size: 87 GB (80 GB of 12K moss textures, 7 GB of yellow paint)[/color][/font_size]
@@ -219,16 +266,31 @@ In their best runs, focus testers spent a combined [b]%s[/b] lost (\"admiring th
 
 The HYPERION LEGENDS Live Team
 [i]"Patching it live since day one."[/i]""" % [
-		_t(total.get("lost", 0.0)), int(total.get("failed_jumps", 0)),
-		("The emergency red splat painted during the final playtests is now a permanent part of the art direction. Legal would like to know who painted it."
-			if int(total.get("hotfixes", 0)) == 1 else
-			"The %d emergency red splats painted during the final playtests are now a permanent part of the art direction. Legal would like to know who painted them." % int(total.get("hotfixes", 0)))
-			if total.get("hotfixes", 0) > 0 else "Zero hotfixes were applied during playtests. Legal is suspicious.",
+		_t(total.get("lost", 0.0)), int(total.get("failed_jumps", 0)), _hotfix_summary(levels),
 		changes, table, "\n".join(known)]
 	var m := _mail("HYPERION LEGENDS Live Team", "liveops@synergex-interactive.biz",
 		"HYPERION LEGENDS v1.0.0 - Day-One Patch Notes", body, false)
 	m.date = "Launch day"
 	return m
+
+
+## The GENERAL line about hotfixes: none, all within each level's budget, or over it somewhere.
+static func _hotfix_summary(levels: Array) -> String:
+	var n := 0
+	var over := 0
+	for lv in levels:
+		var level_n := 0
+		for t in lv.testers:
+			level_n += int(lv.testers[t].get("hotfixes", 0))
+		n += level_n
+		over += maxi(0, level_n - HOTFIX_BUDGET)
+	if n == 0:
+		return "Zero hotfixes were applied during playtests. Legal is suspicious."
+	if over == 0:
+		return ("The approved hotfix applied during the final playtests stayed within budget. Finance sent the spreadsheet to the Art Department, who made it part of the lore."
+			if n == 1 else
+			"The %d approved hotfixes applied during the final playtests stayed within budget. Finance sent the spreadsheet to the Art Department, who made it part of the lore." % n)
+	return "%d emergency red splats were painted during the final playtests, [b]%d over budget[/b]. They are now a permanent part of the art direction. Legal would like to know who painted them." % [n, over]
 
 
 ## What was changed in a level because of how a tester did there. {name} {n} {time} are filled in.
