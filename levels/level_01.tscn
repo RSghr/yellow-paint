@@ -1,66 +1,65 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cinujfnlajjhw"]
 
-[ext_resource type="Script" path="res://level.gd" id="lvl_script"]
 [ext_resource type="PackedScene" uid="uid://caufl8sqp5orp" path="res://debug_block.tscn" id="block"]
-[ext_resource type="PackedScene" path="res://goal.tscn" id="goal"]
 [ext_resource type="PackedScene" path="res://coin.tscn" id="coin"]
+[ext_resource type="PackedScene" path="res://goal.tscn" id="goal"]
+[ext_resource type="Script" uid="uid://d2xo6jturp86h" path="res://level.gd" id="lvl_script"]
 
-[node name="Level01" type="Node3D"]
+[node name="Level01" type="Node3D" unique_id=1467570383]
 script = ExtResource("lvl_script")
 level_name = "Onboarding"
-intro_text = "The playtester only jumps to ledges painted yellow.\nPaint where it should LAND (one splat per ledge is usually enough), then press Enter.\nThree testers will play it, one after the other. Some need more paint than others."
-tester_1 = "Rhea Spawn"
+intro_text = "The playtester only jumps to ledges painted yellow.
+Paint where it should LAND (one splat per ledge is usually enough), then press Enter.
+Three testers will play it, one after the other. Some need more paint than others."
 minimum_1 = 3
-tester_2 = "Polly Gonn"
 minimum_2 = 3
-tester_3 = "Al Gorithm"
-minimum_3 = 6
+minimum_3 = 3
 
-[node name="RunnerSpawn" type="Marker3D" parent="."]
+[node name="RunnerSpawn" type="Marker3D" parent="." unique_id=1625923408]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 0)
 
-[node name="OperatorSpawn" type="Marker3D" parent="."]
+[node name="OperatorSpawn" type="Marker3D" parent="." unique_id=1639138427]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -3.5, 1.05, 2)
 
-[node name="Geometry" type="Node3D" parent="."]
+[node name="Geometry" type="Node3D" parent="." unique_id=1406825633]
 
-[node name="PitFloor" parent="Geometry" instance=ExtResource("block")]
+[node name="PitFloor" parent="Geometry" unique_id=1328505396 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, -4.5, -2)
 size = Vector3(54, 1, 20)
 color = Color(0.35, 0.2, 0.2, 1)
 
-[node name="A_Start" parent="Geometry" instance=ExtResource("block")]
+[node name="A_Start" parent="Geometry" unique_id=543280111 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, 0)
 size = Vector3(8, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="B" parent="Geometry" instance=ExtResource("block")]
+[node name="B" parent="Geometry" unique_id=1602983059 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, -2, 0)
 size = Vector3(5, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="SideLedge" parent="Geometry" instance=ExtResource("block")]
+[node name="SideLedge" parent="Geometry" unique_id=1361164724 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -2, -7)
 size = Vector3(2, 4, 2)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="C_Up" parent="Geometry" instance=ExtResource("block")]
+[node name="C_Up" parent="Geometry" unique_id=1211820532 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, -1.5, 0)
 size = Vector3(5, 5, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="D_Goal" parent="Geometry" instance=ExtResource("block")]
+[node name="D_Goal" parent="Geometry" unique_id=710362382 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, -1.25, 0)
 size = Vector3(18, 5.5, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="Coins" type="Node3D" parent="."]
+[node name="Coins" type="Node3D" parent="." unique_id=851974936]
 
-[node name="CoinOnPath" parent="Coins" instance=ExtResource("coin")]
+[node name="CoinOnPath" parent="Coins" unique_id=1172831801 instance=ExtResource("coin")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, 1.8)
 
-[node name="CoinSideLedge" parent="Coins" instance=ExtResource("coin")]
+[node name="CoinSideLedge" parent="Coins" unique_id=632213463 instance=ExtResource("coin")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -7)
 
-[node name="Goal" parent="." instance=ExtResource("goal")]
+[node name="Goal" parent="." unique_id=456610186 instance=ExtResource("goal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39.5, 1.5, 0)

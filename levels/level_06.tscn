@@ -14,11 +14,11 @@ level_name = "Victory Lap"
 intro_text = ""
 post_launch = true
 tester_1 = "Sven Tory"
-minimum_1 = 25
-tester_2 = "Lou Tbox"
-minimum_2 = 25
-tester_3 = "Liv Elup"
-minimum_3 = 50
+minimum_1 = 19
+tester_2 = "David Goodenough"
+minimum_2 = 20
+tester_3 = "Bea Tah"
+minimum_3 = 20
 
 [node name="RunnerSpawn" type="Marker3D" parent="." unique_id=1379500677]
 editor_description = "Where the playtester starts. Keep it 0.9 above the floor (its origin is at its middle)."

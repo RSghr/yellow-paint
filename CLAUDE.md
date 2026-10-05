@@ -199,7 +199,7 @@ Lineups are a first pass; per-round minimums are set by the user from playtestin
    comes back down after 4 s with nobody on it: `return_after`). David Goodenough, Mike Rotransaction, Rhea Spawn.
 6. `level_06` Victory lap (**post-launch**, the $4.99 DLC): a straight road blocked by a wall. Its button raises the wall
    AND `Geometry/Maze` (every maze wall is a door, sunk 3.6 m into the block), so the route has to be painted blind.
-   Liv Elup, Lou Tbox, Sven Tory.
+   Sven Tory, David Goodenough, Bea Tah (the extremes). Gap under Door7's end (z 13.6-15) is a known shortcut.
 
 ## Adding a level
 Run `tools/new_level.gd` (Script editor > File > Run) or duplicate `levels/_template.tscn` as `levels/level_XX.tscn`.

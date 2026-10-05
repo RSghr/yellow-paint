@@ -1,69 +1,68 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cwubn73kp3bq4"]
 
-[ext_resource type="Script" path="res://level.gd" id="lvl_script"]
 [ext_resource type="PackedScene" uid="uid://caufl8sqp5orp" path="res://debug_block.tscn" id="block"]
-[ext_resource type="PackedScene" path="res://goal.tscn" id="goal"]
-[ext_resource type="PackedScene" path="res://coin.tscn" id="coin"]
 [ext_resource type="PackedScene" path="res://breakable.tscn" id="brk"]
+[ext_resource type="PackedScene" path="res://coin.tscn" id="coin"]
+[ext_resource type="PackedScene" path="res://goal.tscn" id="goal"]
+[ext_resource type="Script" uid="uid://d2xo6jturp86h" path="res://level.gd" id="lvl_script"]
 
-[node name="Level02" type="Node3D"]
+[node name="Level02" type="Node3D" unique_id=829564806]
 script = ExtResource("lvl_script")
 level_name = "Breakables"
-intro_text = "Breakables! Paint the SIDE of something and the playtester smashes it.\nPaint the TOP and it climbs on it. Choose wisely, then press Enter."
+intro_text = "Breakables! Paint the SIDE of something and the playtester smashes it.
+Paint the TOP and it climbs on it. Choose wisely, then press Enter."
 tester_1 = "Bea Tah"
 minimum_1 = 3
 tester_2 = "Moe Cap"
-minimum_2 = 3
 tester_3 = "Liv Elup"
-minimum_3 = 3
 
-[node name="RunnerSpawn" type="Marker3D" parent="."]
+[node name="RunnerSpawn" type="Marker3D" parent="." unique_id=1357247893]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 0)
 
-[node name="OperatorSpawn" type="Marker3D" parent="."]
+[node name="OperatorSpawn" type="Marker3D" parent="." unique_id=362267474]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -3.5, 1.05, 2)
 
-[node name="Geometry" type="Node3D" parent="."]
+[node name="Geometry" type="Node3D" parent="." unique_id=424633655]
 
-[node name="Interactables" type="Node3D" parent="."]
-
-[node name="Coins" type="Node3D" parent="."]
-
-[node name="PitFloor" parent="Geometry" instance=ExtResource("block")]
+[node name="PitFloor" parent="Geometry" unique_id=2086345497 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, -4.5, -2)
 size = Vector3(50, 1, 20)
 color = Color(0.35, 0.2, 0.2, 1)
 
-[node name="A_Start" parent="Geometry" instance=ExtResource("block")]
+[node name="A_Start" parent="Geometry" unique_id=1844039438 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, 0)
 size = Vector3(8, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="B_Long" parent="Geometry" instance=ExtResource("block")]
+[node name="B_Long" parent="Geometry" unique_id=585458821 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, -2, 0)
 size = Vector3(20, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="C_High" parent="Geometry" instance=ExtResource("block")]
+[node name="C_High" parent="Geometry" unique_id=309499348 instance=ExtResource("block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.5, -0.6, 0)
 size = Vector3(9, 6.8, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="PlankWall" parent="Interactables" instance=ExtResource("brk")]
+[node name="Interactables" type="Node3D" parent="." unique_id=1197397696]
+
+[node name="PlankWall" parent="Interactables" unique_id=1674717558 instance=ExtResource("brk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 1.25, 0)
 size = Vector3(0.4, 2.5, 6)
 
-[node name="StepCrate" parent="Interactables" instance=ExtResource("brk")]
+[node name="StepCrate" parent="Interactables" unique_id=1334402248 instance=ExtResource("brk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.3, 0.6, 0)
 
-[node name="CoinCrate" parent="Interactables" instance=ExtResource("brk")]
+[node name="CoinCrate" parent="Interactables" unique_id=280348286 instance=ExtResource("brk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.6, 2.2)
 
-[node name="CoinBehindPlanks" parent="Coins" instance=ExtResource("coin")]
+[node name="Coins" type="Node3D" parent="." unique_id=905131273]
+
+[node name="CoinBehindPlanks" parent="Coins" unique_id=664988266 instance=ExtResource("coin")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -1.5)
 
-[node name="CoinOnCrate" parent="Coins" instance=ExtResource("coin")]
+[node name="CoinOnCrate" parent="Coins" unique_id=1761919520 instance=ExtResource("coin")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1.2, 2.2)
 
-[node name="Goal" parent="." instance=ExtResource("goal")]
+[node name="Goal" parent="." unique_id=295664835 instance=ExtResource("goal")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 2.8, 0)
