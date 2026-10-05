@@ -146,7 +146,16 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   replayed/retried jumps take off a step back from the edge (`_safe_takeoff`).
 - **Return after a detour**: after going for a coin or using a button/breakable (`_detoured`), if it has nothing new to
   try it walks back once to `_furthest` and looks again from there. Plain wandering does NOT count as a detour.
-- It only plans **straight-line walks** between points (no navmesh): it can't plan a walk around a pillar or corner.
+- It plans **straight walks, or two straight walks around ONE corner** (`_corner_walk`: L-shaped via points, nudged,
+  same floor, up to `corner_walk_range` 16 m, cached in `_corner_cache`, cleared when a door moves). No navmesh: a splat
+  two corners away can't be planned, it needs a splat in between. Walks keep 0.38 m from walls (`_walkable`).
+- **Corridor looks** (`_open_ways`, `corridor_looks` 3 × `corridor_look_time` 1.6 s): out of known paint (end of a
+  path, end of a wander walk, careful look) it looks down the open ways one after the other (36 rays at eye height,
+  longest sightlines that lead somewhere new, ≥ 2.5 m, 50° apart), turning round for the ones behind it.
+  Paint within `focus_angle_deg` (20°) of where its head points is noticed `focus_bonus` (2x) faster.
+- **Wander walks** stop short of walls (a wall at 3 m no longer rules out a 2 m walk), 24 directions, and prefer
+  open directions (`wander_open_bias`). After a coin/button detour, the walk back to `_furthest` survives replans
+  (`_heading_back`).
 - Coins are seen without paint but only walked to (`coin_detour` path cost).
 - Breakables: side paint = smash, top paint = climb; more paint wins, ties are a remembered guess.
 - **Hotfixes** (red splats painted mid-playtest) are an order: noticed instantly with line of sight in any direction

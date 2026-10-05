@@ -62,8 +62,12 @@ Behaviour that matters for layout:
 - **Falls aren't the end.** If it falls (by accident) to a lower floor it survives, it retraces its painted route
   back to the furthest point it reached. That only works if the paint it already used is reachable from where it
   landed: on a tower, a splat at the bottom of each climb lets a fallen tester find the way back up.
-- **It walks in straight lines.** It plans straight walks between points and can't route around a pillar or corner.
-  On winding paths, put a splat at each turn (or accept that it will explore/improvise there).
+- **It walks around one corner, not two.** It plans a straight walk, or two straight walks around ONE corner (an L).
+  A splat it can see down the next corridor is fine; a splat around two corners, or one it can't SEE from the last
+  splat (hidden behind a wall end), has to be found by wandering, which "No paint, no way" testers barely do.
+  In a maze: from every splat, the next one must be in plain sight. Corridors narrower than ~1.2 m are hard to walk.
+- **At a crossroads it looks down each corridor** (about 1.6 s each), so a splat at the end of a long corridor gets
+  noticed, but a splat right behind a wall end does not.
 
 ## 5. Interactables
 

@@ -44,11 +44,17 @@ const PERCEPTION_INTERVAL := 0.1
 @export_group("Perception")
 @export var view_distance := 22.0
 @export var view_angle_deg := 100.0
+@export var focus_angle_deg := 20.0  ## Paint within this angle of where its head points...
+@export var focus_bonus := 2.0  ## ...is noticed this many times faster.
 @export var notice_rate := 1.6  ## Higher = spots paint faster. Lone splats at 5m take about a second of looking.
 @export var trust_radius := 1.3  ## Splats within this radius pile up into one spot's trust.
 @export var hotfix_trust := 5  ## A hotfix splat is trusted like a big blob: no hesitation, confident walk.
 
 @export_group("Personality")
+@export var corner_walk_range := 16.0  ## Furthest splat it will walk to around one corner (same floor).
+@export var corridor_looks := 3  ## Out of known paint: how many open ways (corridors, gaps) it looks down.
+@export var corridor_look_time := 1.6  ## Seconds spent looking down each of them.
+@export var wander_open_bias := 0.25  ## Look-around walks prefer directions it can see far down (per metre, max 12).
 @export var scan_time := 1.8  ## A full look-around, left to right.
 @export var hesitation_per_doubt := 0.9  ## Pause before jumping to a spot with only 1 splat.
 @export var leap_error := 0.7  ## Unpainted jumps are guesses: landing error in metres.
@@ -148,6 +154,7 @@ var _look_back := false  ## Truly lost: heading back to the last splat it reache
 var _walks_since_look := 0  ## Look-around walks since it last went back to the last splat.
 var _shaken := false  ## Just fell: no unpainted leaps until it has looked around for a way back (wanders + patience).
 var _detoured := false  ## Went off its route for a coin or to use something: may need to return to _furthest.
+var _heading_back := false  ## On its way back to _furthest after a detour.
 var _wanders := 0
 var _home_y := 0.0  ## Height of the last trusted ground; wandering stays near it.
 var _rethink := false  ## Something new was noticed; reconsider the plan at the next chance.
@@ -155,6 +162,8 @@ var _urgent := false  ## A hotfix appeared: drop whatever it's standing around d
 var _lost_time := 0.0  ## Seconds since it last made progress (reached paint/coin/button/flag, saw new paint, a door opened).
 var _last_jump_desperate := false
 var _too_far_said := {}  ## Spots it already complained were out of reach (cleared on reset).
+var _scan_looks: Array[Vector3] = []  ## Corridor openings still to check during this look-around.
+var _corner_cache := {}  ## "a|b" -> walk point around one corner (or INF): cleared when doors move or on reset.
 var _coin_attention := {}  ## coin instance id -> attention
 var _seen_coins := {}
 var _seen_things := {}  ## Explorer: unpainted buttons/breakables it has noticed (instance id -> true).
@@ -265,6 +274,7 @@ func reset_to_spawn() -> void:
 	_trail_from.clear()
 	_trail_gamble.clear()
 	_detoured = false
+	_heading_back = false
 	_coin_attention.clear()
 	_seen_coins.clear()
 	_seen_things.clear()
@@ -278,6 +288,7 @@ func reset_to_spawn() -> void:
 	_lost_time = 0.0
 	_last_jump_desperate = false
 	_too_far_said.clear()
+	_corner_cache.clear()
 	_home_y = _spawn.origin.y - FEET_OFFSET
 	_head.rotation = Vector3.ZERO
 	_head_pitch = 0.0
@@ -781,6 +792,7 @@ func _start_interacting(step: Dictionary) -> void:
 func _on_world_changed() -> void:
 	# A door opened or something broke: what it can reach has changed.
 	_rethink = true
+	_corner_cache.clear()
 	_lost_time = 0.0
 	if state == State.CONFUSED:
 		_timer = 4.0
@@ -807,7 +819,7 @@ func _arrive(step: Dictionary) -> void:
 			_careful_look()  # Back at the last splat: look again, carefully.
 			return
 	if _path.is_empty():
-		_start_scan(scan_time * 0.7)  # End of what it knew: look around.
+		_start_scan(scan_time * 0.7, corridor_looks)  # End of what it knew: look around, down every open way.
 	elif step.trust <= 1 or _rethink:
 		_rethink = false
 		_start_scan(scan_time * 0.45)  # Unsure: quick look before going on.
@@ -853,14 +865,20 @@ func _advance() -> void:
 		_last_pos = global_position
 
 
-func _start_scan(duration: float) -> void:
+func _start_scan(duration: float, corridors := 0) -> void:
 	state = State.SCANNING
 	_timer = 0.0
+	_scan_looks.clear()
+	if corridors > 0:
+		# Out of known paint: look down the open ways (corridors, gaps), one after the other, like a person
+		# at a crossroads does. Behind it included.
+		_scan_looks = _open_ways(corridors)
+		duration = maxf(duration, _scan_looks.size() * corridor_look_time + 0.4)
 	_scan_duration = duration
 	if duration >= scan_time * 0.6:
 		admire(admire_chance)  # Not a forced line: only when it has nothing more urgent to say.
 	# On a proper look-around it sometimes turns to check behind itself too.
-	if duration >= scan_time * 0.6 and randf() < 0.5:
+	if _scan_looks.is_empty() and duration >= scan_time * 0.6 and randf() < 0.5:
 		_body_turn = deg_to_rad(randf_range(100, 180)) * (1 if randf() < 0.5 else -1)
 
 
@@ -969,6 +987,10 @@ func _perceive(dt: float) -> void:
 					blob += 1
 			var dist := eye.distance_to(target)
 			var gain := dt * notice_rate * (0.6 + 0.4 * blob) / (1.0 + dist / 5.0) * randf_range(0.5, 1.5)
+			# Straight ahead of its eyes (looking down a corridor, at a ledge): noticed faster than in the corner of its eye.
+			var to_flat := Vector3(target.x - eye.x, 0, target.z - eye.z).normalized()
+			if to_flat.dot(look) > cos(deg_to_rad(focus_angle_deg)):
+				gain *= focus_bonus
 			_attention[id] = _attention.get(id, 0.0) + gain
 			if _attention[id] >= 1.0:
 				_seen[id] = true
@@ -1254,8 +1276,9 @@ func _decide() -> void:
 ## Back at the last splat after being lost: a long, careful look around (turning).
 func _careful_look() -> void:
 	_look_back = false
-	_start_scan(scan_time * 2.0)
-	_body_turn = deg_to_rad(randf_range(140, 200)) * (1 if randf() < 0.5 else -1)
+	_start_scan(scan_time * 2.0, corridor_looks + 1)
+	if _scan_looks.is_empty():
+		_body_turn = deg_to_rad(randf_range(140, 200)) * (1 if randf() < 0.5 else -1)
 
 
 ## Priorities: hotfixes > a nearby coin > the flag > painted things to use > unvisited paint.
@@ -1354,8 +1377,9 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 	if _detoured and _furthest != Vector3.INF and feet().distance_to(_furthest) > 1.5:
 		for i in nodes.size():
 			if kinds[i] == "paint" and dist[i] < INF and nodes[i].distance_to(_furthest) < 1.0:
-				say(["Now, where was I?", "Back to where I left off.", "Detour done. Back on track."].pick_random(), true)
-				_detoured = false  # One trip back; if that doesn't help, it explores as usual.
+				if not _heading_back:
+					say(["Now, where was I?", "Back to where I left off.", "Detour done. Back on track."].pick_random(), true)
+				_heading_back = true  # Stays on its way back through replans; cleared once it gets there.
 				return i
 	return -1
 
@@ -1380,8 +1404,10 @@ func _record_visit(pos: Vector3) -> void:
 		_walks_since_look = 0
 		_lost_time = 0.0  # A new splat is progress (walking back to one it already knew isn't).
 		_detoured = false  # New progress: whatever detour it took is behind it.
+		_heading_back = false
 	elif pos.distance_to(_furthest) < 1.0:
 		_detoured = false  # Back where it left off.
+		_heading_back = false
 	_check_retrace_done(pos)
 
 
@@ -1662,10 +1688,18 @@ func _wander() -> void:
 	var best := Vector3.INF
 	var best_score := -INF
 	var origin := feet()
-	for attempt in 12:
-		var angle := attempt * TAU / 12.0
+	var offset := randf() * TAU / 24.0
+	for attempt in 24:
+		var angle := offset + attempt * TAU / 24.0
 		var dir := Vector3(cos(angle), 0, sin(angle))
-		var target := origin + dir * randf_range(wander_min, maxf(wander_range, wander_min + 0.5))
+		# Walks up to the wall in that direction at most (a wall 3 m away doesn't rule out a 2 m walk).
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(origin + Vector3.UP * 0.5,
+			origin + Vector3.UP * 0.5 + dir * view_distance, 1, [get_rid()]))
+		var free: float = (origin + Vector3.UP * 0.5).distance_to(hit.position) if hit else view_distance
+		var walk := minf(randf_range(wander_min, maxf(wander_range, wander_min + 0.5)), free - 0.7)
+		if walk < 1.0:
+			continue
+		var target := origin + dir * walk
 		# Stays on roughly the same level: it won't wander down slopes on its own.
 		var y = _ground_y(space, target, origin.y, 0.3)
 		if y == null or absf(y - _home_y) > 0.3:
@@ -1679,7 +1713,8 @@ func _wander() -> void:
 		var novelty := target.distance_to(_spawn.origin - Vector3.UP * FEET_OFFSET)
 		for v in _visited + _explored:
 			novelty = minf(novelty, target.distance_to(v))
-		var score := novelty + randf() * 1.5
+		# Open ways are more inviting than a wall: it heads down corridors rather than into corners.
+		var score := novelty + randf() * 1.5 + minf(free, 12.0) * wander_open_bias
 		if score > best_score:
 			best_score = score
 			best = target
@@ -1717,6 +1752,10 @@ func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_
 		return {cost = 0.0, jump = false}
 	if _walkable(a, b):
 		return {cost = flat, jump = false}
+	# Same floor, just a corner in the way (a splat seen down the next corridor): walk around that one corner.
+	var corner := _corner_walk(a, b)
+	if corner != Vector3.INF:
+		return {cost = a.distance_to(corner) + corner.distance_to(b), jump = false, via = corner}
 	if not allow_jump or d.y > reach_up + 1.5 or d.y < -max_drop - 1.5:
 		return {}
 	if flat <= reach and d.y <= reach_up and d.y >= -max_drop and _jump_clear(a, b):
@@ -1742,6 +1781,37 @@ func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_
 			continue
 		return {cost = a.distance_to(launch) + r + 2.0, jump = true, via = launch}
 	return {}
+
+
+## A point to walk to first so that a -> point -> b is two straight walks on the same floor (one corner),
+## or INF. Tries the two L-shaped corners (good for corridors), then nudged versions of them. Cached.
+func _corner_walk(a: Vector3, b: Vector3) -> Vector3:
+	if absf(b.y - a.y) > 0.3 or Vector2(b.x - a.x, b.z - a.z).length() > corner_walk_range:
+		return Vector3.INF
+	var key := "%s|%s" % [a.snapped(Vector3.ONE * 0.1), b.snapped(Vector3.ONE * 0.1)]
+	if _corner_cache.has(key):
+		return _corner_cache[key]
+	var found := Vector3.INF
+	var space := get_world_3d().direct_space_state
+	var nudges: Array[Vector2] = []
+	for ox in [0.0, 0.8, -0.8, 1.6, -1.6]:
+		for oz in [0.0, 0.8, -0.8, 1.6, -1.6]:
+			nudges.append(Vector2(ox, oz))
+	nudges.sort_custom(func(u: Vector2, v: Vector2) -> bool: return absf(u.x) + absf(u.y) < absf(v.x) + absf(v.y))
+	for n in nudges:
+		for base in [Vector3(a.x, a.y, b.z), Vector3(b.x, a.y, a.z)]:
+			var c: Vector3 = base + Vector3(n.x, 0, n.y)
+			var y = _ground_y(space, c, a.y, 0.3)
+			if y == null:
+				continue
+			c.y = y
+			if _walkable(a, c) and _walkable(c, b):
+				found = c
+				break
+		if found != Vector3.INF:
+			break
+	_corner_cache[key] = found
+	return found
 
 
 ## Nothing in the way of the jump arc (doors, walls, ceilings).
@@ -1798,6 +1868,41 @@ func _look_at(point: Vector3, duration: float) -> void:
 	_look_timer = duration
 
 
+## Directions worth a look from here: the longest clear sightlines at eye height (corridors, gaps between
+## walls), strongest first, at least 50 degrees apart. Points along them, as far as it can see (max 12 m).
+func _open_ways(count: int) -> Array[Vector3]:
+	var space := get_world_3d().direct_space_state
+	var eye := _head.global_position
+	var rays: Array = []
+	var here := feet()
+	for i in 36:
+		var angle := i * TAU / 36.0
+		var dir := Vector3(cos(angle), 0, sin(angle))
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(eye, eye + dir * view_distance, 1, [get_rid()]))
+		var length: float = eye.distance_to(hit.position) if hit else view_distance
+		# Where it leads matters as much as how far: the way it came from (paint it has walked) is less interesting.
+		var ahead := here + dir * minf(length, 8.0)
+		var novelty := 8.0
+		for v in _visited + _explored:
+			novelty = minf(novelty, ahead.distance_to(v))
+		rays.append([minf(length, 10.0) + novelty + randf() * 1.5, dir, length])
+	rays.sort_custom(func(u, v): return u[0] > v[0])
+	var ways: Array[Vector3] = []
+	var dirs: Array[Vector3] = []
+	for ray in rays:
+		if ways.size() >= count or ray[2] < 2.5:
+			break
+		var too_close := false
+		for d in dirs:
+			if d.dot(ray[1]) > cos(deg_to_rad(50)):
+				too_close = true
+		if too_close:
+			continue
+		dirs.append(ray[1])
+		ways.append(eye + ray[1] * minf(ray[2] - 0.5, 12.0) + Vector3.DOWN * 1.2)
+	return ways
+
+
 ## Starts staring at something: its feet, up high, or a random spot around it.
 func _start_gaze() -> void:
 	_gaze_left = randf_range(gaze_duration.x, gaze_duration.y)
@@ -1841,7 +1946,17 @@ func _update_head(delta: float) -> void:
 	var target_pitch := 0.0
 	_look_timer -= delta
 	_update_gaze(delta)
+	if state == State.SCANNING and _look_timer <= 0.0 and _gaze_left <= 0.0 and not _scan_looks.is_empty():
+		var way: Vector3 = _scan_looks.pop_front()
+		_look_at(way, corridor_look_time)
+		# Behind it: turn the body so the head can get there.
+		var local_way := _body.global_basis.inverse() * (way - _head.global_position)
+		var yaw := atan2(-local_way.x, -local_way.z)
+		if absf(yaw) > deg_to_rad(90):
+			_body_turn = yaw - signf(yaw) * deg_to_rad(60)
 	if _look_timer > 0.0:
+		if state == State.SCANNING:
+			_turn_body(delta)
 		var local := _body.global_basis.inverse() * (_look_point - _head.global_position)
 		target_yaw = clampf(atan2(-local.x, -local.z), deg_to_rad(-110), deg_to_rad(110))
 		target_pitch = clampf(atan2(local.y, Vector2(local.x, local.z).length()), deg_to_rad(-50), deg_to_rad(40))
