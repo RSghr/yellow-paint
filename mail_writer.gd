@@ -287,9 +287,9 @@ static func _hotfix_summary(levels: Array) -> String:
 	if n == 0:
 		return "Zero hotfixes were applied during playtests. Legal is suspicious."
 	if over == 0:
-		return ("The approved hotfix applied during the final playtests stayed within budget. Finance has framed the spreadsheet."
+		return ("The approved hotfix applied during the final playtests stayed within budget. Finance sent the spreadsheet to the Art Department, who made it part of the lore."
 			if n == 1 else
-			"The %d approved hotfixes applied during the final playtests stayed within budget. Finance has framed the spreadsheet." % n)
+			"The %d approved hotfixes applied during the final playtests stayed within budget. Finance sent the spreadsheet to the Art Department, who made it part of the lore." % n)
 	return "%d emergency red splats were painted during the final playtests, [b]%d over budget[/b]. They are now a permanent part of the art direction. Legal would like to know who painted them." % [n, over]
 
 

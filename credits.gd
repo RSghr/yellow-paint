@@ -152,6 +152,7 @@ func _credit_lines() -> Array:
 		["The Art Department", "Both of them (still recovering)"],
 		["Moss", "Hand-sculpted, strand by strand"],
 		["Legal", "Legal"],
+		["Lore & Worldbuilding", "Legal"],
 		["Snacks", "Legal"],
 		["IT Helpdesk", "Have you tried turning it off and on again"],
 		["People & Culture", "Mandatory, Optional"],
