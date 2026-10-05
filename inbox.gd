@@ -70,7 +70,7 @@ Hold [b]{reset_runner}[/b] to restart the tester.
 Yellow paint must be [b]subtle[/b], but it has to get the player through the level. On your grey boxes the way looks obvious. It is not. The testers see 12K moss, ray-traced puddles and about forty overlapping textures per ledge, and they have no idea where to go. One well-placed splat beats ten random ones.
 
 [b]Hotfixes[/b]
-If a playtest goes wrong, you can paint a [color=#e0402a][b]red hotfix[/b][/color] during the session. The tester will drop everything and go there. Use it in emergencies only: it breaks immersion, and your score with it.
+If a playtest goes wrong, you can paint a [color=#e0402a][b]red hotfix[/b][/color] during the session. The tester will drop everything and go there. Management grants you [b]2 hotfixes per playtest[/b] (all three testers together). After that, every one breaks immersion, and your score with it.
 
 [b]Scores[/b]
 Each level is rated [b]out of 15[/b] (three testers, five stars each). A level needs at least [b]10/15[/b] before management schedules the next playtest.

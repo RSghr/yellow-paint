@@ -15,7 +15,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 |---|---|
 | `level_select.tscn/.gd` | Main scene = the operator's company **desktop** (built in code): icons Inlook / Level Select / Company Settings / Recycle Bin, taskbar with Start menu and clock. Quit = Start > Shut down ("...may result in your ~~contract~~ termination"). First launch = a clean desktop (the unread badge on Inlook does the talking, the player opens the mails themselves); returning from a level reopens Level Select (`Progress.open_levels_on_menu`). |
 | `desk_window.gd` | Draggable desktop window (title bar, close) used by the desktop. |
-| `inbox.gd` | Inlook's starting emails (`MAILS`, BBCode bodies) + `all_mails()` (delivered ones first). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, your ThinkBox 2009 only shows grey boxes). "workstation" = IT denying the graphics card. "keys" = IT's quick start guide: controls (key names filled from the Input Map by `_with_keys()`, `{action}` placeholders; a line whose action doesn't exist is dropped), subtle paint, red hotfixes cost stars, 10/15 to unlock the next playtest. Caps Lock in game = "Green paint requires ThinkBox 2009 Pro+" (`game.gd` `_caps_lock_joke`). Read state in `Progress.read_mails`/`seen_intro`. "hr_exit" = HR's exit interview: its "Schedule meeting" button opens a DocuSigh resignation letter (sign, then confirm) that wipes the save (see Progression). |
+| `inbox.gd` | Inlook's starting emails (`MAILS`, BBCode bodies) + `all_mails()` (delivered ones first). "welcome" = the story intro from Chad Bossworth (Synergex Interactive, AAAA game HYPERION LEGENDS, investors, your ThinkBox 2009 only shows grey boxes). "workstation" = IT denying the graphics card. "keys" = IT's quick start guide: controls (key names filled from the Input Map by `_with_keys()`, `{action}` placeholders; a line whose action doesn't exist is dropped), subtle paint, 2 free red hotfixes per level then they cost stars, 10/15 to unlock the next playtest. Caps Lock in game = "Green paint requires ThinkBox 2009 Pro+" (`game.gd` `_caps_lock_joke`). Read state in `Progress.read_mails`/`seen_intro`. "hr_exit" = HR's exit interview: its "Schedule meeting" button opens a DocuSigh resignation letter (sign, then confirm) that wipes the save (see Progression). |
 | `mail_writer.gd` | Emails written during progression: Chad's new-level announcement (opening line by score bracket 15 / 14-10 / 9-5 / 4-0), his performance review when a level scores under 10, and flavor mails (toxic-workplace parody): one about a tester of the new level chosen by their traits (`TESTER_STORIES`, e.g. Explorer leaked the level, admin123) + sometimes an office one (`OFFICE_STORIES`, sent once each). Tester stories: one matching their traits (70%) or a generic "any" one. Patch notes: `patch_notes()` lists **level changes** made because of how each tester did on that level (`LEVEL_CHANGES` per notable stat). |
 | `endings.gd` | The 3 endings (`ENDINGS`: title, critic/gamer scores and verdicts, investor quotes, tester line) + `tester_quote()` / `notable_stat()` (what a tester is remembered for, from their stats). |
 | `credits.tscn/.gd` | Launch-day credits (built in code, one tween timeline, hold Space/Enter/click = x6): title card, credits roll (contractor #, roster with outlets), investor quotes, focus group quotes (from `tester_stats`), critics score then gamers score, ending name, then back to the desktop (`Progress.finish_credits()`, fade in). **Preview**: F6 on `credits.tscn` (pick `preview_ending` on the root, or keys 1/2/3 = Investors/GOTY/Mostly Fine to restart): never touches the save, shows elapsed time vs the music's length (~1:05-1:15 total). |
@@ -80,7 +80,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   **Hold R** (`retry_hold_time`, 2s, bar at the bottom) retries the current tester; N goes to the next tester. After the
   3rd tester there is no N: only retry or Tab back to the desktop. Hotfixes are per round.
 - Each round has its own `minimum_N` (that tester's reliable minimum, set by the user from playtesting), so its own
-  optimal (+5) and can size (+15). Level result = sum of the 3 round scores, **out of 15** (`Progress`, `best_total`).
+  paint steps and can size (see Scoring). Level result = sum of the 3 round scores, **out of 15** (`Progress`, `best_total`).
 - Traits (0 lowest, 1 default, 2 highest), shown to the player only as 1-3 stars. A tester has at most ONE trait at 0:
   - **Jumping**: Short legs / Average / Parkour → reach of EVERY jump, painted ones too (`reach_by_level` 4.5 / 5.5 / 7 m,
     `reach_up_by_level` 2.1 / 2.5 / 3.2 m → `max_jump_distance` / `max_jump_up`), plus `desperate_success_chance`
@@ -178,12 +178,17 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   adds a PS to his next mail (`MailWriter.lost_note`) or, if he had nothing else to send, a "time sheet" mail (once per level).
 
 ## Scoring (game.gd `score()`)
-Per round: start at 5★. Paint penalty vs optimal (= round `minimum_N` + 5): over by 1-5 → -1, 6-10 → -2, >10 → -3.
+Per round: start at 5★. Paint penalty relative to the round minimum m (`paint_step_ratios` [0.2, 0.4, 0.5],
+`steps_for()` / `paint_steps()`): -1 from m+20%, -2 from m+40%, -3 from m+50% (rounded up, each step at least one
+splat after the previous one: m=3 → 4/5/6, m=20 → 24/28/30, m=50 → 60/70/75). Optimal = first step - 1.
+The minimum is measured on a run that collects every coin. Can size = -3 step + max(5, first step - m).
 Coins: all → 0, more than half → -1, half or fewer → -2, none → -3.
-Hotfixes (splats painted during a playtest): 0 → 0, 1-3 → -1, 4+ → -2. They come from outside the can (no limit,
+Hotfixes (splats painted during a playtest): each level has `free_hotfixes` (2) shared by its 3 rounds, used up in
+round order by each round's finishing run (`round_hotfixes`, `free_hotfixes_left()`); the rest cost 1-3 → -1, 4+ → -2.
+The HUD and results card show the free ones. They come from outside the can (no limit,
 not in `splats_used`, no paint penalty) and are **removed on R**. From Enter until R the can is in **Hotfix mode**:
 can, crosshair, HUD and new splats turn red (`PaintManager.hotfix_color`); hotfix splats are bigger, pop in and pulse.
-Minimum 1★. Can size = optimal + 10. Hotfix quotes in `FocusGroup.HOTFIX_QUOTES`; the tester reacts when it notices one.
+Minimum 1★. Hotfix quotes in `FocusGroup.HOTFIX_QUOTES`; the tester reacts when it notices one.
 Scraping refunds paint. Paint on objects that break or open (planks, doors) is put aside (`PaintManager.remove_marks_on` → `_stashed`), still counted, and comes back with the object on reset (`restore_stashed()` in `_reset_run`: hold R or next tester).
 Scraping (and Backspace clear) is **locked during a playtest**: from Enter until R (reset). Adding paint is still allowed
 but each splat is a **hotfix** (`PaintMark.hotfix`, counted in `game.gd` `hotfixes`; R deletes them via `remove_hotfixes()`).

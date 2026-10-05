@@ -136,7 +136,7 @@ Every level is played by 3 focus testers in a row; the player's paint carries ov
 **To set a level's testers:** select the level's root node, and in the Inspector open **Round 1**, **Round 2** and
 **Round 3**. Each has:
 - `Tester N`: a dropdown of everyone in the roster below.
-- `Minimum N`: the fewest splats that reliably get **that tester** to the flag (see section 8). Optimal = minimum + 5.
+- `Minimum N`: the fewest splats that reliably get **that tester** to the flag (see section 8). The paint penalties are percentages of it.
 
 The root shows a ⚠ if a tester is used twice in the level, isn't in the roster, has more than one ★☆☆ trait,
 or a minimum is 0.
@@ -211,13 +211,16 @@ Ideas: start with someone easy-going, end with the one whose weak trait the leve
 
 ## 8. Set each round's `minimum`
 
-A round's `minimum` is the fewest splats that **reliably** get **that tester** to the flag, ignoring coins.
-Optimal (5★ territory) is `minimum + 5`, and the can holds `minimum + 15`. The level score is the 3 rounds added up (out of 15).
+A round's `minimum` is the fewest splats that **reliably** get **that tester** to the flag **with every coin** (a 5★ run).
+Paint penalties are percentages of it (`game.gd` `paint_step_ratios`): from minimum +20% it's -1★, +40% -2★, +50% -3★,
+each step at least one splat after the previous one. So minimum 3: 5★ only at 3, then 4 / 5 / 6. Minimum 20: 5★ up
+to 23, then 24 / 28 / 30. Minimum 50: up to 59, then 60 / 70 / 75. The can holds the -3★ step + 5 (or + the first
+step, if bigger). The level also has **2 free hotfixes** shared by its 3 rounds. The level score is the 3 rounds
+added up (out of 15).
 
 1. Play the round painting only what's strictly needed. Count the splats.
 2. Try it a few times: the AI is a bit random. If it only works sometimes, it's not the minimum yet.
-3. Make sure **all coins plus the minimum** fit within optimal (+5). If coins need more than 5 extra
-   splats, a 5★ run is impossible; move coins or raise the minimum.
+3. The minimum includes the coins: measure it on a run that collects them all.
 4. Remember the paint carries over: the round-2 minimum counts all the paint on the level, including what was
    left from round 1 (a Skeptic round usually means extra splats on each landing, which the next testers will also see).
 
@@ -230,5 +233,5 @@ Optimal (5★ territory) is `minimum + 5`, and the can holds `minimum + 15`. The
 - [ ] Side ledges have room for a painted way back
 - [ ] Buttons have their `target` set and face where the playtester will stand
 - [ ] Flag visibility is intentional (leaps of faith)
-- [ ] 3 different testers picked; each round's `minimum` measured; all coins reachable within optimal
+- [ ] 3 different testers picked; each round's `minimum` measured with all coins collected; all coins reachable
 - [ ] Lineup table in this guide updated
