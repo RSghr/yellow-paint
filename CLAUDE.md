@@ -61,7 +61,11 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   After the credits: Patch 1.1 (`shipped()`): Chad's early access mail (names the post-launch level, $4.99), scores
   kept, no more score mails (no stakes), `post_launch` levels open (`Level.post_launch`, tagged DLC), Start menu shows
   the ending. The results card of the last level says "Chad needs your greenlight" / "The launch is on hold until...".
-- **Tester stats** (`Progress.playtest_stats`, per level key then tester name, across all their tests, never scored;
+- **Best runs** (`Progress.best_runs`, per level key then tester): the stats of the 3 rounds behind the level's saved best
+  score (`game.gd` `round_runs` = each round's finishing attempt, passed to `Progress.record()`; replaced on a new best,
+  filled on a tie if missing). **The patch notes and the credits quotes only use these** (`tester_totals`, `level_stats`):
+  retries, resets and abandoned runs (e.g. a hotfix test you reset) are never mentioned.
+- **Tester stats** (`Progress.playtest_stats`, every attempt, kept but no longer shown;
   `tester_totals(keys)` adds levels up per tester, `level_stats()` lists levels 4+ in order; old saves land under key ""). The patch notes only cover levels 4+ (`patch_note_keys()`: no tutorials, no post-launch, no old unattributed stats); the credits quotes use every level: tests, finishes,
   deaths, retries (hold R after starting), failed_jumps (`Runner.failed_jumps`: landed off target or died mid-jump),
   lost/played seconds, hotfixes_seen (`Runner.hotfixes_seen`), hotfixes painted. Logged by `game.gd` `_close_attempt`
