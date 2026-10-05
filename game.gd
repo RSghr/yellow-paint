@@ -40,6 +40,7 @@ var spectating := false
 var round_index := 0  ## 0-2: which focus tester is playing.
 var round_stars: Array[int] = [0, 0, 0]  ## Stars per round (0 = not finished yet).
 var round_times: Array = [null, null, null]  ## {tester, session, lost} per finished round (logged, not scored).
+var round_runs: Array = [null, null, null]  ## {tester, stats} of each round's finishing attempt (saved if the level total is a new best).
 var _retry_hold := 0.0
 var _speed_index := 0
 var _base_ticks := 60
@@ -477,6 +478,9 @@ func _on_goal() -> void:
 	var session := runner.session_time
 	var lost := runner.time_lost
 	round_times[round_index] = {tester = runner.tester_name, session = session, lost = lost}
+	round_runs[round_index] = {tester = runner.tester_name, stats = {
+		tests = 1, finishes = 1, failed_jumps = runner.failed_jumps, lost = lost, played = session,
+		hotfixes_seen = runner.hotfixes_seen, hotfixes = hotfixes}}
 	var prev_best := Progress.record_time(Progress.current_path(), round_index, session, lost) \
 		if Progress.level_override == "" else -1.0
 	var data := {
@@ -493,7 +497,7 @@ func _on_goal() -> void:
 			total += round_stars[i]
 			rounds.append({tester = level.rounds()[i].tester, stars = round_stars[i],
 				session = round_times[i].session if round_times[i] != null else -1.0})
-		var new_best := Progress.record(Progress.current_path(), total)
+		var new_best := Progress.record(Progress.current_path(), total, round_runs.filter(func(r): return r != null))
 		var unlocked := Progress.level_finished(total, round_times.filter(func(r): return r != null))
 		var hint := ""
 		var good_note := ""
