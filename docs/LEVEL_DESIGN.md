@@ -174,15 +174,16 @@ The numbers behind the stars are in `runner.gd`, export group "Traits" (one valu
 
 ### Current lineups
 
-The minimums are placeholders until measured in playtesting.
+Minimums measured by the user in playtesting (October 2026), the fewest splats for a 15★ run.
 
 | Level | Round 1 | Round 2 | Round 3 |
 |---|---|---|---|
-| `level_01` Onboarding | Rhea Spawn (min 3) | Polly Gonn (min 3) | Al Gorithm (min 6) |
-| `level_02` Breakables | Bea Tah (min 3) | Moe Cap (min 3) | Liv Elup (min 3) |
-| `level_03` Buttons | Cass Cene (min 6) | Lou Tbox (min 6) | Max Levell (min 12) |
-| `level_04` The Gauntlet | Frank Rate (min 10) | Dee Sync (min 10) | Sven Tory (min 20) |
-| `level_05` The Tower | David Goodenough (min 20) | Mike Rotransaction (min 20) | Rhea Spawn (min 20) |
+| `level_01` Onboarding | Rhea Spawn (min 3) | Polly Gonn (min 3) | Al Gorithm (min 3) |
+| `level_02` Breakables | Bea Tah (min 3) | Moe Cap (min 5) | Liv Elup (min 5) |
+| `level_03` Buttons | Cass Cene (min 6) | Lou Tbox (min 2) | Max Levell (min 6) |
+| `level_04` The Gauntlet | Frank Rate (min 4) | Dee Sync (min 10) | Sven Tory (min 10) |
+| `level_05` The Tower | David Goodenough (min 20) | Mike Rotransaction (min 18) | Rhea Spawn (min 19) |
+| `level_06` Victory Lap (DLC) | Sven Tory (min 19) | David Goodenough (min 20) | Bea Tah (min 20) |
 
 ### Add a new tester
 
