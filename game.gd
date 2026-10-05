@@ -52,6 +52,7 @@ var _retry_bar: Control  ## "Hold R to retry" progress, bottom centre.
 var _retry_fill: ColorRect
 var round_intro: Control  ## Level intro banner + sliding tester card (round_intro.gd).
 var speech_feed: Control  ## The tester's last 3 lines, top right (speech_feed.gd).
+var recorder: Node  ## DEBUG branch: playtest_recorder.gd
 var results_card: Control  ## End-of-round results / tester lost (results_card.gd).
 
 @onready var paint: PaintManager = $PaintManager
@@ -87,6 +88,9 @@ func _ready() -> void:
 	_base_ticks = Engine.physics_ticks_per_second
 	_start_round(0)
 	add_child(PAUSE_MENU.new())
+	recorder = load("res://playtest_recorder.gd").new()  # DEBUG branch: logs every attempt to debug_logs/.
+	recorder.game = self
+	add_child(recorder)
 
 
 func _exit_tree() -> void:
@@ -188,6 +192,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_attempt_open = true
 			_round_tested = true
 		runner.start()
+		recorder.begin()
 	elif event.is_action_pressed("fast_forward"):
 		if _playtest_running and not _finished and runner.state != Runner.State.DEAD:
 			_set_speed((_speed_index + 1) % fast_forward_speeds.size())
@@ -449,6 +454,8 @@ func _nav_keys() -> Array:
 
 ## Log the attempt that just ended in the tester's record (Progress.playtest_stats, for the patch notes).
 func _close_attempt(outcome: String) -> void:
+	if recorder:
+		recorder.finish(outcome)
 	if not _attempt_open:
 		return
 	_attempt_open = false
