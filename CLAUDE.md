@@ -121,11 +121,16 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   `max_unpainted_drop` (2.6m) unpainted. Level minimums stay defined as what's *reliable*.
 - Take-off points always keep `takeoff_margin` (0.6m) from the edge, and it can never start a jump while airborne
   (if it slips off, it just falls). `desperate_success_chance` is a probability (0-1).
-- **Retrace after a fall**: landing by accident more than `setback_drop` (1.5m) below its last trusted spot = setback.
-  It heads back to `_furthest` (the most recent NEW paint spot it reached) using known spots as stepping stones,
-  then explores normally. If no painted way back exists, it clears `_visited` and explores anything reachable.
-  After a fall it is `_shaken`: no leap of faith toward the flag until it has done its wanders AND `patience` on the
-  new floor (like a desperate jump), so a painted way back has time to show up. Cleared on new paint or the retrace spot.
+- **Retrace after a fall**: it keeps a **trail** (`_trail`, in order: paint spots it reached and where its unpainted jumps
+  landed, with each jump's take-off in `_trail_from` / `_trail_gamble`). Every landing updates the floor it trusts
+  (`_home_y`), so landing more than `setback_drop` (1.5m) below it is a fall, whatever got it up there. After a fall it
+  heads for the end of the trail (`_retrace_to`, where it fell from): painted links as usual, and the jumps it once made
+  can be made again the same way (`_replay_link`: same take-off, same landing; unpainted ones are gambles again). If
+  the end isn't reachable it goes to the reachable trail stop furthest along (forward only, `_route_index`), and if
+  none is, it explores as usual. Back where it fell, an improvised jump that failed is tried again at once
+  (`_failed_jump` → `_retry_jump`, "Round two"). `_shaken`: no leap of faith toward the flag until it has done its
+  wanders AND `patience` on the new floor. A target within 0.8 m on the same level counts as reached (`_at`: a splat
+  painted against a pillar can't be stood on exactly).
 - **Return after a detour**: after going for a coin or using a button/breakable (`_detoured`), if it has nothing new to
   try it walks back once to `_furthest` and looks again from there. Plain wandering does NOT count as a detour.
 - It only plans **straight-line walks** between points (no navmesh): it can't plan a walk around a pillar or corner.
