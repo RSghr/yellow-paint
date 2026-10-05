@@ -77,7 +77,7 @@ Each level is rated [b]out of 15[/b] (three testers, five stars each). A level n
 
 If you have any further questions, please open a ticket. Tickets are reviewed quarterly.
 
-IT Helpdesk | [i]"Have you tried turning it off and on again? (Please don't. It took us three days to set up.)"[/i]""",
+IT Helpdesk | [i]"Any expired license needs to be approved by Legal and Darren from Accounting."[/i]""",
 	},
 	{
 		id = "art",
@@ -121,7 +121,7 @@ imagining it (imagination requests go through the portal)[/ul]
 
 The workstation fan is loud. This is normal. If it starts smelling like toast, this is also normal.
 
-IT Helpdesk | [i]"Have you tried turning it off and on again? (It takes 40 minutes to boot.)"[/i]""",
+IT Helpdesk | [i]"Any expired license needs to be approved by Legal and Darren from Accounting."[/i]""",
 	},
 	{
 		id = "it",
@@ -144,7 +144,7 @@ If you have already changed your password, please change it again.
 
 This is an automated message. Replies are sent directly to a folder nobody reads.
 
-IT Helpdesk | [i]"Have you tried turning it off and on again? (Do not turn it off during working hours.)"[/i]""",
+IT Helpdesk | [i]"Any expired license needs to be approved by Legal and Darren from Accounting."[/i]""",
 	},
 	{
 		id = "fun",
