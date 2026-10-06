@@ -334,7 +334,7 @@ func celebrate() -> void:
 		return
 	state = State.CELEBRATING
 	_path.clear()
-	say(["I did it! All by myself!", "I did it! And the sunset behind the flag... I'm tearing up.",
+	say(["I did it! All by myself!", "I did it! And the sunset behind the waystone... I'm tearing up.", "Waystone attuned. Progress saved. I can rest now.",
 		"Made it! Can I go back and look at the scenery?"].pick_random(), true)
 	reached_goal.emit()
 
@@ -356,6 +356,9 @@ const ADMIRE := [
 	"I can see my reflection in the marble. Wow.",
 	"The volumetric fog! The god rays!",
 	"Every leaf is moving. Every single leaf.",
+	"Fourteen map icons on this hill, and not one of them is yellow.",
+	"Is that a tower I can climb to reveal the map? No? Just a tower.",
+	"My stamina wheel is so pretty. I want to drain it on purpose.",
 ]
 @export_range(0.0, 1.0) var admire_chance := 0.12  ## Chance to comment on the (real) graphics after a look-around.
 
@@ -372,6 +375,7 @@ const GAZE_LINES := {
 		"Even the gravel has normal maps.",
 		"Hand-placed pebbles. Thousands of them.",
 		"My shadow has soft edges. SOFT EDGES.",
+		"These footprints are older than the kingdom. Probably. I'm not on the lore team.",
 	],
 	up = [
 		"The clouds are volumetric. I could stare at them all day.",
@@ -379,6 +383,7 @@ const GAZE_LINES := {
 		"Birds! Flocking birds! With individual feathers!",
 		"The ceiling has frescoes. Someone painted a ceiling.",
 		"Is that a second sun? Lore.",
+		"Three thousand years of history carved into that archway. The lore testers get to read it. I get to jump.",
 	],
 	spot = [
 		"Wait, look at that statue over there.",
@@ -386,6 +391,9 @@ const GAZE_LINES := {
 		"Look at the ivy on that wall. Physically simulated ivy.",
 		"That banner is waving in the wind. Real cloth physics.",
 		"I want to live in that little house over there.",
+		"A crafting bench! No. Focus. Yellow first.",
+		"That mural explains the whole war. Someone on the lore team is having a great day.",
+		"Is my hunger bar going down? Is this a survival game now?",
 	],
 }
 @export var gaze_interval := Vector2(2.5, 5.5)  ## Seconds between gazes while lost (random in this range).
@@ -817,7 +825,8 @@ func _arrive(step: Dictionary) -> void:
 		return
 	if step.get("kind", "") == "coin":
 		_detoured = true
-		say(["Shiny!", "Ooh, a coin!", "Coin get."].pick_random(), true)
+		say(["Loot get.", "+1 Rusty Gear. No idea what it crafts.", "Collectible 12 of 847.",
+			"Ammo! For the gun I'll find later.", "Ooh, a crafting component."].pick_random(), true)
 	if step.get("paint", false):
 		_record_visit(step.pos)
 		_wanders = 0
@@ -845,7 +854,7 @@ func _advance() -> void:
 			doubt = 1.6
 			Sfx.play("desperate", 0.0)
 			if step.get("coin_gamble", false):
-				say(["No paint? That coin is worth it.", "I can make that. Probably. COIN!", "Money first, safety second."].pick_random(), true)
+				say(["No paint? That loot is worth it.", "I can make that. Probably. LOOT!", "Collectibles first, safety second."].pick_random(), true)
 			elif short_legs:
 				say(["I've never made a jump in my life. Here goes!", "How hard can jumping be?",
 					"I don't really do jumps. But okay!"].pick_random(), true)
@@ -856,7 +865,7 @@ func _advance() -> void:
 			say(["That's far. But it's YELLOW!", "If it's painted, I can reach it. Right?", "Yellow never lies. JUMPING!"].pick_random(), true)
 		elif step.leap:
 			doubt = 1.6
-			say(["No yellow... but the flag is RIGHT THERE.", "Unpainted jump. Here goes nothing.", "If I die, put that in the report."].pick_random(), true)
+			say(["No yellow... but the waystone is RIGHT THERE.", "Unpainted jump. Here goes nothing.", "If I die, put that in the report."].pick_random(), true)
 		elif step.trust <= 1:
 			say(["Is that... a bit of yellow? Okay...", "One drop of yellow. Bold.", "I guess that counts as yellow."].pick_random())
 		if doubt > 0.0:
@@ -1018,7 +1027,8 @@ func _perceive(dt: float) -> void:
 			if state not in [State.WAITING, State.CELEBRATING]:
 				_rethink = true
 				_look_at(ctarget, 0.8)
-				say(["Ooh, shiny!", "A coin! I want it.", "Is that... money?"].pick_random())
+				say(["Ooh, loot!", "Is that a crafting component?", "A collectible! Is it legendary?",
+					"Ammo. I don't have a gun yet, but ammo."].pick_random())
 
 	# Explorer: buttons and planks are interesting even without paint.
 	if curious:
@@ -1036,7 +1046,7 @@ func _perceive(dt: float) -> void:
 			_goal_known = true
 			_rethink = true
 			_look_at(flag, 1.2)
-			say(["The flag! I can see the flag!", "Ooh, is that the end?", "There's the goal!"].pick_random(), true)
+			say(["A waystone! I can see the waystone!", "Ooh, is that the next save point?", "There's the quest marker!"].pick_random(), true)
 
 
 func _can_see(space: PhysicsDirectSpaceState3D, eye: Vector3, look: Vector3, cos_half: float, target: Vector3) -> bool:
@@ -1249,7 +1259,7 @@ func _decide() -> void:
 			_record_visit(here.pos)
 		match kinds[target]:
 			"goal":
-				say(["I know where I'm going!", "Flag, here I come."].pick_random())
+				say(["I know where I'm going!", "Quest objective, here I come."].pick_random())
 			"task":
 				say(["Going to do the yellow thing.", "I see what I'm supposed to do."].pick_random())
 			"curio":

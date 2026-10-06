@@ -28,7 +28,7 @@ Welcome to the [b]Level Readability Department[/b] at Synergex Interactive! As d
 Use as little paint as possible. The art team spent four years on those textures and says yellow paint "ruins the immersion". You will have to take their word for it.
 Every star the testers give us goes straight into a slide for the investors. They like five stars. They have asked us not to show them fewer than five stars.
 Each tester is different. Read their profile. Some of them will need a lot of help. Some of them will jump off anything. All of them write reviews.
-If something goes wrong during a session, you [i]can[/i] push a hotfix. Please don't. The testers notice, and so does Legal.
+If something goes wrong during a session, you [i]can[/i] push a hotfix. Management approved a budget of two per playtest. Please don't use it. The testers notice, and so does Legal.
 Paint is expensive. Use it like it comes out of your salary. (It does.)[/ul]
 
 We are all extremely excited. Let's make this the most intuitive game ever made, together!
@@ -70,14 +70,14 @@ Hold [b]{reset_runner}[/b] to restart the tester.
 Yellow paint must be [b]subtle[/b], but it has to get the player through the level. On your grey boxes the way looks obvious. It is not. The testers see 12K moss, ray-traced puddles and about forty overlapping textures per ledge, and they have no idea where to go. One well-placed splat beats ten random ones.
 
 [b]Hotfixes[/b]
-If a playtest goes wrong, you can paint a [color=#e0402a][b]red hotfix[/b][/color] during the session. The tester will drop everything and go there. Use it in emergencies only: it breaks immersion, and your score with it.
+If a playtest goes wrong, you can paint a [color=#e0402a][b]red hotfix[/b][/color] during the session. The tester will drop everything and go there. Management grants you [b]2 hotfixes per playtest[/b] (all three testers together). After that, every one breaks immersion, and your score with it.
 
 [b]Scores[/b]
 Each level is rated [b]out of 15[/b] (three testers, five stars each). A level needs at least [b]10/15[/b] before management schedules the next playtest.
 
 If you have any further questions, please open a ticket. Tickets are reviewed quarterly.
 
-IT Helpdesk | [i]"Have you tried turning it off and on again? (Please don't. It took us three days to set up.)"[/i]""",
+IT Helpdesk | [i]"Any expired license needs to be approved by Legal and Darren from Accounting."[/i]""",
 	},
 	{
 		id = "art",
@@ -121,7 +121,7 @@ imagining it (imagination requests go through the portal)[/ul]
 
 The workstation fan is loud. This is normal. If it starts smelling like toast, this is also normal.
 
-IT Helpdesk | [i]"Have you tried turning it off and on again? (It takes 40 minutes to boot.)"[/i]""",
+IT Helpdesk | [i]"Any expired license needs to be approved by Legal and Darren from Accounting."[/i]""",
 	},
 	{
 		id = "it",
@@ -144,7 +144,7 @@ If you have already changed your password, please change it again.
 
 This is an automated message. Replies are sent directly to a folder nobody reads.
 
-IT Helpdesk | [i]"Have you tried turning it off and on again? (Do not turn it off during working hours.)"[/i]""",
+IT Helpdesk | [i]"Any expired license needs to be approved by Legal and Darren from Accounting."[/i]""",
 	},
 	{
 		id = "fun",
@@ -195,10 +195,17 @@ People & Culture
 ]
 
 
+static var _debug_mails := []  ## Debug "Show All Mails" (see Progress.show_all_mails()).
+
+
 ## Everything in the inbox, newest first: mails received during play, then the starting ones.
 static func all_mails() -> Array:
 	var mails: Array = Progress.delivered_mails.duplicate()
 	mails.reverse()
+	if Progress.show_all_mails():
+		if _debug_mails.is_empty():  # Written once per session, so random lines don't change between refreshes.
+			_debug_mails = load("res://mail_writer.gd").debug_all_mails()
+		mails = _debug_mails + mails
 	for m in MAILS:
 		if m.id == "keys":
 			m = m.duplicate()

@@ -67,7 +67,8 @@ const DEFAULT_TESTER := "Rhea Spawn"
 
 
 ## Results quotes by stars. For 2-4 stars there are separate lines depending on what cost the
-## stars: too much paint ("paint") or missed coins ("coins").
+## stars: too much paint ("paint") or missed coins ("coins"). Testers never call them coins: on their screen
+## they're loot, crafting components, collectibles, ammo...
 const QUOTES := {
 	5: [
 		"I didn't even notice the paint. It just felt... right.",
@@ -83,6 +84,7 @@ const QUOTES := {
 		coins = [
 			"Great flow! I'm sure I didn't miss anything important.",
 			"Loved it. Were there collectibles? Nobody painted them.",
+			"Great flow. My inventory is suspiciously light, though.",
 		],
 	},
 	3: {
@@ -91,8 +93,8 @@ const QUOTES := {
 			"I'd play it again. With sunglasses.",
 		],
 		coins = [
-			"Solid, but I could hear coins I never found.",
-			"Three stars. Somewhere out there, my coins are lonely.",
+			"Solid, but I could hear loot I never found.",
+			"Three stars. Somewhere out there, my crafting materials are lonely.",
 		],
 	},
 	2: {
@@ -101,8 +103,8 @@ const QUOTES := {
 			"Did the designer think I was a toddler?",
 		],
 		coins = [
-			"I saw the flag. I saw nothing else. Not even a coin.",
-			"Zero treasure. Zero joy. The paint was nice, I guess.",
+			"I saw the quest marker. I saw nothing else. Not even a loot chest.",
+			"Zero loot. Zero joy. The paint was nice, I guess.",
 		],
 	},
 	1: [
@@ -124,9 +126,14 @@ const LOST_QUOTES := [
 ]
 
 
-## Said at the end when hotfixes (painting during the playtest) cost the most stars.
-## Key 1 = 1-3 hotfixes, 2 = 4 or more.
+## Said at the end about hotfixes (painting during the playtest).
+## Key 0 = only free ones were used (sometimes mentioned), 1 = 1-3 over the budget, 2 = 4 or more over.
 const HOTFIX_QUOTES := {
+	0: [
+		"Smooth run. One spot felt a bit... freshly painted.",
+		"Great level. I think it patched itself once. Very modern.",
+		"Something changed mid-run. Barely noticed. Barely.",
+	],
 	1: [
 		"The level changed while I was playing it. Is that a feature?",
 		"Day-one patch? More like mid-run patch.",
@@ -178,6 +185,8 @@ static func quote_for(result: Dictionary, lost_ratio := 0.0) -> String:
 	var hotfix_penalty: int = result.get("hotfix_penalty", 0)
 	if hotfix_penalty > 0 and hotfix_penalty >= result.paint_penalty and hotfix_penalty >= result.coin_penalty:
 		return HOTFIX_QUOTES[hotfix_penalty].pick_random()
+	if hotfix_penalty == 0 and result.get("free_hotfixes", 0) > 0 and result.stars >= 4 and randf() < 0.5:
+		return HOTFIX_QUOTES[0].pick_random()  # Free hotfixes: no stars lost, but they felt something.
 	if lost_ratio >= 0.5:
 		return LOST_QUOTES.pick_random()
 	var lines = QUOTES[result.stars]

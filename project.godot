@@ -157,3 +157,4 @@ rendering_device/driver.windows="d3d12"
 [yellow_paint]
 
 debug/unlock_all_levels=false
+debug/show_all_mails=false
