@@ -62,6 +62,10 @@ Behaviour that matters for layout:
 - **Falls aren't the end.** If it falls (by accident) to a lower floor it survives, it retraces its painted route
   back to the furthest point it reached. That only works if the paint it already used is reachable from where it
   landed: on a tower, a splat at the bottom of each climb lets a fallen tester find the way back up.
+- **Once the waystone is in sight, testers skip paint that leads away from it** (and coins beyond `coin_detour`).
+  Keep it out of sight (walls, or more than 22 m away) until the route heads its way, and put coins before that.
+- **Jumps go straight.** The tester walks back from the landing to find a take-off point on the line toward
+  itself; on a diagonal gap that line often misses the platform. Line platforms up, or paint near the corner.
 - **It walks around one corner, not two.** It plans a straight walk, or two straight walks around ONE corner (an L).
   A splat it can see down the next corridor is fine; a splat around two corners, or one it can't SEE from the last
   splat (hidden behind a wall end), has to be found by wandering, which "No paint, no way" testers barely do.
@@ -184,6 +188,9 @@ Minimums measured by the user in playtesting (October 2026), the fewest splats f
 | `level_04` The Gauntlet | Frank Rate (min 4) | Dee Sync (min 10) | Sven Tory (min 10) |
 | `level_05` The Tower | David Goodenough (min 20) | Mike Rotransaction (min 18) | Rhea Spawn (min 19) |
 | `level_06` Victory Lap (DLC) | Sven Tory (min 19) | David Goodenough (min 20) | Bea Tah (min 20) |
+| `level_07` Hanging Gardens | Frank Rate (min 11) | Al Gorithm (min 15) | Mike Rotransaction (min 26) |
+| `level_08` The Crossroads (draft) | Al Gorithm (min 9?) | Rhea Spawn (min 9?) | Polly Gonn (min 9?) |
+| `level_09` The Secret Room (draft) | Cass Cene (min 9?) | Rhea Spawn (min 7?) | Bea Tah (min 5?) |
 
 ### Add a new tester
 
