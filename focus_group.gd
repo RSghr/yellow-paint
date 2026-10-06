@@ -4,63 +4,64 @@ class_name FocusGroup
 ## The roster. Each tester has three traits, 0 (lowest) to 2. 1 is the default playtester.
 ##   jump:     "Jumping": reach of EVERY jump (painted too) + how well improvised ones land.
 ##             2 Parkour (7 m, 3.2 m up) | 1 Average (5.5 m, 2.5 m up) | 0 Short legs (4.5 m, 2.1 m up, improvised jumps land 50%)
-##   trust:    how much paint it takes to convince them to follow it.
-##             2 Blind trust (believes paint instantly, nearest yellow first, jumps at paint slightly out of reach)
-##             | 1 Thoughtful | 0 Skeptic (believes a lone splat only after ~5 s of doubting; 2 splats ~1.3 s, 3 ≈ normal)
+##   greed:    how much they want the collectibles (coins on the operator's grey boxes).
+##             2 Loot goblin (any coin it sees, however far; before leaving it gambles an unpainted jump for the ones
+##               it can't reach, only if a miss can't kill it) | 1 Average (walks to coins it sees, painted jumps only)
+##             | 0 Ascetic (only a coin on its own floor within ~4 m: put the route next to the coins)
 ##   patience: "Exploration" on the card: how much they look around when lost, and if/when they improvise.
-##             2 Explorer (wanders far and long, improvises late, presses/smashes unpainted things, gambles for coins)
+##             2 Explorer (wanders far and long, improvises late, presses/smashes unpainted things)
 ##             | 1 Curious | 0 No paint, no way (short 1.5-3 m look-around walks, never improvises)
 ## Rule: a tester has at most ONE trait at 0. The operator only sees stars, never the names of the traits' values.
 ## `outlet` (a parody of a games site/magazine) and `intro` (a hint at their archetype) show on the round card.
 const ROSTER := {
-	"Rhea Spawn": {jump = 1, trust = 1, patience = 1,
+	"Rhea Spawn": {jump = 1, greed = 1, patience = 1,
 		outlet = "IBN",
 		intro = "Reviews everything, scores everything 7/10. Follows the paint, takes a breath before each jump. Proudly average."},
-	"Polly Gonn": {jump = 1, trust = 2, patience = 1,
+	"Polly Gonn": {jump = 1, greed = 2, patience = 1,
 		outlet = "Polygone",
-		intro = "If it's yellow, she's on it. Has never once questioned a splat, a quest marker, or a loading screen tip."},
-	"Al Gorithm": {jump = 1, trust = 0, patience = 1,
+		intro = "100% completion on everything, including games she hated. If it sparkles, she wants it before she leaves."},
+	"Al Gorithm": {jump = 1, greed = 0, patience = 1,
 		outlet = "GameFAKs",
-		intro = "Writes 40-page walkthroughs. A drop of paint is a rumour; he wants a puddle before he commits to anything."},
-	"Bea Tah": {jump = 1, trust = 1, patience = 2,
+		intro = "Writes 40-page walkthroughs. Collectibles are \"not on the critical path\": he only picks up what's at his feet."},
+	"Bea Tah": {jump = 1, greed = 1, patience = 2,
 		outlet = "Early Axess Weekly",
 		intro = "Has played every beta since 2009. Checks every corner for 'secrets' before trying anything risky."},
-	"Moe Cap": {jump = 0, trust = 1, patience = 1,
+	"Moe Cap": {jump = 0, greed = 1, patience = 1,
 		outlet = "Game Misinformer",
 		intro = "Brilliant writer, 30 years in the industry. Nobody has ever told him he can't jump."},
-	"Liv Elup": {jump = 2, trust = 1, patience = 0,
+	"Liv Elup": {jump = 2, greed = 1, patience = 0,
 		outlet = "Rock Paper Shortcut",
 		intro = "Speedrun world record holder. Pixel-perfect jumps, but strictly by the book: no paint, no jump."},
-	"Cass Cene": {jump = 1, trust = 1, patience = 0,
+	"Cass Cene": {jump = 1, greed = 1, patience = 0,
 		outlet = "Cinematic Universe Digest",
 		intro = "Believes games should be movies. Will stand perfectly still until something tells her where to go."},
-	"Lou Tbox": {jump = 2, trust = 1, patience = 2,
+	"Lou Tbox": {jump = 2, greed = 2, patience = 2,
 		outlet = "Kotakoo",
 		intro = "Opens every chest, climbs every wall, reads every note. Lands anything, painted or not."},
-	"Max Levell": {jump = 2, trust = 0, patience = 1,
+	"Max Levell": {jump = 2, greed = 0, patience = 1,
 		outlet = "Eurogamble",
-		intro = "Only plays on Nightmare difficulty. Flawless jumper, once there's enough paint to convince him it's intended."},
-	"Frank Rate": {jump = 2, trust = 2, patience = 2,
+		intro = "Only plays on Nightmare difficulty. Collectibles are for casuals: flawless jumper, zero detours."},
+	"Frank Rate": {jump = 2, greed = 2, patience = 2,
 		outlet = "PC Gamerish: 240 FPS Edition",
-		intro = "Hardcore. Needs nothing from you and will mention it in the review."},
-	"Dee Sync": {jump = 0, trust = 2, patience = 1,
+		intro = "Hardcore completionist. Needs nothing from you and will mention it in the review."},
+	"Dee Sync": {jump = 0, greed = 2, patience = 1,
 		outlet = "Twitchy (streamer, 14 viewers)",
-		intro = "Trusts chat, trusts paint, trusts everything. Jumping is another story."},
-	"Sven Tory": {jump = 1, trust = 0, patience = 2,
+		intro = "Streams everything. Chat demands every collectible on screen. Jumping is another story."},
+	"Sven Tory": {jump = 1, greed = 2, patience = 2,
 		outlet = "Destructoad",
-		intro = "Loot goblin. Wanders off to explore everything, but trusts nothing smaller than a bucket of paint."},
-	"David Goodenough": {jump = 1, trust = 2, patience = 0,
+		intro = "Loot goblin. Wanders off to explore everything and won't leave a single shiny thing behind."},
+	"David Goodenough": {jump = 1, greed = 2, patience = 0,
 		outlet = "The Casual Observer",
-		intro = "Plays on his phone during cutscenes. Follows yellow instantly, won't move an inch without it."},
-	"Mike Rotransaction": {jump = 0, trust = 1, patience = 2,
+		intro = "Plays on his phone during cutscenes. Grabs anything that glitters, won't move an inch without paint."},
+	"Mike Rotransaction": {jump = 0, greed = 1, patience = 2,
 		outlet = "Freemium Times",
 		intro = "Would pay to skip any jump. Explores every corner first, then tries one anyway. It rarely works."},
 }
 
-const TRAIT_LABELS := {jump = "Jumping", trust = "Trust", patience = "Exploration"}
+const TRAIT_LABELS := {jump = "Jumping", greed = "Greed", patience = "Exploration"}
 const TRAIT_VALUES := {  ## For the docs/editor only. The game shows stars.
 	jump = ["Short legs", "Average", "Parkour"],  ## Reach (all jumps) + how well improvised jumps land.
-	trust = ["Skeptic", "Thoughtful", "Blind trust"],
+	greed = ["Ascetic", "Average", "Loot goblin"],
 	patience = ["No paint, no way", "Curious", "Explorer"],
 }
 const DEFAULT_TESTER := "Rhea Spawn"
@@ -170,11 +171,11 @@ static func stars(value: int) -> String:
 	return "★".repeat(value + 1) + "☆".repeat(2 - value)
 
 
-## "Jumping ★★☆   Trust ★★★   Exploration ★☆☆"
+## "Jumping ★★☆   Greed ★★★   Exploration ★☆☆"
 static func trait_line(tester: String) -> String:
 	var p := profile(tester)
 	var parts: PackedStringArray = []
-	for t in ["jump", "trust", "patience"]:
+	for t in ["jump", "greed", "patience"]:
 		parts.append("%s %s" % [TRAIT_LABELS[t], stars(p[t])])
 	return "   ".join(parts)
 

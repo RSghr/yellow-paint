@@ -62,6 +62,10 @@ Behaviour that matters for layout:
 - **Falls aren't the end.** If it falls (by accident) to a lower floor it survives, it retraces its painted route
   back to the furthest point it reached. That only works if the paint it already used is reachable from where it
   landed: on a tower, a splat at the bottom of each climb lets a fallen tester find the way back up.
+- **Once the waystone is in sight, testers skip paint that leads away from it** (and coins beyond `coin_detour`).
+  Keep it out of sight (walls, or more than 22 m away) until the route heads its way, and put coins before that.
+- **Jumps go straight.** The tester walks back from the landing to find a take-off point on the line toward
+  itself; on a diagonal gap that line often misses the platform. Line platforms up, or paint near the corner.
 - **It walks around one corner, not two.** It plans a straight walk, or two straight walks around ONE corner (an L).
   A splat it can see down the next corridor is fine; a splat around two corners, or one it can't SEE from the last
   splat (hidden behind a wall end), has to be found by wandering, which "No paint, no way" testers barely do.
@@ -148,29 +152,29 @@ Each tester has three traits, shown to the player only as stars (never the names
 | Trait | ★☆☆ | ★★☆ (default) | ★★★ |
 |---|---|---|---|
 | Jumping (reach of **every** jump + improvised jumps) | Short legs: **4.5 m** across, **2.1 m** up; improvised jumps (leaps of faith too) land ~50% | Average: 5.5 m, 2.5 m up; improvised ~65% | Parkour: **7 m**, **3.2 m** up; improvised ~95% |
-| Trust (how much paint it takes to convince them) | Skeptic: a paint spot has to **convince** it before it uses it. One splat takes ~5 s of staring and doubting, 2 splats ~1.3 s, 3 splats ≈ normal. While it doubts it may get bored and improvise. Paint 2-3 splats per landing, or accept a slow, unpredictable round | Thoughtful | Blind trust: believes any paint instantly, fast, but goes for the **nearest** yellow (dead end or not) and jumps at paint up to 1.5 m out of reach (and falls). Scrape leftover paint before its round |
-| Exploration (all levels: while lost, goes back to the last splat for a careful look every 1 / 2 / 4 look-around walks) | No paint, no way: only short look-around walks (**1.5-3 m**), so the next splat must be visible from close to the last one. Never jumps unpainted (no leaps of faith either) | Curious: a few look-around walks, improvises after ~8 s | Explorer: wanders much further and longer (8 walks up to 9 m), improvises late (~16 s), and **gets curious**: presses unpainted buttons, smashes unpainted planks/crates it saw, and gambles on a jump to reach a coin (paint the coin's ledge to make it safe) |
+| Greed (what a collectible is worth to them) | Ascetic: only picks up loot on its own floor within ~4 m that it can walk to. Anything further needs a painted way, or it's left behind | Average: walks to loot it sees, never jumps for it | Loot goblin: wants **every** collectible before the waystone. Sees loot across a gap with no paint: walks to the edge, looks around first (paint, other loot, the waystone), then gambles the jump with its Jumping odds, **only if a miss would land on a floor it survives** (it climbs back and carries on). Loot over a deadly pit needs paint |
+| Exploration (all levels: while lost, goes back to the last splat for a careful look every 1 / 2 / 4 look-around walks) | No paint, no way: only short look-around walks (**1.5-3 m**), so the next splat must be visible from close to the last one. Never jumps unpainted (no leaps of faith either) | Curious: a few look-around walks, improvises after ~8 s | Explorer: wanders much further and longer (8 walks up to 9 m), improvises late (~16 s), and **gets curious**: presses unpainted buttons and smashes unpainted planks/crates it saw |
 
 The numbers behind the stars are in `runner.gd`, export group "Traits" (one value per star level).
 
 ### The roster
 
-| Tester | Outlet | Jumping | Trust | Exploration |
+| Tester | Outlet | Jumping | Greed | Exploration |
 |---|---|---|---|---|
-| Rhea Spawn | IBN | ★★☆ Average | ★★☆ Thoughtful | ★★☆ Curious |
-| Polly Gonn | Polygone | ★★☆ Average | ★★★ Blind trust | ★★☆ Curious |
-| Al Gorithm | GameFAKs | ★★☆ Average | ★☆☆ Skeptic | ★★☆ Curious |
-| Bea Tah | Early Axess Weekly | ★★☆ Average | ★★☆ Thoughtful | ★★★ Explorer |
-| Moe Cap | Game Misinformer | ★☆☆ Short legs | ★★☆ Thoughtful | ★★☆ Curious |
-| Liv Elup | Rock Paper Shortcut | ★★★ Parkour | ★★☆ Thoughtful | ★☆☆ No paint, no way |
-| Cass Cene | Cinematic Universe Digest | ★★☆ Average | ★★☆ Thoughtful | ★☆☆ No paint, no way |
-| Lou Tbox | Kotakoo | ★★★ Parkour | ★★☆ Thoughtful | ★★★ Explorer |
-| Max Levell | Eurogamble | ★★★ Parkour | ★☆☆ Skeptic | ★★☆ Curious |
-| Frank Rate | PC Gamerish: 240 FPS Edition | ★★★ Parkour | ★★★ Blind trust | ★★★ Explorer |
-| Dee Sync | Twitchy (streamer, 14 viewers) | ★☆☆ Short legs | ★★★ Blind trust | ★★☆ Curious |
-| Sven Tory | Destructoad | ★★☆ Average | ★☆☆ Skeptic | ★★★ Explorer |
-| David Goodenough | The Casual Observer | ★★☆ Average | ★★★ Blind trust | ★☆☆ No paint, no way |
-| Mike Rotransaction | Freemium Times | ★☆☆ Short legs | ★★☆ Thoughtful | ★★★ Explorer |
+| Rhea Spawn | IBN | ★★☆ Average | ★★☆ Average | ★★☆ Curious |
+| Polly Gonn | Polygone | ★★☆ Average | ★★★ Loot goblin | ★★☆ Curious |
+| Al Gorithm | GameFAKs | ★★☆ Average | ★☆☆ Ascetic | ★★☆ Curious |
+| Bea Tah | Early Axess Weekly | ★★☆ Average | ★★☆ Average | ★★★ Explorer |
+| Moe Cap | Game Misinformer | ★☆☆ Short legs | ★★☆ Average | ★★☆ Curious |
+| Liv Elup | Rock Paper Shortcut | ★★★ Parkour | ★★☆ Average | ★☆☆ No paint, no way |
+| Cass Cene | Cinematic Universe Digest | ★★☆ Average | ★★☆ Average | ★☆☆ No paint, no way |
+| Lou Tbox | Kotakoo | ★★★ Parkour | ★★★ Loot goblin | ★★★ Explorer |
+| Max Levell | Eurogamble | ★★★ Parkour | ★☆☆ Ascetic | ★★☆ Curious |
+| Frank Rate | PC Gamerish: 240 FPS Edition | ★★★ Parkour | ★★★ Loot goblin | ★★★ Explorer |
+| Dee Sync | Twitchy (streamer, 14 viewers) | ★☆☆ Short legs | ★★★ Loot goblin | ★★☆ Curious |
+| Sven Tory | Destructoad | ★★☆ Average | ★★★ Loot goblin | ★★★ Explorer |
+| David Goodenough | The Casual Observer | ★★☆ Average | ★★★ Loot goblin | ★☆☆ No paint, no way |
+| Mike Rotransaction | Freemium Times | ★☆☆ Short legs | ★★☆ Average | ★★★ Explorer |
 
 ### Current lineups
 
@@ -184,13 +188,16 @@ Minimums measured by the user in playtesting (October 2026), the fewest splats f
 | `level_04` The Gauntlet | Frank Rate (min 4) | Dee Sync (min 10) | Sven Tory (min 10) |
 | `level_05` The Tower | David Goodenough (min 20) | Mike Rotransaction (min 18) | Rhea Spawn (min 19) |
 | `level_06` Victory Lap (DLC) | Sven Tory (min 19) | David Goodenough (min 20) | Bea Tah (min 20) |
+| `level_07` Hanging Gardens | Frank Rate (min 11) | Al Gorithm (min 15) | Mike Rotransaction (min 26) |
+| `level_08` The Vault (draft, Greed) | Al Gorithm (min 8?) | Rhea Spawn (min 7?) | Polly Gonn (min 5?) |
+| `level_09` The Secret Room (draft) | Cass Cene (min 9?) | Rhea Spawn (min 7?) | Bea Tah (min 5?) |
 
 ### Add a new tester
 
 Open `focus_group.gd` and add a line to `ROSTER`:
 
 ```gdscript
-"Jen Erik": {jump = 1, trust = 2, patience = 0,
+"Jen Erik": {jump = 1, greed = 2, patience = 0,
 	outlet = "Gamespotty",
 	intro = "A line hinting at how they play, shown on the round card."},
 ```
@@ -204,10 +211,11 @@ refresh). Add the tester to the roster table above too.
 ### Picking a lineup
 
 Ideas: start with someone easy-going, end with the one whose weak trait the level punishes:
-- **Skeptic** where single splats would do for everyone else: it needs 2-3 per landing to keep moving, or it stalls and gambles.
+- **Ascetic** where the loot is spread out: every collectible off its path needs its own painted way.
+- **Loot goblin** where some loot hangs over a deadly pit: it gambles for the safe ones by itself, the deadly ones need paint (or it leaves them).
 - **No paint, no way** where the default tester would leap to the flag or gamble on a short hop: those need paint now.
 - **Short legs** combined with **Explorer**: it improvises and fails half the time (~50%), so the paint has to be there before it gets bored.
-- **Blind trust** or **Parkour + Explorer**: generous rounds, where a low minimum rewards a player who paints little.
+- **Parkour + Explorer**: generous rounds, where a low minimum rewards a player who paints little.
 
 ## 8. Set each round's `minimum`
 
@@ -222,7 +230,7 @@ added up (out of 15).
 2. Try it a few times: the AI is a bit random. If it only works sometimes, it's not the minimum yet.
 3. The minimum includes the coins: measure it on a run that collects them all.
 4. Remember the paint carries over: the round-2 minimum counts all the paint on the level, including what was
-   left from round 1 (a Skeptic round usually means extra splats on each landing, which the next testers will also see).
+   left from round 1.
 
 ## 9. Checklist
 

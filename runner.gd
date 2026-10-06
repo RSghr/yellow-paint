@@ -73,37 +73,45 @@ const PERCEPTION_INTERVAL := 0.1
 @export var reach_up_by_level: Array[float] = [2.1, 2.5, 3.2]  ## max_jump_up: how high a ledge it can jump onto.
 @export var jump_success_by_level: Array[float] = [0.5, 0.65, 0.95]  ## desperate_success_chance: odds that an improvised jump lands (Short legs: leaps of faith too).
 @export var leap_error_by_level: Array[float] = [0.7, 0.7, 0.25]  ## Leap-of-faith aim error in metres.
-@export_subgroup("Trust (Skeptic / Thoughtful / Blind trust)")
-## Skeptic: seconds before it believes a spot with ONE splat it has seen (n splats: this / n², so 3 splats ≈ 0.5 s,
-## about normal). Until then it won't use the spot: it stares at it, doubts, and may end up improvising. 0 = instant.
-@export var conviction_time_by_level: Array[float] = [5.0, 0.0, 0.0]
-## Blind trust: heads for the NEAREST yellow (dead end or not), and will jump at paint up to this much further
-## than it can actually reach (and fall short). 0 = never.
-@export var overreach_by_level: Array[float] = [0.0, 0.0, 1.5]
-@export var trust_bonus_by_level: Array[int] = [0, 0, 2]  ## Added to every spot's trust (3+ = no hesitation, confident walk).
-@export var notice_rate_by_level: Array[float] = [1.2, 1.6, 2.4]
-@export var scan_time_by_level: Array[float] = [2.4, 1.8, 1.1]  ## How long its look-arounds take.
-@export var hesitation_by_level: Array[float] = [1.3, 0.9, 0.5]  ## hesitation_per_doubt.
+@export_subgroup("Greed (Ascetic / Average / Loot goblin)")
+## Ascetic: only goes for a coin on its own floor within this radius (walking). -1 = any coin it sees.
+@export var greed_radius_by_level: Array[float] = [4.0, -1.0, -1.0]
+## How far out of its way (path cost) it goes for a coin it can reach without gambling.
+@export var coin_detour_by_level: Array[float] = [4.0, 16.0, 80.0]
+## Loot goblin: wants every collectible before leaving. A coin it can't reach without an unpainted jump: once nothing
+## else is left (or before heading for the waystone), it walks to the take-off point, looks around one last time, then
+## jumps for it with its Jumping odds, but ONLY if a miss can't kill it (a floor above death_height under the gap).
+@export var loot_goblin_by_level: Array[bool] = [false, false, true]
 @export_subgroup("Exploration (No paint, no way / Curious / Explorer)")  # "patience" in the code and roster.
 @export var patience_by_level: Array[float] = [-1.0, 8.0, 16.0]  ## Seconds lost (after its wanders) before improvising. -1 = never improvises (no desperate jumps, no leaps of faith).
 @export var wander_limit_by_level: Array[int] = [3, 3, 8]  ## Look-around walks before it gives up and waits.
 @export var wander_range_by_level: Array[float] = [3.0, 5.0, 9.0]  ## How far each look-around walk can go (metres).
 @export var wander_min_by_level: Array[float] = [1.5, 2.0, 2.0]  ## Shortest look-around walk (metres).
-## True = curious: presses unpainted buttons and smashes unpainted planks it sees, and gambles on a jump for a coin.
+## True = curious: presses unpainted buttons and smashes unpainted planks it sees.
 @export var curious_by_level: Array[bool] = [false, false, true]
 ## While lost, after this many look-around walks it goes back to the last splat it reached and looks again carefully
 ## (it may just have missed the next splat behind a corner). Lower = more often. 0 = never.
 @export var look_back_every_by_level: Array[int] = [1, 2, 4]
 
-var conviction_time := 0.0  ## See conviction_time_by_level.
+## Quirks of the old Trust trait, off for everyone (every tester is "Thoughtful" now). Kept for experiments:
+## conviction_time > 0 = Skeptic (doubts a lone splat that long), overreach > 0 = Blind trust (nearest yellow first,
+## jumps at paint that much out of reach). trust_bonus is added to every spot's trust.
+@export var conviction_time := 0.0
 var short_legs := false  ## Jumping 1★: leaps of faith only land desperate_success_chance of the time too.
 var wander_min := 2.0
-var overreach := 0.0  ## See overreach_by_level. > 0 also means "Blind trust": nearest yellow first.
-var trust_bonus := 0
+@export var overreach := 0.0
+@export var trust_bonus := 0
+var greed_radius := -1.0  ## See greed_radius_by_level.
+var loot_goblin := false  ## See loot_goblin_by_level.
+var _scouted_coins := {}  ## Loot goblin: coins it already looked around for before gambling (instance id -> true).
+var _gamble_ok := {}  ## Set by _decide: node index -> a coin it may gamble for (a miss can't kill it).
+var _loot_takeoffs: Array[Vector3] = []  ## Where its loot gambles took off from.
+var _loot_return := {}  ## Loot goblin: {at = landing} of the unpainted jump that got it to some loot (see _try_loot_return).
+var _coin_jump := {}  ## Set by _decide: node index -> a coin it can only reach with an unpainted jump.
 var improvises := true  ## False = "No paint, no way": never jumps anywhere unpainted.
-var curious := false  ## Explorer: tries unpainted buttons/planks and jumps for coins.
+var curious := false  ## Explorer: tries unpainted buttons/planks.
 var look_back_every := 2  ## See look_back_every_by_level.
-var profile := {jump = 1, trust = 1, patience = 1}
+var profile := {jump = 1, greed = 1, patience = 1}
 
 @export_group("Speech")
 @export var speech_pixel_size := 0.004  ## Text size up close (world units per font pixel).
@@ -293,6 +301,8 @@ func reset_to_spawn() -> void:
 	_too_far_said.clear()
 	_corner_cache.clear()
 	_link_cache.clear()
+	_scouted_coins.clear()
+	_loot_return = {}
 	_home_y = _spawn.origin.y - FEET_OFFSET
 	_head.rotation = Vector3.ZERO
 	_head_pitch = 0.0
@@ -314,12 +324,10 @@ func apply_profile(tester: String, p: Dictionary) -> void:
 	desperate_success_chance = jump_success_by_level[p.jump]
 	leap_error = leap_error_by_level[p.jump]
 	short_legs = p.jump == 0
-	conviction_time = conviction_time_by_level[p.trust]
-	overreach = overreach_by_level[p.trust]
-	trust_bonus = trust_bonus_by_level[p.trust]
-	notice_rate = notice_rate_by_level[p.trust]
-	scan_time = scan_time_by_level[p.trust]
-	hesitation_per_doubt = hesitation_by_level[p.trust]
+	var greed: int = p.get("greed", 1)
+	greed_radius = greed_radius_by_level[greed]
+	coin_detour = coin_detour_by_level[greed]
+	loot_goblin = loot_goblin_by_level[greed]
 	patience = patience_by_level[p.patience]
 	improvises = patience >= 0.0
 	wander_limit = wander_limit_by_level[p.patience]
@@ -549,9 +557,28 @@ func known_curios() -> Array[Dictionary]:
 func known_coins() -> Array[Coin]:
 	var result: Array[Coin] = []
 	for coin in get_tree().get_nodes_in_group("coin"):
-		if not coin.taken and _seen_coins.has(coin.get_instance_id()):
+		if not coin.taken and _seen_coins.has(coin.get_instance_id()) and _wants_coin(coin):
 			result.append(coin)
 	return result
+
+
+## Ascetic: only a coin on its own floor, a few steps away, or one the operator painted. Everyone else: any coin it
+## has seen.
+func _wants_coin(coin: Coin) -> bool:
+	if greed_radius < 0.0 or _painted_coin(coin.global_position):
+		return true
+	var c := coin.global_position
+	var f := feet()
+	return absf(c.y - f.y) < 0.6 and f.distance_to(c) <= greed_radius and _walkable(f, Vector3(c.x, f.y, c.z))
+
+
+## Paint (that it knows and believes) right next to the coin: the operator is pointing at it. Any greed takes it,
+## however far the detour.
+func _painted_coin(pos: Vector3) -> bool:
+	for s in known_spots():
+		if s.convinced and Vector2(s.pos.x - pos.x, s.pos.z - pos.z).length() < 1.5 and absf(s.pos.y - pos.y) < 1.5:
+			return true
+	return false
 
 
 # --- Main loop -------------------------------------------------------------
@@ -600,7 +627,9 @@ func _physics_process(delta: float) -> void:
 				_decide()
 		State.HESITATING:
 			_idle_physics(delta)
-			if _rethink and _path[0].get("desperate", false):
+			if state != State.HESITATING or _path.is_empty():
+				pass  # Slipped off the edge while winding up (see _idle_physics): it's falling now.
+			elif _rethink and _path[0].get("desperate", false):
 				say(["Oh! Yellow! Never mind.", "Wait, there's paint now?"].pick_random(), true)
 				_decide()  # Paint appeared while it was psyching itself up: use that instead.
 			elif _timer >= _scan_duration:
@@ -730,6 +759,8 @@ func _process_jump(delta: float) -> void:
 			# Made it = landed where it aimed: close in plan AND at about that height (not 8 m under a coin).
 			if off.length() < 1.2 and feet().y > step.pos.y - 0.8:
 				_home_y = feet().y  # Made it (painted or not): this is the floor it's on now.
+				if step.get("coin_gamble", false):
+					_loot_return = {at = feet()}  # It will need a way back once the loot is in the bag.
 				if step.jump:
 					# Remember the way and the take-off, so it can make this jump again after a fall.
 					var painted: bool = step.get("paint", false)
@@ -744,6 +775,8 @@ func _process_jump(delta: float) -> void:
 				_home_y = feet().y
 				if step.get("jump", false):
 					_trail_add(feet(), _jump_from, true)
+				if step.get("coin_gamble", false):
+					_loot_return = {at = feet()}  # Landed by the loot after all: it will need a way back too.
 				if step.leap:
 					say(["Made it! ...mostly.", "Nailed it. Sort of."].pick_random(), true)
 		elif not _check_setback():  # Fell off something without meaning to?
@@ -913,6 +946,8 @@ func _jump_to(step: Dictionary) -> void:
 		_start_scan(scan_time * 0.5)
 		return
 	_jump_from = from
+	if step.get("coin_gamble", false):
+		_loot_takeoffs.append(from)  # A way back from the loot (see _try_loot_return).
 	var target: Vector3 = step.pos
 	var flat := Vector3(target.x - from.x, 0, target.z - from.z)
 	_last_jump_desperate = step.get("desperate", false)
@@ -1024,7 +1059,7 @@ func _perceive(dt: float) -> void:
 		_coin_attention[cid] = _coin_attention.get(cid, 0.0) + dt * notice_rate * 2.0 / (1.0 + eye.distance_to(ctarget) / 8.0)
 		if _coin_attention[cid] >= 1.0:
 			_seen_coins[cid] = true
-			if state not in [State.WAITING, State.CELEBRATING]:
+			if state not in [State.WAITING, State.CELEBRATING] and _wants_coin(coin):
 				_rethink = true
 				_look_at(ctarget, 0.8)
 				say(["Ooh, loot!", "Is that a crafting component?", "A collectible! Is it legendary?",
@@ -1145,9 +1180,9 @@ func _decide() -> void:
 		kinds.append("coin")
 		payload.append(c)
 		hot.append(false)
-		# An Explorer will gamble on an unpainted jump for a coin, but only one with a floor under it:
+		# A loot goblin will gamble on an unpainted jump for a coin, but only one with a floor under it:
 		# a coin floating over a pit is for painted jumps that pass through it, not a place to land.
-		jumpable.append(curious and _has_floor_under(c.global_position))
+		jumpable.append(loot_goblin and _has_floor_under(c.global_position))
 	for t in known_curios():
 		nodes.append(t.pos)
 		trust.append(1)
@@ -1219,6 +1254,8 @@ func _decide() -> void:
 			if link.is_empty():
 				continue
 			var nd: float = dist[u] + link.cost + (4.0 / trust[v] if kinds[v] == "paint" else 0.0)
+			if kinds[v] == "coin" and link.jump:
+				nd += 20.0  # An unpainted jump for loot is a last resort: a painted way there always wins.
 			if nd < dist[v]:
 				dist[v] = nd
 				prev[v] = u
@@ -1226,6 +1263,16 @@ func _decide() -> void:
 				via_point[v] = link.get("via")
 				via_over[v] = link.get("overreach", false)
 				via_replay[v] = link.get("replay", false)
+
+	# Loot goblin: which coins it could gamble for (unpainted jump) without a miss killing it.
+	_gamble_ok.clear()
+	_coin_jump.clear()
+	for c in n:
+		if kinds[c] == "coin" and dist[c] < INF and via_jump[c]:
+			_coin_jump[c] = true
+			var from: Vector3 = via_point[c] if via_point[c] != null else nodes[prev[c]]
+			if _miss_survivable(from, nodes[c]):
+				_gamble_ok[c] = true
 
 	var target := _pick_target(nodes, trust, kinds, dist, hot)
 	_path.clear()
@@ -1257,6 +1304,17 @@ func _decide() -> void:
 		while _path.size() > 1 and _path[0].kind == "paint" and _at(_path[0].pos):
 			var here: Dictionary = _path.pop_front()
 			_record_visit(here.pos)
+		if kinds[target] == "coin" and _coin_jump.has(target):
+			var cid: int = payload[target].get_instance_id()
+			if not _scouted_coins.has(cid):
+				# Loot goblin, first time: walk to the take-off and look around one last time before gambling.
+				_scouted_coins[cid] = true
+				_path.pop_back()
+				say(["That loot is coming with me. Let me just check something first.",
+					"I'm not leaving without that one.", "Hold on. Is there an easier way to that collectible?"].pick_random(), true)
+				if _path.is_empty():
+					_careful_look()
+					return
 		match kinds[target]:
 			"goal":
 				say(["I know where I'm going!", "Quest objective, here I come."].pick_random())
@@ -1269,6 +1327,8 @@ func _decide() -> void:
 		return
 	if _look_back:
 		return  # Looking for a way back to the last splat: there's none (empty _path), the caller carries on.
+	if _try_loot_return():
+		return
 
 	# Skeptic: it has seen paint but doesn't believe it yet. It stares at it (that counts as a look-around)
 	# until it does, or until it has been lost long enough to improvise instead.
@@ -1315,6 +1375,31 @@ func _careful_look() -> void:
 		_body_turn = deg_to_rad(randf_range(140, 200)) * (1 if randf() < 0.5 else -1)
 
 
+## Loot goblin: the nearest coin it can gamble for (see _gamble_ok), or -1.
+func _best_gamble(dist: Array[float]) -> int:
+	if not loot_goblin:
+		return -1
+	var best := -1
+	for i in _gamble_ok:
+		if best == -1 or dist[i] < dist[best]:
+			best = i
+	return best
+
+
+## Would an unpainted jump from `from` to `to` that misses (falls short, like a failed gamble) still land on a floor
+## above the death height? Checks the stretch where misses land (40-70% of the way).
+func _miss_survivable(from: Vector3, to: Vector3) -> bool:
+	var space := get_world_3d().direct_space_state
+	var top := maxf(from.y, to.y) + 1.0
+	for t in [0.4, 0.55, 0.7]:
+		var p := from.lerp(to, t)
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(p.x, top, p.z),
+			Vector3(p.x, death_height - 1.0, p.z), 1, [get_rid()]))
+		if hit.is_empty() or hit.position.y < death_height + 0.5:
+			return false
+	return true
+
+
 ## Priorities: hotfixes > a nearby coin > the flag > painted things to use > unvisited paint.
 func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String], dist: Array[float],
 		hot: Array[bool]) -> int:
@@ -1337,15 +1422,20 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 			if kinds[i] == "paint" and dist[i] < INF and nodes[i].distance_to(_furthest) < 1.0:
 				return i
 
+	# Coins it can reach without gambling (walking, or painted jumps), within its greed's detour.
 	for i in nodes.size():
-		if kinds[i] == "coin" and dist[i] <= coin_detour and (best == -1 or dist[i] < dist[best]):
+		if kinds[i] == "coin" and dist[i] < INF and (dist[i] <= coin_detour or _painted_coin(nodes[i])) \
+				and not _coin_jump.has(i) \
+				and (best == -1 or dist[i] < dist[best]):
 			best = i
 	if best != -1:
 		return best
 
 	var goal_index := kinds.find("goal")
 	if goal_index != -1 and dist[goal_index] < INF:
-		return goal_index
+		# Loot goblin: one last collectible before leaving (only if a miss can't kill it).
+		var g := _best_gamble(dist)
+		return g if g != -1 else goal_index
 
 	# Retracing after a fall: go back to the furthest spot it had reached.
 	if _retrace_to != Vector3.INF:
@@ -1397,6 +1487,11 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 			best = i
 	if best != -1:
 		return best
+
+	# Loot goblin: nothing painted left to do, so it goes for the collectibles it can only gamble for.
+	var gamble := _best_gamble(dist)
+	if gamble != -1:
+		return gamble
 
 	# Explorer: nothing painted left to do, so it pokes at things nobody painted (right or wrong).
 	for i in nodes.size():
@@ -1502,6 +1597,41 @@ func _replay_link(a: Vector3, b: Vector3) -> Dictionary:
 	if a.distance_to(from) > 0.6 and not _walkable(a, from):
 		return {}
 	return {cost = a.distance_to(from) + from.distance_to(b) + 4.0, jump = true, via = from, replay = _trail_gamble[kb]}
+
+
+## Loot goblin on the ledge it gambled its way onto, nothing left to do here: jump back the way it came (a gamble
+## again, with its Jumping odds), if a miss wouldn't kill it. One try: a miss is a fall, and it retraces from there.
+func _try_loot_return() -> bool:
+	if _loot_return.is_empty():
+		return false
+	var at: Vector3 = _loot_return.at
+	var me := feet()
+	if me.distance_to(at) > 3.0 or absf(me.y - at.y) > 0.6:
+		return false  # Not on that ledge any more.
+	_loot_return = {}
+	_loot_takeoffs.clear()
+	# Where it could go back to: places it stood or took off from, on this ledge's level but not on this ledge.
+	var spots: Array[Vector3] = []
+	for p in _trail + _trail_from + _loot_takeoffs:
+		if p != Vector3.INF and absf(p.y - me.y) < 0.8 and not _walkable(me, p):
+			spots.append(p)
+	spots.sort_custom(func(a, b): return me.distance_to(a) < me.distance_to(b))
+	for to in spots:
+		var link := _link_within(me, to, true, max_jump_distance, max_jump_up)
+		if link.is_empty() or not link.jump:
+			continue
+		var from: Vector3 = link.via if link.get("via") != null else me
+		if not _miss_survivable(from, to):
+			continue
+		_path.clear()
+		if link.get("via") != null:
+			_path.append({pos = link.via, jump = false, trust = 99, leap = false, paint = false, kind = "walk", host = null})
+		_path.append({pos = to, jump = true, trust = 1, leap = true, desperate = true, paint = false, kind = "leap", host = null})
+		say(["Loot secured. Now, back the way I came.", "Got it. Same jump, other direction.",
+			"In the bag. Getting back is a tomorrow problem. It's tomorrow."].pick_random(), true)
+		_advance()
+		return true
+	return false
 
 
 ## Back where an improvised jump failed: walk to where it took off and jump the same way again.
