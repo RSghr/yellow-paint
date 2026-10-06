@@ -103,7 +103,7 @@ const QUOTES := {
 			"Did the designer think I was a toddler?",
 		],
 		coins = [
-			"I saw the flag. I saw nothing else. Not even a loot chest.",
+			"I saw the quest marker. I saw nothing else. Not even a loot chest.",
 			"Zero loot. Zero joy. The paint was nice, I guess.",
 		],
 	},

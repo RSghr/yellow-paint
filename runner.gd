@@ -334,7 +334,7 @@ func celebrate() -> void:
 		return
 	state = State.CELEBRATING
 	_path.clear()
-	say(["I did it! All by myself!", "I did it! And the sunset behind the flag... I'm tearing up.",
+	say(["I did it! All by myself!", "I did it! And the sunset behind the waystone... I'm tearing up.", "Waystone attuned. Progress saved. I can rest now.",
 		"Made it! Can I go back and look at the scenery?"].pick_random(), true)
 	reached_goal.emit()
 
@@ -865,7 +865,7 @@ func _advance() -> void:
 			say(["That's far. But it's YELLOW!", "If it's painted, I can reach it. Right?", "Yellow never lies. JUMPING!"].pick_random(), true)
 		elif step.leap:
 			doubt = 1.6
-			say(["No yellow... but the flag is RIGHT THERE.", "Unpainted jump. Here goes nothing.", "If I die, put that in the report."].pick_random(), true)
+			say(["No yellow... but the waystone is RIGHT THERE.", "Unpainted jump. Here goes nothing.", "If I die, put that in the report."].pick_random(), true)
 		elif step.trust <= 1:
 			say(["Is that... a bit of yellow? Okay...", "One drop of yellow. Bold.", "I guess that counts as yellow."].pick_random())
 		if doubt > 0.0:
@@ -1046,7 +1046,7 @@ func _perceive(dt: float) -> void:
 			_goal_known = true
 			_rethink = true
 			_look_at(flag, 1.2)
-			say(["The flag! I can see the flag!", "Ooh, is that the end?", "There's the goal!"].pick_random(), true)
+			say(["A waystone! I can see the waystone!", "Ooh, is that the next save point?", "There's the quest marker!"].pick_random(), true)
 
 
 func _can_see(space: PhysicsDirectSpaceState3D, eye: Vector3, look: Vector3, cos_half: float, target: Vector3) -> bool:
@@ -1259,7 +1259,7 @@ func _decide() -> void:
 			_record_visit(here.pos)
 		match kinds[target]:
 			"goal":
-				say(["I know where I'm going!", "Flag, here I come."].pick_random())
+				say(["I know where I'm going!", "Quest objective, here I come."].pick_random())
 			"task":
 				say(["Going to do the yellow thing.", "I see what I'm supposed to do."].pick_random())
 			"curio":
