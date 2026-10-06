@@ -48,6 +48,10 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   has a best of `UNLOCK_STARS` (10/15) or more (`Progress.earned` / `missing_for`). There's no "next level" key: levels are started from the desktop. **Testing bypass**: Project Settings > Yellow Paint > Debug > Unlock All Levels
   (`yellow_paint/debug/unlock_all_levels`, debug builds only; turn on "Advanced Settings" to see it). It shows every
   level but doesn't send the unlock emails.
+  **Show All Mails** (`yellow_paint/debug/show_all_mails`, `Progress.show_all_mails()`): Inlook lists every mail the game
+  can send (`MailWriter.debug_all_mails()`: story mails in career order, every tester/office flavor, Chad by bracket,
+  PS mails, greenlight, the 3 endings, patch notes and Patch 1.1 mails, plus a "Variants" mail with every random line),
+  tagged "[Story: unlock_2] ...", written from the current save (0 where nothing was logged). Never saved; no buttons.
 - `Progress.level_finished(total)` (called by game.gd after round 3): if the next level just became available, Chad's
   announcement + 1-2 flavor mails are delivered (once, id `unlock_<level>`); if this level's best is still under 10,
   Chad's review (once per level and score bracket). Mails persist in `Progress.delivered_mails`; the desktop shows a "new email" toast
