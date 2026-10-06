@@ -9,16 +9,16 @@
 [ext_resource type="PackedScene" path="res://wall_button.tscn" id="btn"]
 
 [node name="Level09" type="Node3D"]
-editor_description = "EXPLORATION level (No paint, no way / Curious / Explorer, everything else average). Long route: Start, R2, R3, R4, plank, Goal; each next landing only shows from the far end of the platform. Shortcut: the unpainted button at R2's east end raises a bridge from R2 to R4 (skips R3). Waystone over 22 m away (out of sight) until R4. Minimums are placeholders."
+editor_description = "EXPLORATION level (No paint, no way / Curious / Explorer, everything else average). Long route: Start, R2, R3, R4, plank, Goal; each next landing only shows from the far end of the platform. Trap: an unpainted button next to R2's landing sinks R4. The Explorer presses it as soon as it runs out of painted spots, so leaning on its exploring ruins the run. Waystone over 22 m away (out of sight) until R4. Minimums are placeholders."
 script = ExtResource("lvl_script")
 level_name = "The Secret Room"
-intro_text = "The path turns behind walls, and somewhere there's a secret. Some testers find everything. Some won't take a step you didn't paint."
+intro_text = "The path turns behind walls. Some testers won't take a step you didn't paint. Others touch everything, and not everything here is good for them."
 tester_1 = "Cass Cene"
 minimum_1 = 9
 tester_2 = "Rhea Spawn"
 minimum_2 = 7
 tester_3 = "Bea Tah"
-minimum_3 = 5
+minimum_3 = 7
 
 [node name="RunnerSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -40,15 +40,15 @@ size = Vector3(8, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
 [node name="R2_Long" parent="Geometry" instance=ExtResource("block")]
-editor_description = "15 m long. You land at the west end; R3 only shows from the east end (x > 16)."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, -2, 0)
-size = Vector3(15, 4, 6)
+editor_description = "14 m long. You land at the west end; R3 only shows from the east end (x > 18)."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, -2, 0)
+size = Vector3(14, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
 [node name="R2_Wall" parent="Geometry" instance=ExtResource("block")]
-editor_description = "Hides R3 until the tester walks past x = 16. Cass (1.5-3 m wanders) never gets there alone, Rhea (2-5 m) sometimes, Bea (up to 9 m) does."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 2, -2.75)
-size = Vector3(9, 4, 0.5)
+editor_description = "Hides R3 until the tester walks past x = 18. Cass (1.5-3 m wanders) never gets there alone, Rhea (2-5 m) sometimes, Bea (up to 9 m) does."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 2, -2.75)
+size = Vector3(11, 4, 0.5)
 color = Color(0.5, 0.48, 0.55, 1)
 
 [node name="R3_Long" parent="Geometry" instance=ExtResource("block")]
@@ -63,16 +63,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.25, 2, -9.25)
 size = Vector3(0.5, 4, 6.5)
 color = Color(0.5, 0.48, 0.55, 1)
 
-[node name="R4_Long" parent="Geometry" instance=ExtResource("block")]
-editor_description = "Last long platform. The plank bridge to the waystone is at its east end. The waystone is out of sight (over 22 m) until here."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, -2, -13)
-size = Vector3(12, 4, 6)
-color = Color(0.58, 0.6, 0.64, 1)
-
-[node name="CoinLedge" parent="Geometry" instance=ExtResource("block")]
-editor_description = "Coin ledge 3 m south of R2 (both routes pass R2). Painted: easy. Unpainted: the Explorer gambles the jump (65%). Coins after the waystone is in sight are skipped, so keep them before R4."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, -2, 7)
-size = Vector3(2, 4, 2)
+[node name="CoinNook" parent="Geometry" instance=ExtResource("block")]
+editor_description = "A nook on R2's south side with a coin: walkable, so nobody gambles for it."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, -2, 4.5)
+size = Vector3(3, 4, 3)
 color = Color(0.58, 0.6, 0.64, 1)
 
 [node name="GoalPlatform" parent="Geometry" instance=ExtResource("block")]
@@ -83,17 +77,18 @@ color = Color(0.58, 0.6, 0.64, 1)
 
 [node name="Interactables" type="Node3D" parent="."]
 
-[node name="SecretBridge" parent="Interactables" instance=ExtResource("door")]
-editor_description = "SHORTCUT: a bridge that rises from the pit when SecretButton is pressed. R2 east end -> walk -> R4, skipping R3 and two jumps."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.25, -5.6, -6.5)
-size = Vector3(3.5, 4, 7)
-move_distance = 3.6
+[node name="R4_Sinking" parent="Interactables" instance=ExtResource("door")]
+editor_description = "R4, the last long platform (a door, so it can move). TrapButton SINKS it 3.5 m into the pit: the level is ruined until you reset. Top paint = landing (it rides along)."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, -2, -13)
+size = Vector3(12, 4, 6)
+move_direction = Vector3(0, -1, 0)
+move_distance = 3.5
 is_platform = true
 
-[node name="SecretButton" parent="Interactables" instance=ExtResource("btn")]
-editor_description = "Unpainted on purpose: only the Explorer presses unpainted buttons. Paint it for the others if you want them to use the shortcut."
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 19, 0, 2.6)
-target = NodePath("../SecretBridge")
+[node name="TrapButton" parent="Interactables" instance=ExtResource("btn")]
+editor_description = "THE TRAP. Unpainted, nobody presses it... except the Explorer, the moment it has no painted spot left to go to (e.g. landing on R2 with nothing painted in sight). It sinks R4. Never paint it (painted buttons get pressed by everyone)."
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 10.5, 0, 2.6)
+target = NodePath("../R4_Sinking")
 
 [node name="PlankBridge" parent="Interactables" instance=ExtResource("brk")]
 editor_description = "The bridge to the waystone. The Explorer smashes unpainted breakables: paint its TOP (= walk on it) or she breaks her own bridge."
@@ -107,8 +102,8 @@ editor_description = "Next to R2's landing (doesn't reveal anything)."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0, 1.8)
 
 [node name="Coin2" parent="Coins" instance=ExtResource("coin")]
-editor_description = "On the coin ledge south of R2."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 7)
+editor_description = "In the nook south of R2."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 4.8)
 
 [node name="Goal" parent="." instance=ExtResource("goal")]
 editor_description = "The waystone. Its origin sits on the floor."
