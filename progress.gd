@@ -14,6 +14,8 @@ const TUTORIAL_COUNT := 3  ## Levels 1-3 are always available.
 const UNLOCK_STARS := 10  ## A level after the tutorials appears once EVERY level before it scored this much (out of 15).
 ## Testing: Project Settings > Yellow Paint > Debug > Unlock All Levels shows every level (debug builds only).
 const UNLOCK_ALL_SETTING := "yellow_paint/debug/unlock_all_levels"
+## Testing: Project Settings > Yellow Paint > Debug > Show All Mails lists every mail in Inlook (debug builds only).
+const ALL_MAILS_SETTING := "yellow_paint/debug/show_all_mails"
 
 var LEVELS: Array[Dictionary] = []  ## [{name, path, post_launch}], filled by _discover_levels().
 var current := 0  ## Index into LEVELS.
@@ -129,6 +131,11 @@ func missing_for(index: int) -> PackedStringArray:
 ## The editor toggle to see every level while testing (never active in release exports).
 func unlock_all() -> bool:
 	return OS.is_debug_build() and bool(ProjectSettings.get_setting(UNLOCK_ALL_SETTING, false))
+
+
+## Debug: Inlook shows every mail the game can send (MailWriter.debug_all_mails()), for proofreading.
+func show_all_mails() -> bool:
+	return OS.is_debug_build() and bool(ProjectSettings.get_setting(ALL_MAILS_SETTING, false))
 
 
 ## Called by the game when the 3 rounds of the current level are done (after record()).

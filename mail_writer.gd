@@ -126,6 +126,12 @@ const OFFICE_STORIES := [
 ]
 
 
+const LOST_LINES := [
+	"PS: {name} spent [b]{lost}[/b] of a {session} session wandering around, lost. The investors timed it. One of them used a sundial.",
+	"PS: I'm told {name} was lost for [b]{lost}[/b] out of {session}. That's {pct}% of the session spent admiring the scenery. The art team is thrilled. I am not. Please paint with intent.",
+	"PS: {name} was lost for [b]{lost}[/b] (out of {session}). Marketing wants to call it \"open world\". Legal says we can't.",
+]
+
 ## Chad's remark when a tester spent half the session (or more) lost. "" if nobody did.
 ## rounds: [{tester, session, lost}]
 static func lost_note(rounds: Array) -> String:
@@ -142,14 +148,22 @@ static func lost_note(rounds: Array) -> String:
 		return ""
 	var lost := "%d:%02d" % [roundi(worst.lost) / 60, roundi(worst.lost) % 60]
 	var session := "%d:%02d" % [roundi(worst.session) / 60, roundi(worst.session) % 60]
-	var lines := [
-		"PS: {name} spent [b]{lost}[/b] of a {session} session wandering around, lost. The investors timed it. One of them used a sundial.",
-		"PS: I'm told {name} was lost for [b]{lost}[/b] out of {session}. That's {pct}% of the session spent admiring the scenery. The art team is thrilled. I am not. Please paint with intent.",
-		"PS: {name} was lost for [b]{lost}[/b] (out of {session}). Marketing wants to call it \"open world\". Legal says we can't.",
-	]
-	return lines.pick_random().replace("{name}", worst.tester).replace("{lost}", lost) \
+	return (LOST_LINES.pick_random() as String).replace("{name}", worst.tester).replace("{lost}", lost) \
 		.replace("{session}", session).replace("{pct}", str(roundi(worst_ratio * 100)))
 
+
+const HOTFIX_LINES := {
+	within = [
+		"PS: {n} {hotfixes} this session. Within budget. Finance sent a thumbs-up emoji, which they have never done before.",
+		"PS: You used {n} of your {budget} approved hotfixes. That's what they're for. Don't make it a personality.",
+		"PS: {n} {hotfixes}, all within budget. Legal looked at them and said nothing. From Legal, that's a hug.",
+	],
+	over = [
+		"PS: {n} hotfixes. The budget was {budget}. Legal would like to know where the other {over} came from.",
+		"PS: {n} hotfixes against an approved budget of {budget}. The testers have started calling the level \"haunted\". Marketing loves it. I don't.",
+		"PS: {over} hotfixes over budget. Finance has opened a ticket. The ticket has a ticket.",
+	],
+}
 
 ## Chad's remark about the hotfixes of the level's 3 runs. rounds: [{hotfixes, hotfix_budget}]. "" if none.
 ## Within the budget it's tolerated; over it, he notices.
@@ -161,19 +175,7 @@ static func hotfix_note(rounds: Array) -> String:
 		budget = int(r.get("hotfix_budget", budget))
 	if n == 0:
 		return ""
-	var lines: Array
-	if n <= budget:
-		lines = [
-			"PS: {n} {hotfixes} this session. Within budget. Finance sent a thumbs-up emoji, which they have never done before.",
-			"PS: You used {n} of your {budget} approved hotfixes. That's what they're for. Don't make it a personality.",
-			"PS: {n} {hotfixes}, all within budget. Legal looked at them and said nothing. From Legal, that's a hug.",
-		]
-	else:
-		lines = [
-			"PS: {n} hotfixes. The budget was {budget}. Legal would like to know where the other {over} came from.",
-			"PS: {n} hotfixes against an approved budget of {budget}. The testers have started calling the level \"haunted\". Marketing loves it. I don't.",
-			"PS: {over} hotfixes over budget. Finance has opened a ticket. The ticket has a ticket.",
-		]
+	var lines: Array = HOTFIX_LINES.within if n <= budget else HOTFIX_LINES.over
 	return (lines.pick_random() as String).replace("{n}", str(n)).replace("{budget}", str(budget)) \
 		.replace("{over}", str(n - budget)).replace("{hotfixes}", "hotfix" if n == 1 else "hotfixes")
 
@@ -289,12 +291,7 @@ static func patch_notes(ending: String, totals: Dictionary, levels: Array) -> Di
 	known.append("Yellow paint can be seen on top of the hand-sculpted moss. The Art Department has been informed. The Art Department is not okay.")
 	known.append("The Level Readability workstation still renders the game as grey boxes. IT says this is a feature.")
 	known.append("Crafting was never added. The 1,400 crafting components scattered across the world remain fully collectible.")
-	known.append([
-		"Ammo can be collected, but there are no guns yet. Guns are planned for Season 2.",
-		"The hunger bar was removed in v0.9. Some players report still feeling hungry.",
-		"Some players skipped the 600 pages of lore carved into the architecture. They will be found.",
-		"The 214 map icons on the starting hill are now 213. Nobody noticed which one.",
-	].pick_random())
+	known.append(GENRE_ISSUES.pick_random())
 
 	var body := """[b]HYPERION LEGENDS: ETERNAL DAWN - v1.0.0 Day-One Patch[/b]
 [font_size=15][color=#6b6e7a]Download size: 87 GB (80 GB of 12K moss textures, 7 GB of yellow paint)[/color][/font_size]
@@ -340,6 +337,14 @@ static func _hotfix_summary(levels: Array) -> String:
 			"The %d approved hotfixes applied during the final playtests stayed within budget. Finance sent the spreadsheet to the Art Department, who made it part of the lore." % n)
 	return "%d emergency red splats were painted during the final playtests, [b]%d over budget[/b]. They are now a permanent part of the art direction. Legal would like to know who painted them." % [n, over]
 
+
+## One of these is picked for the patch notes' known issues.
+const GENRE_ISSUES := [
+	"Ammo can be collected, but there are no guns yet. Guns are planned for Season 2.",
+	"The hunger bar was removed in v0.9. Some players report still feeling hungry.",
+	"Some players skipped the 600 pages of lore carved into the architecture. They will be found.",
+	"The 214 map icons on the starting hill are now 213. Nobody noticed which one.",
+]
 
 ## What was changed in a level because of how a tester did there. {name} {n} {time} are filled in.
 const LEVEL_CHANGES := {
@@ -467,3 +472,70 @@ static func _mail(from: String, address: String, subject: String, body: String, 
 		date = "%s %d:%02d %s" % [days[t.weekday], hour12, t.minute, "AM" if t.hour < 12 else "PM"],
 		template = "",
 	}
+
+
+# --- Debug: every mail, for proofreading ---------------------------------------
+
+## Project Settings > Yellow Paint > Debug > Show All Mails (debug builds only): Inlook lists every mail the game can
+## send, written with the current save's data (0 where nothing was logged). Not saved; turn it off and they're gone.
+## Random lines (Chad's openings and PSs, patch note lines) are also listed in full in "variants" mails.
+static func debug_all_mails() -> Array:
+	var out := []
+	var add := func(id: String, tag: String, m: Dictionary):
+		m.id = "debug_" + id
+		m.subject = "[%s] %s" % [tag, m.subject]
+		out.append(m)
+	var roster: Dictionary = FocusGroup.ROSTER
+	var any_tester: String = FocusGroup.DEFAULT_TESTER
+	var three := PackedStringArray(roster.keys().slice(0, 3))
+	# Story mails, in career order.
+	var n := 0
+	for event in ["unlock_1", "unlock_2", "unlock_3", "greenlight", "patch"]:
+		for st in story_for(event):
+			n += 1
+			add.call("%02d_%s" % [n, st.id], "Story: " + event, st.mail)
+	# Flavor about testers: every story, with a tester it fits.
+	for i in TESTER_STORIES.size():
+		var st: Array = TESTER_STORIES[i]
+		var who := any_tester
+		if st[0] != "any":
+			for t in roster:
+				if _matches(st[0], roster[t]):
+					who = t
+					break
+		var p := FocusGroup.profile(who)
+		add.call("tester_%02d" % i, "Tester flavor: " + st[0],
+			_mail(st[1], st[2], st[3], st[4].replace("{name}", who).replace("{outlet}", p.get("outlet", "freelance")), false))
+	for st in OFFICE_STORIES:
+		add.call("office_" + st[0], "Office flavor", _mail(st[1], st[2], st[3], st[4], false))
+	# Chad, by score bracket.
+	for total in [15, 12, 7, 2]:
+		add.call("announce_%d" % total, "Chad: announcement %d/15" % total, announcement("The Gauntlet", total, three))
+		add.call("perf_%d" % total, "Chad: review %d/15" % total, performance("The Gauntlet", total, 10))
+	add.call("perf_final", "Chad: review, last level", performance("The Tower", 7, 10, "", true))
+	var lost_rounds := [{tester = any_tester, session = 120.0, lost = 80.0}]
+	add.call("lost_mail", "Chad: time sheet", lost_mail("The Gauntlet", lost_note(lost_rounds)))
+	add.call("hotfix_within", "Chad: PS hotfixes within budget",
+		performance("The Gauntlet", 7, 10, hotfix_note([{hotfixes = 2, hotfix_budget = HOTFIX_BUDGET}])))
+	add.call("hotfix_mail", "Chad: hotfix budget", hotfix_mail("The Gauntlet", hotfix_note([{hotfixes = 5, hotfix_budget = HOTFIX_BUDGET}])))
+	add.call("greenlight", "Chad: greenlight", greenlight())
+	# Release.
+	var scores := []
+	for lv in Progress.ending_levels():
+		scores.append({name = Progress.LEVELS[lv].name, stars = Progress.best(Progress.LEVELS[lv].path)})
+	var totals: Dictionary = Progress.tester_totals(Progress.patch_note_keys())
+	var levels: Array = Progress.level_stats()
+	for ending in ["investors", "goty", "decent"]:
+		add.call("ending_" + ending, "Ending: " + ending, ending_mail(ending, scores))
+		add.call("patch_notes_" + ending, "Patch notes: " + ending, patch_notes(ending, totals, levels))
+		add.call("patch_1_1_" + ending, "Patch 1.1: " + ending, patch_mail(ending, "Victory Lap"))
+	# Every random line, in full.
+	var v := "[b]Chad's openings (by total stars)[/b]\n[ul]%s[/ul]\n" % "\n".join(BRACKETS.values())
+	v += "\n[b]PS: tester lost half the session[/b] ({name} {lost} {session} {pct})\n[ul]%s[/ul]\n" % "\n".join(LOST_LINES)
+	v += "\n[b]PS: hotfixes within budget[/b]\n[ul]%s[/ul]\n" % "\n".join(HOTFIX_LINES.within)
+	v += "\n[b]PS: hotfixes over budget[/b]\n[ul]%s[/ul]\n" % "\n".join(HOTFIX_LINES.over)
+	for stat in LEVEL_CHANGES:
+		v += "\n[b]Patch notes, level change: %s[/b]\n[ul]%s[/ul]\n" % [stat, "\n".join(LEVEL_CHANGES[stat])]
+	v += "\n[b]Patch notes, genre known issue[/b]\n[ul]%s[/ul]" % "\n".join(GENRE_ISSUES)
+	add.call("variants", "Variants", _mail("Debug", "debug@localhost", "Every random line", v, false))
+	return out  # Inlook shows them in this order, above the real ones: story mails first.

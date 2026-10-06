@@ -195,10 +195,17 @@ People & Culture
 ]
 
 
+static var _debug_mails := []  ## Debug "Show All Mails" (see Progress.show_all_mails()).
+
+
 ## Everything in the inbox, newest first: mails received during play, then the starting ones.
 static func all_mails() -> Array:
 	var mails: Array = Progress.delivered_mails.duplicate()
 	mails.reverse()
+	if Progress.show_all_mails():
+		if _debug_mails.is_empty():  # Written once per session, so random lines don't change between refreshes.
+			_debug_mails = load("res://mail_writer.gd").debug_all_mails()
+		mails = _debug_mails + mails
 	for m in MAILS:
 		if m.id == "keys":
 			m = m.duplicate()
