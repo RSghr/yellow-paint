@@ -226,10 +226,12 @@ Lineups are a first pass; per-round minimums are set by the user from playtestin
    Al Gorithm (Skeptic), Rhea Spawn, Polly Gonn (Blind trust): only Trust differs. All straight jumps (diagonal links
    fail the take-off search).
 9. `level_09` The Secret Room (draft by Claude): an EXPLORATION level. Long platforms with walls: each next landing
-   only shows from the far end, so "No paint, no way" needs a walk splat there. Unpainted button at R2's east end raises
-   a bridge to R4 (skips R3, Explorer only), breakable plank bridge to the waystone (Explorer smashes it unless its top
-   is painted), coin ledge for the Explorer's gamble. Waystone > 22 m away until R4 (once the waystone is known, testers
-   skip paint that leads away from it). Cass Cene, Rhea Spawn, Bea Tah: only Exploration differs.
+   only shows from the far end, so "No paint, no way" needs a walk splat there. **TrapButton** (unpainted, next to
+   R2's landing) sinks R4 (a door, `move_direction` down): the Explorer presses unpainted buttons the moment it has no
+   painted spot left to go to, so leaning on its exploring ruins the run (it then jumps onto the sunk paint and dies).
+   Never paint the trap (painted buttons get pressed by everyone). Breakable plank bridge to the waystone (paint its top
+   for the Explorer), coin nook on R2 (walkable: no gamble). Waystone > 22 m away until R4. Cass Cene, Rhea Spawn,
+   Bea Tah: only Exploration differs.
 
 ## Adding a level
 Run `tools/new_level.gd` (Script editor > File > Run) or duplicate `levels/_template.tscn` as `levels/level_XX.tscn`.
