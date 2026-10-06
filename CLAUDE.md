@@ -165,7 +165,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   (`_heading_back`).
 - Coins are seen without paint but only walked to (`coin_detour` path cost). **Nobody in the fiction calls them coins**:
   the operator's ThinkBox draws coins, the testers see loot, crafting components, collectibles, ammo (runner lines,
-  quotes, mails). The patch notes admit crafting was never added. The HUD/results card ("Coins") is the operator's view.
+  quotes, mails). The patch notes admit crafting was never added. Same for the **flag**: testers see a waystone /
+  save point / quest marker. Only the operator (and #3502, who sat at the same desk) calls it a flag. The HUD/results card ("Coins") is the operator's view.
 - **AAAA flavor**: the game is a bit of every genre (open-world map icons, survival hunger bar, RPG loot, lore carved in
   the architecture, and some testers sulk they weren't the ones sent to read the lore). Keep it to the occasional
   `ADMIRE`/`GAZE_LINES` line and the patch notes' known issues: subtle.
