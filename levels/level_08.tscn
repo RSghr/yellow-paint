@@ -9,16 +9,16 @@
 [ext_resource type="PackedScene" path="res://wall_button.tscn" id="btn"]
 
 [node name="Level08" type="Node3D"]
-editor_description = "TRUST level (Skeptic / Thoughtful / Blind trust, everything else average). Route: Start, A, B, C (south), E, Goal (all straight jumps). Each route platform has a closer dead end; the 'shortcut' east of B is 1 m too far. Minimums are placeholders."
+editor_description = "GREED level (Ascetic / Average / Loot goblin, everything else average). Route: Start, A, B, Goal. Coins: by the landing (free), far end of A (Ascetic needs a splat near it), a ledge over a safe terrace (Loot goblin gambles), a ledge over the pit (painted for all). Minimums are placeholders."
 script = ExtResource("lvl_script")
-level_name = "The Crossroads"
-intro_text = "Every platform here has a way on, and a nicer-looking way nowhere. Some testers need more convincing than others. Some need less."
+level_name = "The Vault"
+intro_text = "Some testers want every collectible in the world. Some won't take a step for one. The vault has plenty, in good places and in bad ones."
 tester_1 = "Al Gorithm"
-minimum_1 = 9
+minimum_1 = 8
 tester_2 = "Rhea Spawn"
-minimum_2 = 9
+minimum_2 = 7
 tester_3 = "Polly Gonn"
-minimum_3 = 9
+minimum_3 = 5
 
 [node name="RunnerSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -30,8 +30,8 @@ transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -3.5
 
 [node name="PitFloor" parent="Geometry" instance=ExtResource("block")]
 editor_description = "Catches falls (top y = -4, below death_height -2.5)."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, -4.5, -2)
-size = Vector3(64, 1, 36)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, -4.5, 0)
+size = Vector3(60, 1, 36)
 color = Color(0.35, 0.2, 0.2, 1)
 
 [node name="Start" parent="Geometry" instance=ExtResource("block")]
@@ -39,58 +39,46 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, 0)
 size = Vector3(8, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="A" parent="Geometry" instance=ExtResource("block")]
-editor_description = "Route. 3.5 m from Start."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -2, 0)
-size = Vector3(5, 4, 5)
+[node name="A_Long" parent="Geometry" instance=ExtResource("block")]
+editor_description = "10 m long. Coin1 is by the landing; Coin2 is 7 m further: the Ascetic only takes coins within ~4 m of where it stands, so it needs a splat near Coin2 (or the route to pass it)."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, -2, 0)
+size = Vector3(10, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="DeadEnd1_Coin" parent="Geometry" instance=ExtResource("block")]
-editor_description = "DEAD END (coin). 2.5 m from A: closer than the way on (B, 3.5 m), so Blind trust takes it if it's yellow. Needs a painted way back."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -2, 7)
-size = Vector3(4, 4, 4)
+[node name="SafetyTerrace" parent="Geometry" instance=ExtResource("block")]
+editor_description = "Lower terrace (top y = -1.5, above death_height). A missed jump to LedgeSafe lands here, and the ramp leads back up to B."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, -3.5, 7.75)
+size = Vector3(8, 4, 8.5)
+color = Color(0.45, 0.47, 0.5, 1)
+
+[node name="LedgeSafe" parent="Geometry" instance=ExtResource("block")]
+editor_description = "Coin ledge 3 m north of A, over the terrace: the Loot goblin gambles for Coin3 because a miss can't kill it."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, -0.75, 7.5)
+size = Vector3(3, 1.5, 3)
+color = Color(0.58, 0.6, 0.64, 1)
+
+[node name="LedgeDeadly" parent="Geometry" instance=ExtResource("block")]
+editor_description = "Coin ledge 3 m south of A, over the pit: a miss would kill, so the Loot goblin won't gamble. Everyone needs a painted jump there and back."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, -2, -7.5)
+size = Vector3(3, 4, 3)
 color = Color(0.58, 0.6, 0.64, 1)
 
 [node name="B" parent="Geometry" instance=ExtResource("block")]
-editor_description = "Route. 3.5 m from A."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, -2, 0)
-size = Vector3(5, 4, 5)
+editor_description = "Route. 3.5 m from A. Its west side meets the ramp up from the terrace."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, -2, 2)
+size = Vector3(6, 4, 10)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="DeadEnd2_Vista" parent="Geometry" instance=ExtResource("block")]
-editor_description = "DEAD END (vista). 2.5 m from B: the nearest yellow if you paint it."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, -2, 7)
-size = Vector3(4, 4, 4)
-color = Color(0.58, 0.6, 0.64, 1)
-
-[node name="Shortcut_TooFar" parent="Geometry" instance=ExtResource("block")]
-editor_description = "TRAP. 6.5 m from B: beyond a normal jump (5.5 m) but within Blind trust's overreach (+1.5 m). If it's painted, Polly jumps and falls short. Nobody can use it."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, -2, 0)
-size = Vector3(5, 4, 5)
-color = Color(0.58, 0.6, 0.64, 1)
-
-[node name="C" parent="Geometry" instance=ExtResource("block")]
-editor_description = "Route (turns south). 3.5 m from B."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, -2, -8.5)
-size = Vector3(5, 4, 5)
-color = Color(0.58, 0.6, 0.64, 1)
-
-[node name="DeadEnd3_Coin" parent="Geometry" instance=ExtResource("block")]
-editor_description = "DEAD END (coin). 2.5 m west of C, closer than E (3.5 m east)."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, -2, -8.5)
-size = Vector3(4, 4, 4)
-color = Color(0.58, 0.6, 0.64, 1)
-
-[node name="E" parent="Geometry" instance=ExtResource("block")]
-editor_description = "Route. 3.5 m from C."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.5, -2, -8.5)
-size = Vector3(4, 4, 5)
-color = Color(0.58, 0.6, 0.64, 1)
+[node name="Ramp" parent="Geometry" instance=ExtResource("block")]
+editor_description = "From the terrace (y -1.5) up to B (y 0)."
+transform = Transform3D(0.936329, 0.351123, 0, -0.351123, 0.936329, 0, 0, 0, 1, 19.07, -0.94, 5)
+size = Vector3(4.272, 0.4, 3)
+color = Color(0.45, 0.47, 0.5, 1)
 
 [node name="GoalPlatform" parent="Geometry" instance=ExtResource("block")]
-editor_description = "Waystone. 3.5 m from E."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, -2, -8.5)
-size = Vector3(6, 4, 5)
+editor_description = "Waystone. 3.5 m from B. Over 22 m from the start, so it's out of sight until A's east end."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.5, -2, 0)
+size = Vector3(6, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
 [node name="Interactables" type="Node3D" parent="."]
@@ -98,13 +86,21 @@ color = Color(0.58, 0.6, 0.64, 1)
 [node name="Coins" type="Node3D" parent="."]
 
 [node name="Coin1" parent="Coins" instance=ExtResource("coin")]
-editor_description = "On the first dead end."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 7)
+editor_description = "By A's landing: everyone gets it."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 1.2)
 
 [node name="Coin2" parent="Coins" instance=ExtResource("coin")]
-editor_description = "On the third dead end."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 0, -8.5)
+editor_description = "Far end of A: the Ascetic needs a splat near it."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 0, -2)
+
+[node name="Coin3" parent="Coins" instance=ExtResource("coin")]
+editor_description = "On LedgeSafe: the Loot goblin gambles for it (safe), the others need paint there and back."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 7.5)
+
+[node name="Coin4" parent="Coins" instance=ExtResource("coin")]
+editor_description = "On LedgeDeadly: painted jumps only, for everyone."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, -7.5)
 
 [node name="Goal" parent="." instance=ExtResource("goal")]
 editor_description = "The waystone. Its origin sits on the floor."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, -8.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.5, 0, 0)

@@ -29,7 +29,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `settings_menu.gd` | Settings overlay (options + controls list read from the Input Map). Used by the desktop (titled "COMPANY SETTINGS") and the pause menu. |
 | `pause_menu.gd` | Esc in game: Resume / Settings / Level select / Quit. Added by `game.gd`. |
 | `spectator_camera.gd` | Orbit camera following the playtester (A on AZERTY = physical Q). Operator is frozen (`active = false`) while spectating. |
-| `focus_group.gd` | `FocusGroup`: the tester `ROSTER` (pun names, parody `outlet` (IBN, Polygone...), archetype `intro`, jump/trust/exploration (`patience`) traits 0-2), star display, results quotes. |
+| `focus_group.gd` | `FocusGroup`: the tester `ROSTER` (pun names, parody `outlet` (IBN, Polygone...), archetype `intro`, jump/greed/exploration (`patience`) traits 0-2), star display, results quotes. |
 | `art/paint_splat.png` | Splat image (white placeholder), tinted by `PaintManager.paint_color`. |
 | `levels/_template.tscn`, `tools/new_level.gd` | Level template + EditorScript (File > Run) that creates the next `level_XX.tscn`. Guide: `docs/LEVEL_DESIGN.md` (also has the roster with stars and the current lineups; keep them in sync). |
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
@@ -91,26 +91,25 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
     0.5 / 0.65 / 0.95 (`jump_success_by_level`) and `leap_error` for improvised jumps (Short legs: leaps of faith also
     land only 50%, `short_legs`). A seen painted landing that's out of reach makes it say "Too far!" (`_say_too_far`,
     once per spot). Short legs needs gaps of ~3.3 m (The Tower needs 5 m: Mike Rotransaction can't finish it yet).
-  - **Trust** (how much paint it takes to convince them): Skeptic / Thoughtful / Blind trust (+ trust bonus 0/0/+2 =
-    no hesitation, notice rate, scan and hesitation times).
-    - 1★ "Skeptic" (`conviction_time_by_level` 5 s): a paint spot must **convince** it before the planner uses it.
-      Conviction = Σ seconds it has known each splat of the spot × splats / 5 s, so 1 splat ≈ 5 s, 2 ≈ 1.3 s,
-      3 ≈ 0.5 s (about normal). Hotfixes and visited spots convince at once; the clock (`_clock`) is frozen while
-      WAITING. While doubting, `_doubted_spot()` makes it stare at the spot (counts as a look-around); once its
-      look-arounds and `patience` run out it may improvise instead. V shows doubted spots as orange growing posts.
-    - 3★ "Blind trust" (`overreach_by_level` 1.5 m): picks the NEAREST unvisited yellow (dead ends included) instead of
-      the one toward the flag, and when there's no proper way it jumps at paint up to 1.5 m beyond its reach
-      (`_link` fallback, step `overreach`): it gets as far as its legs allow and usually falls. Leftover paint from
-      the previous tester becomes a trap: scrape it.
+  - **Greed** (key `greed`, replaced Trust: everyone now has the old Thoughtful trust): Ascetic / Average / Loot goblin.
+    - 1★ "Ascetic" (`greed_radius_by_level` 4 m): only wants loot on its own floor (|dy| < 0.6) within 4 m with a
+      walkable path (`_wants_coin`, filters `known_coins()`). Anything else needs a painted way or is left behind.
+    - 2★ Average: walks to loot it sees (`coin_detour_by_level` 16), never jumps for it.
+    - 3★ "Loot goblin" (`loot_goblin_by_level`, `coin_detour` 80): wants every collectible before the waystone (picks
+      reachable loot and `_best_gamble()` before the waystone). Loot across a gap with no paint: first walks to the
+      take-off only (`_scouted_coins`, "Let me just check something first"), looks around (paint, loot, waystone), then
+      gambles the jump with its Jumping odds (coin jumps need `_has_floor_under`). **Only if a miss is survivable**
+      (`_miss_survivable`: rays down at 40/55/70% of the jump; no floor or floor under `death_height` + 0.5 = no
+      gamble, `_gamble_ok`). After a miss it climbs back / retraces as usual. Loot over a deadly pit needs paint.
+    - Old Trust code (`conviction_time`, `overreach`, `trust_bonus`) is kept dormant as plain exports at 0.
   - **Exploration** (key `patience` in code): No paint, no way / Curious / Explorer.
     - 1★ "No paint, no way": short look-around walks only (`wander_min_by_level`/`wander_range_by_level` 1.5-3 m),
       so each splat must be visible from near the last one. Never improvises (no desperate jumps, no leaps of faith).
     - 2★ Curious: wanders 3 times, 2-5 m, improvises after 8 s.
     - 3★ Explorer: wanders 8 times up to 9 m, improvises after 16 s, and is **curious** (`curious_by_level`): presses
       unpainted buttons and smashes unpainted breakables it has seen (`known_curios`, `_seen_things`, path kind
-      "curio", tried once nothing painted is left), and jumps for a coin it sees without paint (`coin_gamble`: a
-      desperate jump with its Jumping odds; only for a coin with floor under it, `_has_floor_under`: a coin floating over a
-      pit is only for painted jumps through it). Anything with paint is left to the paint.
+      "curio", tried once nothing painted is left). Anything with paint is left to the paint.
+      (Jumping for unpainted loot is the Loot goblin's now, not the Explorer's.)
   - Values live in runner.gd's "Traits" export arrays (index = trait level); `Runner.apply_profile()` applies them.
 
 ## AI rules (runner.gd), keep these intact
@@ -176,8 +175,9 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   walked without hesitation or look-arounds. It replans on the spot (`_urgent`). Hotfix paint on a breakable decides it.
 - **Moving platforms**: while the floor under it is moving it stands still (`RIDING`), then looks around. Spots on a
   platform that is still moving are ignored until it stops (its `state_changed` triggers a rethink).
-- Priorities: unused hotfix > nearby coin (Explorer: may gamble a jump) > flag > painted interactable > unvisited paint >
-  (Explorer) unpainted button/breakable > (Skeptic) stare at doubted paint > leap of faith > wander > desperate jump.
+- Priorities: unused hotfix > nearby coin (within `coin_detour`, Ascetic: `greed_radius`) > (Loot goblin) survivable coin
+  gamble > flag > painted interactable > unvisited paint > (Loot goblin) coin gamble > (Explorer) unpainted
+  button/breakable > leap of faith > wander > desperate jump.
 
 ## Times (logged, never scored)
 - `Runner.session_time` (playtest start → flag) and `time_lost` (`_is_lost()`: confused, wander walks, look-arounds
@@ -210,7 +210,7 @@ but each splat is a **hotfix** (`PaintMark.hotfix`, counted in `game.gd` `hotfix
 
 ## Levels (in `Progress.LEVELS` order)
 Lineups are a first pass; per-round minimums are set by the user from playtesting (retune after trait changes).
-1. `level_01` Onboarding: paint landings. Rhea Spawn (default), Polly Gonn (blind trust), Al Gorithm (skeptic).
+1. `level_01` Onboarding: paint landings. Rhea Spawn (default), Polly Gonn (loot goblin), Al Gorithm (ascetic).
 2. `level_02` Breakables: planks side = smash, crate top = climb; coin on a crate. Bea Tah, Moe Cap, Liv Elup.
    (The standard 3-splat route ends with a leap of faith to the flag: Liv Elup, "No paint, no way", needs it painted.)
 3. `level_03` Buttons: two painted buttons/doors, side ledge needs a painted way back. Cass Cene, Lou Tbox, Max Levell.
@@ -222,10 +222,11 @@ Lineups are a first pass; per-round minimums are set by the user from playtestin
    Sven Tory, David Goodenough, Bea Tah (the extremes). Gap under Door7's end (z 13.6-15) is a known shortcut.
 7. `level_07` Hanging Gardens (the user's): a JUMP level, each tester takes a different path for their reach.
    Frank Rate, Al Gorithm, Mike Rotransaction.
-8. `level_08` The Crossroads (draft by Claude, for the user to edit): a TRUST level. Every route platform has a closer
-   dead end (2.5 m vs 3.5 m), coins on two of them, and a "shortcut" 6.5 m away (Blind trust overreaches and falls).
-   Al Gorithm (Skeptic), Rhea Spawn, Polly Gonn (Blind trust): only Trust differs. All straight jumps (diagonal links
-   fail the take-off search).
+8. `level_08` The Vault (draft by Claude, for the user to edit): a GREED level. Start → A_Long → B (up a ramp) →
+   goal, 3.5 m gaps. Coin1/Coin2 on A_Long (Ascetic only takes Coin1), Coin3 on LedgeSafe (3 m off A_Long's side, a
+   miss lands on SafetyTerrace at -1.5 and the Ramp leads up to B), Coin4 on LedgeDeadly (same gap, over the pit).
+   The Loot goblin gambles for Coin3 by itself and never for Coin4 (paint it). Al Gorithm (Ascetic), Rhea Spawn,
+   Polly Gonn (Loot goblin): only Greed differs. Minimums are placeholders.
 9. `level_09` The Secret Room (draft by Claude): an EXPLORATION level. Long platforms with walls: each next landing
    only shows from the far end, so "No paint, no way" needs a walk splat there. **TrapButton** (unpainted, next to
    R2's landing) sinks R4 (a door, `move_direction` down): the Explorer presses unpainted buttons the moment it has no

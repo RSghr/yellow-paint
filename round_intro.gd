@@ -139,7 +139,7 @@ func _build_card(round_index: int, round_count: int, tester: String, note: Strin
 	gap.custom_minimum_size = Vector2(0, 8)
 	col.add_child(gap)
 	var p := FocusGroup.profile(tester)
-	for t in ["jump", "trust", "patience"]:
+	for t in ["jump", "greed", "patience"]:
 		var row := HBoxContainer.new()
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var trait_label := _label(FocusGroup.TRAIT_LABELS[t], 20, Color.WHITE)
