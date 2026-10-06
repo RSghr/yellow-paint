@@ -219,6 +219,17 @@ Lineups are a first pass; per-round minimums are set by the user from playtestin
 6. `level_06` Victory lap (**post-launch**, the $4.99 DLC): a straight road blocked by a wall. Its button raises the wall
    AND `Geometry/Maze` (every maze wall is a door, sunk 3.6 m into the block), so the route has to be painted blind.
    Sven Tory, David Goodenough, Bea Tah (the extremes). Gap under Door7's end (z 13.6-15) is a known shortcut.
+7. `level_07` Hanging Gardens (the user's): a JUMP level, each tester takes a different path for their reach.
+   Frank Rate, Al Gorithm, Mike Rotransaction.
+8. `level_08` The Crossroads (draft by Claude, for the user to edit): a TRUST level. Every route platform has a closer
+   dead end (2.5 m vs 3.5 m), coins on two of them, and a "shortcut" 6.5 m away (Blind trust overreaches and falls).
+   Al Gorithm (Skeptic), Rhea Spawn, Polly Gonn (Blind trust): only Trust differs. All straight jumps (diagonal links
+   fail the take-off search).
+9. `level_09` The Secret Room (draft by Claude): an EXPLORATION level. Long platforms with walls: each next landing
+   only shows from the far end, so "No paint, no way" needs a walk splat there. Unpainted button at R2's east end raises
+   a bridge to R4 (skips R3, Explorer only), breakable plank bridge to the waystone (Explorer smashes it unless its top
+   is painted), coin ledge for the Explorer's gamble. Waystone > 22 m away until R4 (once the waystone is known, testers
+   skip paint that leads away from it). Cass Cene, Rhea Spawn, Bea Tah: only Exploration differs.
 
 ## Adding a level
 Run `tools/new_level.gd` (Script editor > File > Run) or duplicate `levels/_template.tscn` as `levels/level_XX.tscn`.
