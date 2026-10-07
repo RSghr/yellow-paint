@@ -57,6 +57,9 @@ var _retry_lock := false  ## R must be released before another retry can start.
 var _retry_bar: Control  ## "Hold R to retry" progress, bottom centre.
 var _retry_fill: ColorRect
 var round_intro: Control  ## Level intro banner + sliding tester card (round_intro.gd).
+@export var bounds_margin := 20.0  ## Operator: how far past the level's edges it can fly.
+@export var bounds_headroom := 25.0  ## Operator: how far above the level's highest point.
+var _bounds_msg_cooldown := 0.0
 var speech_feed: Control  ## The tester's last 3 lines, top right (speech_feed.gd).
 var results_card: Control  ## End-of-round results / tester lost (results_card.gd).
 
@@ -96,6 +99,31 @@ func _ready() -> void:
 
 
 
+
+## Where the operator may go: everything visible in the level, plus `bounds_margin` on each side and `bounds_headroom`
+## above, so the whole level fits in a wide shot.
+func _operator_bounds() -> AABB:
+	var box := AABB(level.operator_spawn().origin, Vector3.ZERO)
+	box = box.expand(level.runner_spawn().origin)
+	for node in level.find_children("*", "VisualInstance3D", true, false):
+		var v := node as VisualInstance3D
+		if v.is_visible_in_tree():
+			box = box.merge(v.global_transform * v.get_aabb())
+	box = box.grow(bounds_margin)
+	box.size.y += bounds_headroom - bounds_margin
+	return box
+
+
+func _on_operator_bounds() -> void:
+	if _bounds_msg_cooldown > 0.0:
+		return
+	_bounds_msg_cooldown = 3.0
+	message_label.text = "Render distance reached.\nThe ThinkBox 2009 doesn't draw anything past here."
+	await get_tree().create_timer(2.5, true, false, true).timeout
+	if message_label.text.begins_with("Render distance"):
+		message_label.text = ""
+
+
 func _exit_tree() -> void:
 	_set_speed(0)  # Never leave the desktop/credits running fast.
 	_close_attempt("quit")  # Left mid-playtest (Tab, pause menu): it still counts as a test.
@@ -117,6 +145,8 @@ func _load_level() -> void:
 	operator.name = "Operator"
 	operator.transform = level.operator_spawn()
 	add_child(operator)
+	operator.bounds = _operator_bounds()
+	operator.hit_bounds.connect(_on_operator_bounds)
 
 	spectator = SPECTATOR_CAMERA.new()
 	spectator.name = "SpectatorCamera"
@@ -208,6 +238,7 @@ func hotfix_tally() -> String:
 
 func _process(delta: float) -> void:
 	delta /= Engine.time_scale  # HUD timers run in real time, even at fast-forward.
+	_bounds_msg_cooldown -= delta
 	_process_retry_hold(delta)
 	_update_reach_gizmo()
 	if _out_of_paint_timer > 0.0:
