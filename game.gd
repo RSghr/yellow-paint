@@ -99,6 +99,7 @@ func _ready() -> void:
 	add_child(recorder)
 
 
+
 func _exit_tree() -> void:
 	_set_speed(0)  # Never leave the desktop/credits running fast.
 	_close_attempt("quit")  # Left mid-playtest (Tab, pause menu): it still counts as a test.
@@ -222,6 +223,10 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_CAPSLOCK:
 		_caps_lock_joke()
+		return
+	if OS.is_debug_build() and event is InputEventKey and event.pressed and not event.echo \
+			and event.physical_keycode == KEY_F10:
+		_toggle_recording_view()  # DEBUG only (not in release builds): hide every bit of UI for recording.
 		return
 	if event.is_action_pressed("start_test"):
 		message_label.text = ""
@@ -407,6 +412,14 @@ func _on_out_of_paint() -> void:
 
 
 ## Caps Lock: would toggle green paint, but that's a ThinkBox 2009 Pro+ feature (see the IT quick start mail).
+## DEBUG (F10, debug builds only, not in the Input Map or the controls list): hides the whole HUD and the tester's
+## speech bubble so the game can be recorded clean. F10 again brings them back.
+func _toggle_recording_view() -> void:
+	$HUD.visible = not $HUD.visible
+	runner.get_node("Speech").visible = $HUD.visible
+
+
+
 func _caps_lock_joke() -> void:
 	if _out_of_paint_timer > 0.0:
 		return
