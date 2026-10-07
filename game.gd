@@ -97,7 +97,6 @@ func _ready() -> void:
 	add_child(PAUSE_MENU.new())
 
 
-
 ## C brought the tester card up: free the cursor to hover its traits, and grab it back when the card goes away
 ## (only if it was grabbed before).
 func _on_card_inspecting(on: bool) -> void:
