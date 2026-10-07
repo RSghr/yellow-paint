@@ -156,6 +156,8 @@ Each tester has three traits, shown to the player only as stars (never the names
 | Exploration (all levels: while lost, goes back to the last splat for a careful look every 1 / 2 / 4 look-around walks) | No paint, no way: only short look-around walks (**1.5-3 m**), so the next splat must be visible from close to the last one. Never jumps unpainted (no leaps of faith either) | Curious: a few look-around walks, improvises after ~8 s | Explorer: wanders much further and longer (8 walks up to 9 m), improvises late (~16 s), and **gets curious**: presses unpainted buttons and smashes unpainted planks/crates it saw |
 
 The numbers behind the stars are in `runner.gd`, export group "Traits" (one value per star level).
+In game, the player reads what each star level means by pressing **C** and hovering a trait on the tester card
+(`focus_group.gd` `TRAIT_INFO`). If you change a trait's numbers, update that text too.
 
 ### The roster
 

@@ -57,6 +57,7 @@ var _retry_lock := false  ## R must be released before another retry can start.
 var _retry_bar: Control  ## "Hold R to retry" progress, bottom centre.
 var _retry_fill: ColorRect
 var round_intro: Control  ## Level intro banner + sliding tester card (round_intro.gd).
+var _cursor_was_captured := false  ## Before the tester card was brought up with C.
 var speech_feed: Control  ## The tester's last 3 lines, top right (speech_feed.gd).
 var results_card: Control  ## End-of-round results / tester lost (results_card.gd).
 
@@ -86,6 +87,7 @@ func _ready() -> void:
 		coin.collected.connect(_on_coin_collected)
 	round_intro = ROUND_INTRO.new()
 	$HUD.add_child(round_intro)
+	round_intro.inspecting_changed.connect(_on_card_inspecting)
 	results_card = RESULTS_CARD.new()
 	$HUD.add_child(results_card)
 	_build_retry_bar()
@@ -93,6 +95,17 @@ func _ready() -> void:
 	_base_ticks = Engine.physics_ticks_per_second
 	_start_round(0)
 	add_child(PAUSE_MENU.new())
+
+
+
+## C brought the tester card up: free the cursor to hover its traits, and grab it back when the card goes away
+## (only if it was grabbed before).
+func _on_card_inspecting(on: bool) -> void:
+	if on:
+		_cursor_was_captured = Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+		operator._set_mouse_locked(false)
+	elif _cursor_was_captured and not get_tree().paused:
+		operator._set_mouse_locked(true)
 
 
 func _exit_tree() -> void:
