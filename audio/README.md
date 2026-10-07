@@ -23,6 +23,7 @@ Missing files are silent, so you can add them one at a time.
 | `mail` | New email in Inlook (desktop notification) |
 | `power_off` | Computer switches off (resignation in Inlook) |
 | `score_reveal` | Credits: a review score lands (critics, then gamers) |
+| `fan` | The ThinkBox's fan when the operator flies too far from the level. Looped; louder and higher as it spins up; has its own bus (not the SFX volume). `fan.wav` is a generated placeholder: replace it with a real one (a few seconds that loop cleanly). Played by `overheat.gd`, not `Sfx`. |
 
 The list lives in `sfx.gd` (`SOUNDS`). To add a new sound, add a line there and call
 `Sfx.play("name")` where it should play. Volume is controlled by the Master volume in Settings.
