@@ -3,8 +3,9 @@ extends Node
 ##   - Inside `comfort` (the level plus some room for wide shots): nothing.
 ##   - Past it, over `strain_distance` metres: the picture pixelates and its colours fall apart (follows the
 ##     camera, so flying back clears it), and the fan spins up.
-##   - The fan never calms down: it stays at the loudest it got until the level is reloaded (this node is freed with
-##     the game scene). It plays on its own "Fan" bus, ignores the SFX/Music sliders, makes up for the Master slider
+##   - The fan never calms down: it stays at the loudest it got until the level is left (this node is freed with the
+##     game scene). Then it spins down over `spin_down_time` instead of cutting out: its player lives under the root,
+##     not under this node, so it outlives the level. It plays on its own "Fan" bus, ignores the SFX/Music sliders, makes up for the Master slider
 ##     (up to `max_master_boost_db`) and keeps going while paused.
 ## Sound: audio/fan.wav (or .ogg/.mp3), looped. Missing = silent fan, the picture still breaks down.
 
@@ -33,6 +34,7 @@ void fragment() {
 @export var fan_quiet_db := -26.0  ## Fan volume when it kicks in...
 @export var fan_loud_db := 6.0  ## ...and at full strain.
 @export var max_master_boost_db := 30.0  ## How much it makes up for a lowered Master volume.
+@export var spin_down_time := 4.0  ## Leaving the level: seconds for the fan to wind down to silence.
 
 var comfort := AABB()  ## Set by game.gd.
 var heat := 0.0  ## Highest strain reached since the level was loaded. Only goes up.
@@ -61,9 +63,24 @@ func _ready() -> void:
 
 	_fan_bus = _make_fan_bus()
 	_fan = AudioStreamPlayer.new()
+	_fan.name = "ThinkBoxFan"
 	_fan.bus = "Fan"
 	_fan.stream = _load_fan()
-	add_child(_fan)
+	_fan.process_mode = Node.PROCESS_MODE_ALWAYS
+	get_tree().root.add_child.call_deferred(_fan)  # Not under this node: it has to outlive the level (_exit_tree).
+
+
+## Leaving the level: the fan winds down to silence instead of cutting out, then goes away.
+func _exit_tree() -> void:
+	if not is_instance_valid(_fan):
+		return
+	if not _fan.playing:
+		_fan.queue_free()
+		return
+	var tween := _fan.create_tween().set_parallel()
+	tween.tween_property(_fan, "volume_db", -60.0, spin_down_time).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(_fan, "pitch_scale", 0.35, spin_down_time).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tween.chain().tween_callback(_fan.queue_free)
 
 
 func _process(_delta: float) -> void:
@@ -85,7 +102,7 @@ func current_strain() -> float:
 
 
 func _update_fan() -> void:
-	if not _fan.stream:
+	if not _fan.stream or not _fan.is_inside_tree():
 		return
 	if heat < fan_start:
 		return
