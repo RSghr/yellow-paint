@@ -62,6 +62,12 @@ var _cursor_was_captured := false  ## Before the tester card was brought up with
 @export var bounds_margin := 20.0  ## Room past the level's edges before the ThinkBox starts to struggle (overheat.gd).
 @export var bounds_headroom := 25.0  ## Same, above the level's highest point.
 var overheat: Node  ## Pixelation + fan past the comfort zone (overheat.gd).
+## The sky (art/thinkbox_sky.gdshader), rolled each time a level loads: midday, sunset or night, and the
+## missing-texture checker once in a while.
+const SKY_NAMES := ["midday", "sunset", "night", "missing texture"]
+@export var missing_texture_chance := 0.005
+@export var force_sky := -1  ## DEBUG: 0-3 always uses that sky (see SKY_NAMES), -1 = random.
+var sky_variant := 0
 var speech_feed: Control  ## The tester's last 3 lines, top right (speech_feed.gd).
 var results_card: Control  ## End-of-round results / tester lost (results_card.gd).
 
@@ -76,6 +82,7 @@ var results_card: Control  ## End-of-round results / tester lost (results_card.g
 
 
 func _ready() -> void:
+	_roll_sky()
 	_load_level()
 	speech_feed = SPEECH_FEED.new()
 	$HUD.add_child(speech_feed)
@@ -124,6 +131,18 @@ func _operator_bounds() -> AABB:
 	box = box.grow(bounds_margin)
 	box.size.y += bounds_headroom - bounds_margin
 	return box
+
+
+
+func _roll_sky() -> void:
+	if force_sky >= 0:
+		sky_variant = force_sky
+	elif randf() < missing_texture_chance:
+		sky_variant = 3
+	else:
+		sky_variant = randi() % 3
+	var env: Environment = $WorldEnvironment.environment
+	(env.sky.sky_material as ShaderMaterial).set_shader_parameter("variant", sky_variant)
 
 
 func _exit_tree() -> void:
