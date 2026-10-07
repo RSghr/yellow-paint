@@ -25,7 +25,7 @@ const CONTROLS := [
 	["reset_runner", "Hold: reset the level / retry this tester"],
 	["fast_forward", "Fast-forward the playtest (1x / 2x / 4x)"],
 	["toggle_spectator", "Spectator camera (follow the playtester)"],
-	["toggle_tester_card", "Focus tester card (frees the mouse to read the traits)"],
+	["toggle_tester_card", "Inspect the focus tester card"],
 	["toggle_ai_debug", "Show what the AI knows + its jump reach"],
 	["next_level", "Next tester (after a round)"],
 	["back_to_menu", "Level select"],
