@@ -11,6 +11,8 @@ const SPRINT_FOV := 105.0
 const PAINT_RANGE := 30.0
 const PAINT_REPEAT := 0.12  ## Seconds between splats while holding the button.
 const FALL_RESET_Y := -30.0
+
+signal hit_bounds  ## Tried to fly past `bounds` (game.gd shows a message).
 const JETPACK_ACCEL := 22.0  ## Hold jump in the air to float upward.
 const JETPACK_MAX_RISE := 5.0
 const FLY_SPEED := 8.0  ## Vertical speed in fly mode.
@@ -19,6 +21,7 @@ const FLY_SPEED := 8.0  ## Vertical speed in fly mode.
 @onready var camera: Camera3D = $Head/Camera3D
 
 var locked_mouse := true
+var bounds := AABB()  ## Set by game.gd: the level plus some room. Sides and top only (falling is FALL_RESET_Y's job).
 var active := true  ## False while spectating: no moving, looking or painting (gravity still applies).
 var flying := false  ## Fly mode: no gravity, Space up, Ctrl down.
 var pitch := 0.0
@@ -110,6 +113,27 @@ func _move(delta: float) -> void:
 	velocity /= ts  # move_and_slide() steps by the scaled physics delta.
 	move_and_slide()
 	velocity *= ts
+	_keep_in_bounds()
+
+
+## The level's edges, plus leeway for wide shots: it stops there like against a wall.
+func _keep_in_bounds() -> void:
+	if not bounds.has_volume():
+		return
+	var p := global_position
+	var lo := bounds.position
+	var hi := bounds.end
+	var c := Vector3(clampf(p.x, lo.x, hi.x), minf(p.y, hi.y), clampf(p.z, lo.z, hi.z))
+	if c.is_equal_approx(p):
+		return
+	global_position = c
+	if c.x != p.x:
+		velocity.x = 0.0
+	if c.y != p.y:
+		velocity.y = minf(velocity.y, 0.0)
+	if c.z != p.z:
+		velocity.z = 0.0
+	hit_bounds.emit()
 
 
 func _handle_paint(delta: float) -> void:
