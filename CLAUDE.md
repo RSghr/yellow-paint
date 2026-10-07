@@ -261,6 +261,8 @@ using raycasts, call `game.runner.start()`, and step `physics_frame`. The AI is 
   - The user pulls with Godot closed or reloads when prompted.
 - Godot's open editor can overwrite files changed on disk (script editor buffers). Never assume a write landed, verify.
 - Fly down is Ctrl only (C is the tester card).
+- **F10 = recording view** (debug builds only, `game.gd` `_toggle_recording_view`): hides the whole HUD and the
+  tester's speech bubble; F10 again shows them. Hard-coded key, not in the Input Map or the controls list.
 - **Fast-forward** (T, `fast_forward`, physical): during a playtest (Enter until the flag/death/R) cycles
   `game.gd` `fast_forward_speeds` 1x / 2x / 4x (HUD "▶▶ 4x"). Sets `Engine.time_scale` AND scales
   `physics_ticks_per_second`, so the physics step stays 1/60 and the AI plays exactly the same. Back to 1x on
