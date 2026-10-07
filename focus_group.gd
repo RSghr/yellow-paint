@@ -64,6 +64,25 @@ const TRAIT_VALUES := {  ## For the docs/editor only. The game shows stars.
 	greed = ["Ascetic", "Average", "Loot goblin"],
 	patience = ["No paint, no way", "Curious", "Explorer"],
 }
+## Shown when hovering a trait on the tester card (round_intro.gd): what each star level means in play.
+## Written as the focus group's own notes on the tester. Keep them in sync with runner.gd's "Traits" values.
+const TRAIT_INFO := {
+	jump = [
+		"Clears about 4.5 m across and 2 m up, painted or not. Paint a landing further than that and they will tell you it's too far.\nJumps they improvise without paint land about half the time.",
+		"Clears about 5.5 m across and 2.5 m up.\nJumps they improvise without paint land about two times out of three.",
+		"Clears up to 7 m across and 3 m up.\nJumps they improvise without paint almost always land, so they get by on less paint.",
+	],
+	greed = [
+		"Only picks up loot a few steps away, on the floor they are standing on.\nAnything further is left behind unless the way to it is painted.",
+		"Walks over to any loot they spot, but never risks a jump for it.\nA collectible across a gap needs a painted landing.",
+		"Wants every collectible before touching the waystone, and will jump for unpainted loot if a miss wouldn't be fatal.\nLoot over a deadly drop still needs paint.",
+	],
+	patience = [
+		"Barely strays from the last splat to look around, so the next one must be visible from there.\nNever jumps anywhere unpainted, not even toward the waystone.",
+		"Looks around a little, and after a few seconds without a lead, improvises: an unpainted jump toward the waystone or any ledge in sight.",
+		"Roams far and takes a long time before improvising.\nPresses every unpainted button and breaks every unpainted crate or plank they come across, wanted or not.",
+	],
+}
 const DEFAULT_TESTER := "Rhea Spawn"
 
 

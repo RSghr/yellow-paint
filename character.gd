@@ -53,9 +53,7 @@ func _on_hotfix_mode_changed(on: bool) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not active:
 		return
-	if event.is_action_pressed("lock_mouse"):
-		_set_mouse_locked(not locked_mouse)
-	elif event.is_action_pressed("toggle_fly"):
+	if event.is_action_pressed("toggle_fly"):
 		flying = not flying
 		velocity.y = 0.0
 	elif not locked_mouse and event is InputEventMouseButton and event.pressed:

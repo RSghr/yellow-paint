@@ -4,7 +4,11 @@ extends Control
 ##   - the focus tester's card sliding in from the bottom left: round, name, outlet, intro line,
 ##     then the three trait stars popping in one by one.
 ## Both fade out after `hold_time` seconds, or right away when the playtest starts (dismiss()).
-## C (toggle_tester_card) brings the card back at any time and keeps it up until C is pressed again.
+## C (toggle_tester_card) brings the card back at any time and keeps it up until C is pressed again. While it's up
+## that way the cursor is free (inspecting_changed), and hovering a trait shows what its stars mean
+## (FocusGroup.TRAIT_INFO) in a panel next to the card.
+
+signal inspecting_changed(on: bool)  ## The card was brought up with C (free the cursor) / put away.
 
 const YELLOW := Color(1, 0.82, 0.05)
 
@@ -15,6 +19,11 @@ var _card: PanelContainer
 var _stat_rows: Array[Control] = []
 var _tween: Tween
 var _showing := false  ## The card is on screen (or sliding in).
+var _inspecting := false  ## Brought up with C: the cursor is free to hover the traits.
+var _hint: Label  ## Footer: how to inspect the traits / close the card.
+var _tip: PanelContainer  ## Trait details, next to the card.
+var _tip_title: Label
+var _tip_body: Label
 
 
 func _ready() -> void:
@@ -35,6 +44,16 @@ func _ready() -> void:
 	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_banner.modulate.a = 0.0
 	add_child(_banner)
+	_build_tip()
+
+
+func _process(_delta: float) -> void:
+	if _tip.visible and (not _showing or Input.mouse_mode == Input.MOUSE_MODE_CAPTURED):
+		_tip.visible = false
+	# Hidden (faded) rows mustn't eat the click that grabs the mouse back.
+	var filter := Control.MOUSE_FILTER_STOP if _showing else Control.MOUSE_FILTER_IGNORE
+	for row in _stat_rows:
+		row.mouse_filter = filter
 
 
 ## Show the card for this round. `intro` = level intro text ("" to skip the banner).
@@ -44,6 +63,7 @@ func play(intro: String, round_index: int, round_count: int, tester: String, not
 	if _card:
 		_card.queue_free()
 	_stat_rows.clear()
+	_set_inspecting(false)
 	_banner.text = intro
 	_banner.modulate.a = 0.0
 	_card = _build_card(round_index, round_count, tester, note)
@@ -68,12 +88,14 @@ func toggle() -> void:
 	for row in _stat_rows:
 		row.modulate.a = 0.0
 	_animate(false)
+	_set_inspecting(true)
 
 
 func dismiss() -> void:
 	if not _card or not _showing:
 		return
 	_showing = false
+	_set_inspecting(false)
 	if _tween:
 		_tween.kill()
 	_tween = create_tween().set_parallel()
@@ -141,7 +163,9 @@ func _build_card(round_index: int, round_count: int, tester: String, note: Strin
 	var p := FocusGroup.profile(tester)
 	for t in ["jump", "greed", "patience"]:
 		var row := HBoxContainer.new()
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.mouse_filter = Control.MOUSE_FILTER_STOP  # Hover = trait details (only once the cursor is free).
+		row.mouse_entered.connect(_show_tip.bind(t, p[t], row))
+		row.mouse_exited.connect(func(): _tip.visible = false)
 		var trait_label := _label(FocusGroup.TRAIT_LABELS[t], 20, Color.WHITE)
 		trait_label.custom_minimum_size = Vector2(200, 0)
 		row.add_child(trait_label)
@@ -154,7 +178,66 @@ func _build_card(round_index: int, round_count: int, tester: String, note: Strin
 		n.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		n.custom_minimum_size = Vector2(476, 0)
 		col.add_child(n)
+	_hint = _label("", 14, Color(1, 1, 1, 0.45))
+	col.add_child(_hint)
+	_update_hint()
 	return card
+
+
+func _set_inspecting(on: bool) -> void:
+	if on == _inspecting:
+		return
+	_inspecting = on
+	_update_hint()
+	if not on and _tip:
+		_tip.visible = false
+	inspecting_changed.emit(on)
+
+
+func _update_hint() -> void:
+	if _hint:
+		_hint.text = "Hover a trait for details  ·  C to close" if _inspecting else "C  ·  inspect the traits"
+
+
+func _build_tip() -> void:
+	_tip = PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.07, 0.07, 0.09, 0.95)
+	style.border_width_left = 3
+	style.border_color = YELLOW
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 16
+	style.content_margin_right = 16
+	style.content_margin_top = 10
+	style.content_margin_bottom = 12
+	_tip.add_theme_stylebox_override("panel", style)
+	_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tip.visible = false
+	var col := VBoxContainer.new()
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_theme_constant_override("separation", 4)
+	_tip.add_child(col)
+	_tip_title = _label("", 16, YELLOW)
+	col.add_child(_tip_title)
+	_tip_body = _label("", 16, Color(1, 1, 1, 0.9))
+	_tip_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tip_body.custom_minimum_size = Vector2(400, 0)
+	col.add_child(_tip_body)
+	add_child(_tip)
+
+
+## Trait details next to the card, level with the hovered row.
+func _show_tip(t: String, value: int, row: Control) -> void:
+	if not _showing:
+		return
+	_tip_title.text = "%s  %s" % [FocusGroup.TRAIT_LABELS[t], FocusGroup.stars(value)]
+	_tip_body.text = FocusGroup.TRAIT_INFO[t][value]
+	_tip.reset_size()
+	_tip.visible = true
+	var card_rect := _card.get_global_rect()
+	var y := row.get_global_rect().get_center().y - _tip.get_combined_minimum_size().y * 0.5
+	y = clampf(y, 16.0, get_viewport_rect().size.y - _tip.get_combined_minimum_size().y - 16.0)
+	_tip.global_position = Vector2(card_rect.end.x + 12.0, y)
 
 
 func _label(text: String, size: int, color: Color) -> Label:
