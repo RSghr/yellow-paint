@@ -105,7 +105,10 @@ func _ready() -> void:
 	_build_speed_label()
 	_base_ticks = Engine.physics_ticks_per_second
 	_start_round(0)
-	add_child(PAUSE_MENU.new())
+	var pause_menu := PAUSE_MENU.new()
+	# The last tester is done and the results card is up: Esc goes straight back to the desk (as the card says).
+	pause_menu.leave_instead = func(): return _finished and round_index + 1 == Level.ROUNDS
+	add_child(pause_menu)
 
 
 ## C brought the tester card up: free the cursor to hover its traits, and grab it back when the card goes away

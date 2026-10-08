@@ -428,21 +428,32 @@ static func bracket_text(total: int) -> String:
 ## `used` = template ids already sent (so office stories don't repeat).
 static func flavor_for(testers: PackedStringArray, used: Array, office := true) -> Array[Dictionary]:
 	var mails: Array[Dictionary] = []
-	if not testers.is_empty():
-		var tester: String = testers[randi() % testers.size()]
+	# Every story is sent once per career: drafted again, a tester only gets a story they haven't had yet.
+	var fresh := TESTER_STORIES.filter(func(st): return tester_template(st) not in used)
+	var candidates: Array = Array(testers).filter(func(t): return fresh.any(
+		func(st): return _matches(st[0], FocusGroup.profile(t))))
+	if not candidates.is_empty():
+		var tester: String = candidates.pick_random()
 		var p := FocusGroup.profile(tester)
 		# A story about one of their traits if there is one (sometimes a generic one anyway, for variety).
-		var specific := TESTER_STORIES.filter(func(st): return st[0] != "any" and _matches(st[0], p))
-		var generic := TESTER_STORIES.filter(func(st): return st[0] == "any")
-		var pool: Array = specific if not specific.is_empty() and randf() < 0.7 else generic
+		var specific := fresh.filter(func(st): return st[0] != "any" and _matches(st[0], p))
+		var generic := fresh.filter(func(st): return st[0] == "any")
+		var pool: Array = specific if not specific.is_empty() and (generic.is_empty() or randf() < 0.7) else generic
 		var story: Array = pool.pick_random()
-		mails.append(_mail(story[1], story[2], story[3],
-			story[4].replace("{name}", tester).replace("{outlet}", p.get("outlet", "freelance")), false))
+		var m := _mail(story[1], story[2], story[3],
+			story[4].replace("{name}", tester).replace("{outlet}", p.get("outlet", "freelance")), false)
+		m.template = tester_template(story)
+		mails.append(m)
 	if office and (mails.is_empty() or randf() < 0.6):
 		var m := office_mail(used)
 		if not m.is_empty():
 			mails.append(m)
 	return mails
+
+
+## Template id of a tester story (its subject: unique, and old saves without template ids still match it).
+static func tester_template(story: Array) -> String:
+	return "tester_" + story[3]
 
 
 ## A generic office mail not sent yet ({} if they all were). `used` = templates already delivered.

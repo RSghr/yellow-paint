@@ -422,6 +422,12 @@ func admire(chance := 1.0) -> void:
 		say(ADMIRE.pick_random())
 
 
+## "Collectible 57 of 912." (new numbers every time: the same count twice in a playtest gave the joke away).
+func _collectible_count() -> String:
+	var total := randi_range(101, 1359)
+	return "Collectible %d of %d." % [randi_range(5, mini(134, total - 1)), total]
+
+
 func say(text: String, force := false) -> void:
 	if not force and _speech_cooldown > 0.0:
 		return
@@ -870,7 +876,7 @@ func _arrive(step: Dictionary) -> void:
 		return
 	if step.get("kind", "") == "coin":
 		_detoured = true
-		say(["Loot get.", "+1 Rusty Gear. No idea what it crafts.", "Collectible 12 of 847.",
+		say(["Loot get.", "+1 Rusty Gear. No idea what it crafts.", _collectible_count(),
 			"Ammo! For the gun I'll find later.", "Ooh, a crafting component."].pick_random(), true)
 	if step.get("paint", false):
 		_record_visit(step.pos)
