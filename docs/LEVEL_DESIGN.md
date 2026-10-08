@@ -64,8 +64,9 @@ Behaviour that matters for layout:
   landed: on a tower, a splat at the bottom of each climb lets a fallen tester find the way back up.
 - **Once the waystone is in sight, testers skip paint that leads away from it** (and coins beyond `coin_detour`).
   Keep it out of sight (walls, or more than 22 m away) until the route heads its way, and put coins before that.
-- **Jumps go straight.** The tester walks back from the landing to find a take-off point on the line toward
-  itself; on a diagonal gap that line often misses the platform. Line platforms up, or paint near the corner.
+- **Take-offs face the landing.** The tester looks for a take-off point straight back from the landing toward itself,
+  then up to 60° either side, keeping 0.6 m from the edge. Very diagonal gaps (more than 60° off) can still fail:
+  line platforms up roughly, or paint near the corner.
 - **It walks around one corner, not two.** It plans a straight walk, or two straight walks around ONE corner (an L).
   A splat it can see down the next corridor is fine; a splat around two corners, or one it can't SEE from the last
   splat (hidden behind a wall end), has to be found by wandering, which "No paint, no way" testers barely do.
