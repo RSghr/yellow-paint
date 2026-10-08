@@ -84,7 +84,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 ## Focus testers and rounds
 - A level is played by **3 testers in a row** (`Level.rounds()`), set per level. **Paint carries over** between rounds;
   **Hold R** (`retry_hold_time`, 2s, bar at the bottom) retries the current tester; N goes to the next tester. After the
-  3rd tester there is no N: only retry or Tab back to the desktop. Hotfixes are per round.
+  3rd tester there is no N: only retry, or Esc > Level select (no Tab shortcut: a stray key press used to throw a
+  level away). Hotfixes are per round.
 - Each round has its own `minimum_N` (that tester's reliable minimum, set by the user from playtesting), so its own
   paint steps and can size (see Scoring). Level result = sum of the 3 round scores, **out of 15** (`Progress`, `best_total`).
 - Traits (0 lowest, 1 default, 2 highest), shown to the player only as 1-3 stars. A tester has at most ONE trait at 0:
@@ -92,7 +93,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
     `reach_up_by_level` 2.1 / 2.5 / 3.2 m → `max_jump_distance` / `max_jump_up`), plus `desperate_success_chance`
     0.5 / 0.65 / 0.95 (`jump_success_by_level`) and `leap_error` for improvised jumps (Short legs: leaps of faith also
     land only 50%, `short_legs`). A seen painted landing that's out of reach makes it say "Too far!" (`_say_too_far`,
-    once per spot). Short legs needs gaps of ~3.3 m (The Tower needs 5 m: Mike Rotransaction can't finish it yet).
+    once per spot, BEFORE it improvises: out of reach = no take-off on its floor works, margin included, but 1.5 m
+    more reach would; way out of range says nothing). Short legs needs gaps of ~3.3 m (The Tower needs 5 m: Mike Rotransaction can't finish it yet).
   - **Greed** (key `greed`, replaced Trust: everyone now has the old Thoughtful trust): Ascetic / Average / Loot goblin.
     - 1★ "Ascetic" (`greed_radius_by_level` 4 m): only wants loot on its own floor (|dy| < 0.6) within 4 m with a
       walkable path (`_wants_coin`, filters `known_coins()`). Anything else needs a painted way or is left behind.
@@ -277,7 +279,7 @@ using raycasts, call `game.runner.start()`, and step `physics_frame`. The AI is 
   `physics_ticks_per_second`, so the physics step stays 1/60 and the AI plays exactly the same. Back to 1x on
   goal, death, R / next tester and leaving. The operator (`character.gd`), the R hold bar, HUD timers and the
   speech feed undo the time scale, so they stay real-time.
-- Input actions use **physical** keycodes (the user is on AZERTY) except menu keys (N, Tab, Esc) which use logical keycodes.
+- Input actions use **physical** keycodes (the user is on AZERTY) except menu keys (N, Esc) which use logical keycodes.
 - Controls are listed in the Settings menu (`settings_menu.gd` `CONTROLS`), not on the HUD. Add new actions there too.
 - Test scripts can live outside the project (e.g. a scratchpad) and be run with `--script /abs/path.gd`; don't reference
   `Level`/autoload class names at the top level of a test script (they compile before autoloads exist).

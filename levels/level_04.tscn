@@ -16,7 +16,7 @@ Paint a route, then press Enter to start the playtest."
 tester_1 = "Frank Rate"
 minimum_1 = 4
 tester_2 = "Dee Sync"
-minimum_2 = 10
+minimum_2 = 9
 tester_3 = "Sven Tory"
 minimum_3 = 10
 

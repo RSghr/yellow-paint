@@ -11,9 +11,9 @@ level_name = "Onboarding"
 intro_text = "The playtester only jumps to ledges painted yellow.
 Paint where it should LAND (one splat per ledge is usually enough), then press Enter.
 Three testers will play it, one after the other. Some need more paint than others."
-minimum_1 = 3
-minimum_2 = 3
-minimum_3 = 3
+minimum_1 = 4
+minimum_2 = 2
+minimum_3 = 4
 
 [node name="RunnerSpawn" type="Marker3D" parent="." unique_id=1625923408]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 0)
