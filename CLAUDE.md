@@ -146,6 +146,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   `max_unpainted_drop` (2.6m) unpainted. Level minimums stay defined as what's *reliable*.
 - Improvised landings (leaps of faith, desperate jumps) are never in the death zone (`death_height` + 0.5), and one
   that bounced it straight back to its take-off is crossed off (`_futile_leaps`, `_is_futile_leap`).
+- Take-off search (`_link_within`): straight back from the landing toward the tester, else rotated up to ±60°
+  (`TAKEOFF_ANGLES`), in 0.2 m steps plus the exact end of its reach (short legs' window can be narrower than a step).
 - Take-off points always keep `takeoff_margin` (0.6m) from the edge, and it can never start a jump while airborne
   (if it slips off, it just falls). `desperate_success_chance` is a probability (0-1).
 - **Retrace after a fall**: it keeps a **trail** (`_trail`, in order: paint spots it reached and where its unpainted jumps
@@ -161,8 +163,14 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   painted against a pillar can't be stood on exactly). Slipping off an edge while standing around or winding up a jump
   is a fall too (`_idle_physics`), a jump whose target is out of reach from where it really stands is cancelled, and
   replayed/retried jumps take off a step back from the edge (`_safe_takeoff`).
-- **Return after a detour**: after going for a coin or using a button/breakable (`_detoured`), if it has nothing new to
-  try it walks back once to `_furthest` and looks again from there. Plain wandering does NOT count as a detour.
+- **Return after a detour**: after going for a coin or pressing a button (`_detoured`), if it has nothing new to
+  try it walks back once to `_furthest` and looks again from there. Plain wandering does NOT count as a detour, and
+  neither does smashing planks (they were in the way: the way on is through them).
+- **Dead-end return** (`_try_dead_end_return`, before a desperate jump): lost on a SIDE ledge it jumped onto (painted
+  or not), it jumps back to where that jump took off ("Dead end. Back the way I came.", a gamble with its Jumping odds),
+  once per ledge (`_dead_ends`); the take-off becomes `_furthest`. Side ledge = it got no closer to the waystone (or,
+  waystone unseen, no further from the start) than the floor it jumped from (`_is_progress`, 1.5 m): on a floor that
+  was progress it improvises onward as before (Parkour routes like Hanging Gardens rely on it).
 - It plans **straight walks, or two straight walks around ONE corner** (`_corner_walk`: L-shaped via points, nudged,
   same floor, up to `corner_walk_range` 16 m, cached in `_corner_cache`, cleared when a door moves). No navmesh: a splat
   two corners away can't be planned, it needs a splat in between. Walks keep 0.38 m from walls (`_walkable`).

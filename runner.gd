@@ -106,6 +106,8 @@ var greed_radius := -1.0  ## See greed_radius_by_level.
 var loot_goblin := false  ## See loot_goblin_by_level.
 var _scouted_coins := {}  ## Loot goblin: coins it already looked around for before gambling (instance id -> true).
 var _gamble_ok := {}  ## Set by _decide: node index -> a coin in jump reach it may gamble for (Loot goblin).
+const TAKEOFF_ANGLES := [0.0, 20.0, -20.0, 40.0, -40.0, 60.0, -60.0]  ## Directions tried for a take-off (see _link_within).
+var _dead_ends: Array[Vector3] = []  ## Floors it already jumped back from (see _try_dead_end_return): once each.
 var _futile_leaps: Array[Vector3] = []  ## Improvised landings it tried that put it right back where it took off.
 var _loot_anchor := Vector3.INF  ## Loot goblin: the spot it marked before jumping for loot (where it comes back to).
 var _loot_return := {}  ## Loot goblin: {at = landing} of the unpainted jump that got it to some loot (see _try_loot_return).
@@ -307,6 +309,7 @@ func reset_to_spawn() -> void:
 	_loot_return = {}
 	_loot_anchor = Vector3.INF
 	_futile_leaps.clear()
+	_dead_ends.clear()
 	_home_y = _spawn.origin.y - FEET_OFFSET
 	_head.rotation = Vector3.ZERO
 	_head_pitch = 0.0
@@ -827,7 +830,10 @@ func _process_interact() -> void:
 
 func _start_interacting(step: Dictionary) -> void:
 	_task = step
-	_detoured = true
+	# A button can be off to the side: afterwards it goes back to where it left off. Planks are in the way:
+	# once smashed, the way on is through them, so walking back would only lose time.
+	if step.host == null or step.host.kind != "breakable":
+		_detoured = true
 	state = State.INTERACTING
 	_timer = 0.0
 	_scan_duration = step.host.interact_duration()
@@ -1361,6 +1367,10 @@ func _decide() -> void:
 		return
 	# Out of ideas for `patience` seconds AND it has finished a full round of looking around
 	# (that's usually when it spots paint it missed): gamble on a jump instead of sulking.
+	# Stuck on a floor it jumped onto: go back the way it came before gambling on somewhere new.
+	if improvises and _lost_time >= patience and _wanders >= wander_limit and _try_dead_end_return():
+		_lost_time = 0.0
+		return
 	if improvises and _lost_time >= patience and _wanders >= wander_limit and _try_desperate_jump():
 		_lost_time = 0.0  # One gamble, then it gets another patience period.
 		return
@@ -1602,6 +1612,54 @@ func _replay_link(a: Vector3, b: Vector3) -> Dictionary:
 	if a.distance_to(from) > 0.6 and not _walkable(a, from):
 		return {}
 	return {cost = a.distance_to(from) + from.distance_to(b) + 4.0, jump = true, via = from, replay = _trail_gamble[kb]}
+
+
+## Lost on a side ledge it got to by a jump (painted or not), nothing left to try here: jump back to where that jump
+## took off (the same jump the other way, a gamble with its Jumping odds), once per dead end. From there it carries on
+## looking, and that take-off becomes where it "left off" (look-backs go there, not to the dead end).
+## Only a SIDE ledge: one that got it no closer to the waystone (or, waystone unseen, no further from the start) than
+## the floor it jumped from. A floor that was progress is where improvising onward belongs (Parkour routes).
+func _try_dead_end_return() -> bool:
+	var me := feet()
+	for f in _dead_ends:
+		if f.distance_to(me) < 4.0 and absf(f.y - me.y) < 0.6:
+			return false  # Already came back from here once: improvise as usual.
+	for k in range(_trail.size() - 1, -1, -1):
+		var stop: Vector3 = _trail[k]
+		var from: Vector3 = _trail_from[k]
+		if from == Vector3.INF or absf(stop.y - me.y) > 0.6 or not (_at(stop) or _walkable(me, stop)):
+			continue
+		if absf(from.y - me.y) < 0.6 and _walkable(me, from):
+			continue  # That jump started on this same floor: not a way off it.
+		if _is_progress(from, me):
+			return false  # It moved forward getting here: improvise onward instead.
+		var back := _safe_takeoff(from, stop)
+		var link := _link_within(me, back, true, max_jump_distance, max_jump_up)
+		if link.is_empty() or not link.jump:
+			continue
+		_dead_ends.append(me)
+		_furthest = back  # Where it left off from now on.
+		_crumbs.clear()
+		_detoured = false
+		_path.clear()
+		if link.get("via") != null:
+			_path.append({pos = link.via, jump = false, trust = 99, leap = false, paint = false, kind = "walk", host = null})
+		_path.append({pos = back, jump = true, trust = 1, leap = true, desperate = true, paint = false, kind = "leap",
+			host = null, loot_return = true})
+		say(["Dead end. Back the way I came.", "Nothing up here. Same jump, other direction.",
+			"OK, wrong ledge. Going back."].pick_random(), true)
+		_advance()
+		return true
+	return false
+
+
+## Is `to` further along than `from`? Closer to the waystone if it has seen it, else further from the start.
+func _is_progress(from: Vector3, to: Vector3) -> bool:
+	if _goal_known:
+		var g := _goal.global_position
+		return Vector2(to.x - g.x, to.z - g.z).length() < Vector2(from.x - g.x, from.z - g.z).length() - 1.5
+	var o := _spawn.origin
+	return Vector2(to.x - o.x, to.z - o.z).length() > Vector2(from.x - o.x, from.z - o.z).length() + 1.5
 
 
 func _is_futile_leap(p: Vector3) -> bool:
@@ -1954,26 +2012,32 @@ func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_
 		return {}
 	if flat <= reach and d.y <= reach_up and d.y >= -max_drop and _jump_clear(a, b):
 		return {cost = flat + 2.0, jump = true}
-	# Paint marks where to LAND. Walk to a sensible take-off point on this ground first.
+	# Paint marks where to LAND. Walk to a sensible take-off point on this ground first: straight back toward where
+	# it stands, else up to 60 degrees either side (standing off to one side, the straight line can cross the gap
+	# at a slant and run out of reach, while the edge right in front of the splat is close enough).
 	var space := get_world_3d().direct_space_state
-	var back := Vector3(-d.x, 0, -d.z).normalized()
-	var r := 1.2
-	while r <= reach and r < flat:
-		var launch: Vector3 = b + back * r
-		r += 0.2
-		var y = _ground_y(space, launch, a.y, 0.45)
-		if y == null:
-			continue
-		launch.y = y
-		# Keep a safety margin: there must still be ground between the feet and the edge.
-		if _ground_y(space, launch - back * takeoff_margin, y, 0.3) == null:
-			continue
-		var j: Vector3 = b - launch
-		if j.y > reach_up or j.y < -max_drop:
-			continue
-		if not _walkable(a, launch) or not _jump_clear(launch, b):
-			continue
-		return {cost = a.distance_to(launch) + r + 2.0, jump = true, via = launch}
+	var straight := Vector3(-d.x, 0, -d.z).normalized()
+	for angle in TAKEOFF_ANGLES:
+		var back := straight.rotated(Vector3.UP, deg_to_rad(angle))
+		var r := 1.2
+		while r <= reach and r < flat:
+			var launch: Vector3 = b + back * r
+			# Steps of 0.2 m, and the very end of its reach too: with short legs the window between the edge margin
+			# and the reach can be narrower than one step.
+			r = reach if r < reach and r + 0.2 > reach else r + 0.2
+			var y = _ground_y(space, launch, a.y, 0.45)
+			if y == null:
+				continue
+			launch.y = y
+			# Keep a safety margin: there must still be ground between the feet and the edge.
+			if _ground_y(space, launch - back * takeoff_margin, y, 0.3) == null:
+				continue
+			var j: Vector3 = b - launch
+			if j.y > reach_up or j.y < -max_drop:
+				continue
+			if not _walkable(a, launch) or not _jump_clear(launch, b):
+				continue
+			return {cost = a.distance_to(launch) + r + 2.0, jump = true, via = launch}
 	return {}
 
 
