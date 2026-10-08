@@ -424,8 +424,8 @@ func admire(chance := 1.0) -> void:
 
 ## "Collectible 57 of 912." (new numbers every time: the same count twice in a playtest gave the joke away).
 func _collectible_count() -> String:
-	var total := randi_range(101, 1359)
-	return "Collectible %d of %d." % [randi_range(5, mini(134, total - 1)), total]
+	var found := randi_range(5, 134)
+	return "Collectible %d of %d." % [found, found + randi_range(101, 1359)]
 
 
 func say(text: String, force := false) -> void:
