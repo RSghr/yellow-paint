@@ -102,8 +102,11 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
       jump, `_has_floor_under`), it goes for before unvisited paint and the waystone (`_pick_target`, right after
       reachable coins; not while retracing a fall). First time: walks to the take-off only (`_scouted_coins`, "Let me
       just check something first"), looks around, then improvises the jump with its Jumping odds. **No safety check**:
-      a miss over a pit is a death (user's call, Oct 2026: on level 1 the pillar loot costs no paint for Polly, ~25%
-      deaths). It gets back the way it came (`_try_loot_return`: jumps back to a trail stop / take-off, another gamble).
+      a miss over a pit is a death (user's call, Oct 2026: on level 1 the pillar loot costs no paint for Polly, ~35-40%
+      deaths with her 65% odds). **Marked spot**: before the jump it marks its take-off (`_loot_anchor`, "Marking this
+      spot"). After grabbing the loot, if nothing painted leads on from there, it first looks around carefully for paint
+      (`_try_loot_return`, `looked`), then goes back to the marked spot (same jump the other way, a gamble again; a
+      miss is a fall and the usual retrace takes over). The mark is dropped once it reaches a new splat.
       Loot out of reach stays remembered (`_seen_coins`) and is gone for as soon as a known spot puts it in reach.
     - Old Trust code (`conviction_time`, `overreach`, `trust_bonus`) is kept dormant as plain exports at 0.
   - **Exploration** (key `patience` in code): No paint, no way / Curious / Explorer.
@@ -139,6 +142,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   regardless of distance (a miss falls well short). Never back to where it has been (trail/visited), and never down
   once it has made progress (down = where it came from). Paint appearing during the wind-up cancels it. Won't drop more than
   `max_unpainted_drop` (2.6m) unpainted. Level minimums stay defined as what's *reliable*.
+- Improvised landings (leaps of faith, desperate jumps) are never in the death zone (`death_height` + 0.5), and one
+  that bounced it straight back to its take-off is crossed off (`_futile_leaps`, `_is_futile_leap`).
 - Take-off points always keep `takeoff_margin` (0.6m) from the edge, and it can never start a jump while airborne
   (if it slips off, it just falls). `desperate_success_chance` is a probability (0-1).
 - **Retrace after a fall**: it keeps a **trail** (`_trail`, in order: paint spots it reached and where its unpainted jumps
