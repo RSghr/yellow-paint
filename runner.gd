@@ -78,9 +78,10 @@ const PERCEPTION_INTERVAL := 0.1
 @export var greed_radius_by_level: Array[float] = [4.0, -1.0, -1.0]
 ## How far out of its way (path cost) it goes for a coin it can reach without gambling.
 @export var coin_detour_by_level: Array[float] = [4.0, 16.0, 80.0]
-## Loot goblin: wants every collectible before leaving. A coin it can't reach without an unpainted jump: once nothing
-## else is left (or before heading for the waystone), it walks to the take-off point, looks around one last time, then
-## jumps for it with its Jumping odds, but ONLY if a miss can't kill it (a floor above death_height under the gap).
+## Loot goblin: loot first, paint second. Any collectible it sees on a platform within its jump reach, it goes for
+## before following paint: walks to the take-off point, looks around one last time, then improvises the jump with its
+## Jumping odds (a miss over a pit is a death), and jumps back the same way. Loot out of reach is remembered: it goes
+## for it as soon as some spot it knows puts it within reach.
 @export var loot_goblin_by_level: Array[bool] = [false, false, true]
 @export_subgroup("Exploration (No paint, no way / Curious / Explorer)")  # "patience" in the code and roster.
 @export var patience_by_level: Array[float] = [-1.0, 8.0, 16.0]  ## Seconds lost (after its wanders) before improvising. -1 = never improvises (no desperate jumps, no leaps of faith).
@@ -104,7 +105,7 @@ var wander_min := 2.0
 var greed_radius := -1.0  ## See greed_radius_by_level.
 var loot_goblin := false  ## See loot_goblin_by_level.
 var _scouted_coins := {}  ## Loot goblin: coins it already looked around for before gambling (instance id -> true).
-var _gamble_ok := {}  ## Set by _decide: node index -> a coin it may gamble for (a miss can't kill it).
+var _gamble_ok := {}  ## Set by _decide: node index -> a coin in jump reach it may gamble for (Loot goblin).
 var _loot_takeoffs: Array[Vector3] = []  ## Where its loot gambles took off from.
 var _loot_return := {}  ## Loot goblin: {at = landing} of the unpainted jump that got it to some loot (see _try_loot_return).
 var _coin_jump := {}  ## Set by _decide: node index -> a coin it can only reach with an unpainted jump.
@@ -1264,15 +1265,13 @@ func _decide() -> void:
 				via_over[v] = link.get("overreach", false)
 				via_replay[v] = link.get("replay", false)
 
-	# Loot goblin: which coins it could gamble for (unpainted jump) without a miss killing it.
+	# Loot goblin: which coins it can only reach with an unpainted jump (within its reach: it goes for those).
 	_gamble_ok.clear()
 	_coin_jump.clear()
 	for c in n:
 		if kinds[c] == "coin" and dist[c] < INF and via_jump[c]:
 			_coin_jump[c] = true
-			var from: Vector3 = via_point[c] if via_point[c] != null else nodes[prev[c]]
-			if _miss_survivable(from, nodes[c]):
-				_gamble_ok[c] = true
+			_gamble_ok[c] = true
 
 	var target := _pick_target(nodes, trust, kinds, dist, hot)
 	_path.clear()
@@ -1386,20 +1385,6 @@ func _best_gamble(dist: Array[float]) -> int:
 	return best
 
 
-## Would an unpainted jump from `from` to `to` that misses (falls short, like a failed gamble) still land on a floor
-## above the death height? Checks the stretch where misses land (40-70% of the way).
-func _miss_survivable(from: Vector3, to: Vector3) -> bool:
-	var space := get_world_3d().direct_space_state
-	var top := maxf(from.y, to.y) + 1.0
-	for t in [0.4, 0.55, 0.7]:
-		var p := from.lerp(to, t)
-		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(p.x, top, p.z),
-			Vector3(p.x, death_height - 1.0, p.z), 1, [get_rid()]))
-		if hit.is_empty() or hit.position.y < death_height + 0.5:
-			return false
-	return true
-
-
 ## Priorities: hotfixes > a nearby coin > the flag > painted things to use > unvisited paint.
 func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String], dist: Array[float],
 		hot: Array[bool]) -> int:
@@ -1431,11 +1416,15 @@ func _pick_target(nodes: Array[Vector3], trust: Array[int], kinds: Array[String]
 	if best != -1:
 		return best
 
+	# Loot goblin: loot in reach comes before paint and the waystone, even if it takes an unpainted jump.
+	if _retrace_to == Vector3.INF:
+		var g := _best_gamble(dist)
+		if g != -1:
+			return g
+
 	var goal_index := kinds.find("goal")
 	if goal_index != -1 and dist[goal_index] < INF:
-		# Loot goblin: one last collectible before leaving (only if a miss can't kill it).
-		var g := _best_gamble(dist)
-		return g if g != -1 else goal_index
+		return goal_index
 
 	# Retracing after a fall: go back to the furthest spot it had reached.
 	if _retrace_to != Vector3.INF:
@@ -1600,7 +1589,7 @@ func _replay_link(a: Vector3, b: Vector3) -> Dictionary:
 
 
 ## Loot goblin on the ledge it gambled its way onto, nothing left to do here: jump back the way it came (a gamble
-## again, with its Jumping odds), if a miss wouldn't kill it. One try: a miss is a fall, and it retraces from there.
+## again, with its Jumping odds). One try: a miss is a fall (or a death), and it retraces from there.
 func _try_loot_return() -> bool:
 	if _loot_return.is_empty():
 		return false
@@ -1619,9 +1608,6 @@ func _try_loot_return() -> bool:
 	for to in spots:
 		var link := _link_within(me, to, true, max_jump_distance, max_jump_up)
 		if link.is_empty() or not link.jump:
-			continue
-		var from: Vector3 = link.via if link.get("via") != null else me
-		if not _miss_survivable(from, to):
 			continue
 		_path.clear()
 		if link.get("via") != null:

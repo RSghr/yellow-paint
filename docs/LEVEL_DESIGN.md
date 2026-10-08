@@ -152,7 +152,7 @@ Each tester has three traits, shown to the player only as stars (never the names
 | Trait | ★☆☆ | ★★☆ (default) | ★★★ |
 |---|---|---|---|
 | Jumping (reach of **every** jump + improvised jumps) | Short legs: **4.5 m** across, **2.1 m** up; improvised jumps (leaps of faith too) land ~50% | Average: 5.5 m, 2.5 m up; improvised ~65% | Parkour: **7 m**, **3.2 m** up; improvised ~95% |
-| Greed (what a collectible is worth to them) | Ascetic: only picks up loot on its own floor within ~4 m that it can walk to. Anything further needs a painted way, or it's left behind | Average: walks to loot it sees, never jumps for it | Loot goblin: wants **every** collectible before the waystone. Sees loot across a gap with no paint: walks to the edge, looks around first (paint, other loot, the waystone), then gambles the jump with its Jumping odds, **only if a miss would land on a floor it survives** (it climbs back and carries on). Loot over a deadly pit needs paint |
+| Greed (what a collectible is worth to them) | Ascetic: only picks up loot on its own floor within ~4 m that it can walk to. Anything further needs a painted way, or it's left behind | Average: walks to loot it sees, never jumps for it | Loot goblin: **loot first, paint second.** Any loot it sees on a platform within its jump reach, it goes for before following paint: walks to the edge, looks around, then improvises the jump with its Jumping odds (no paint needed, but a miss over a pit kills it) and jumps back the same way. Loot out of reach is remembered and fetched as soon as it's in reach. Paint the loot's platform to make it a safe painted jump |
 | Exploration (all levels: while lost, goes back to the last splat for a careful look every 1 / 2 / 4 look-around walks) | No paint, no way: only short look-around walks (**1.5-3 m**), so the next splat must be visible from close to the last one. Never jumps unpainted (no leaps of faith either) | Curious: a few look-around walks, improvises after ~8 s | Explorer: wanders much further and longer (8 walks up to 9 m), improvises late (~16 s), and **gets curious**: presses unpainted buttons and smashes unpainted planks/crates it saw |
 
 The numbers behind the stars are in `runner.gd`, export group "Traits" (one value per star level).
@@ -214,7 +214,7 @@ refresh). Add the tester to the roster table above too.
 
 Ideas: start with someone easy-going, end with the one whose weak trait the level punishes:
 - **Ascetic** where the loot is spread out: every collectible off its path needs its own painted way.
-- **Loot goblin** where some loot hangs over a deadly pit: it gambles for the safe ones by itself, the deadly ones need paint (or it leaves them).
+- **Loot goblin** where loot sits on side platforms: it saves you the paint but risks its neck for each one (paint the platform to make the jump safe).
 - **No paint, no way** where the default tester would leap to the flag or gamble on a short hop: those need paint now.
 - **Short legs** combined with **Explorer**: it improvises and fails half the time (~50%), so the paint has to be there before it gets bored.
 - **Parkour + Explorer**: generous rounds, where a low minimum rewards a player who paints little.

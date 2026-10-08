@@ -97,12 +97,14 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
     - 1★ "Ascetic" (`greed_radius_by_level` 4 m): only wants loot on its own floor (|dy| < 0.6) within 4 m with a
       walkable path (`_wants_coin`, filters `known_coins()`). Anything else needs a painted way or is left behind.
     - 2★ Average: walks to loot it sees (`coin_detour_by_level` 16), never jumps for it.
-    - 3★ "Loot goblin" (`loot_goblin_by_level`, `coin_detour` 80): wants every collectible before the waystone (picks
-      reachable loot and `_best_gamble()` before the waystone). Loot across a gap with no paint: first walks to the
-      take-off only (`_scouted_coins`, "Let me just check something first"), looks around (paint, loot, waystone), then
-      gambles the jump with its Jumping odds (coin jumps need `_has_floor_under`). **Only if a miss is survivable**
-      (`_miss_survivable`: rays down at 40/55/70% of the jump; no floor or floor under `death_height` + 0.5 = no
-      gamble, `_gamble_ok`). After a miss it climbs back / retraces as usual. Loot over a deadly pit needs paint.
+    - 3★ "Loot goblin" (`loot_goblin_by_level`, `coin_detour` 80): **loot first, paint second.** Any collectible it
+      sees on a platform within its jump reach (`_coin_jump` / `_gamble_ok`: a coin node only reachable by an unpainted
+      jump, `_has_floor_under`), it goes for before unvisited paint and the waystone (`_pick_target`, right after
+      reachable coins; not while retracing a fall). First time: walks to the take-off only (`_scouted_coins`, "Let me
+      just check something first"), looks around, then improvises the jump with its Jumping odds. **No safety check**:
+      a miss over a pit is a death (user's call, Oct 2026: on level 1 the pillar loot costs no paint for Polly, ~25%
+      deaths). It gets back the way it came (`_try_loot_return`: jumps back to a trail stop / take-off, another gamble).
+      Loot out of reach stays remembered (`_seen_coins`) and is gone for as soon as a known spot puts it in reach.
     - Old Trust code (`conviction_time`, `overreach`, `trust_bonus`) is kept dormant as plain exports at 0.
   - **Exploration** (key `patience` in code): No paint, no way / Curious / Explorer.
     - 1★ "No paint, no way": short look-around walks only (`wander_min_by_level`/`wander_range_by_level` 1.5-3 m),
@@ -177,9 +179,9 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   walked without hesitation or look-arounds. It replans on the spot (`_urgent`). Hotfix paint on a breakable decides it.
 - **Moving platforms**: while the floor under it is moving it stands still (`RIDING`), then looks around. Spots on a
   platform that is still moving are ignored until it stops (its `state_changed` triggers a rethink).
-- Priorities: unused hotfix > nearby coin (within `coin_detour`, Ascetic: `greed_radius`) > (Loot goblin) survivable coin
-  gamble > flag > painted interactable > unvisited paint > (Loot goblin) coin gamble > (Explorer) unpainted
-  button/breakable > leap of faith > wander > desperate jump.
+- Priorities: unused hotfix > nearby coin (within `coin_detour`, Ascetic: `greed_radius`) > (Loot goblin) coin in jump
+  reach > flag > painted interactable > unvisited paint > (Explorer) unpainted button/breakable > leap of faith >
+  wander > desperate jump.
 
 ## Times (logged, never scored)
 - `Runner.session_time` (playtest start → flag) and `time_lost` (`_is_lost()`: confused, wander walks, look-arounds
@@ -227,7 +229,7 @@ Lineups are a first pass; per-round minimums are set by the user from playtestin
 8. `level_08` The Vault (draft by Claude, for the user to edit): a GREED level. Start → A_Long → B (up a ramp) →
    goal, 3.5 m gaps. Coin1/Coin2 on A_Long (Ascetic only takes Coin1), Coin3 on LedgeSafe (3 m off A_Long's side, a
    miss lands on SafetyTerrace at -1.5 and the Ramp leads up to B), Coin4 on LedgeDeadly (same gap, over the pit).
-   The Loot goblin gambles for Coin3 by itself and never for Coin4 (paint it). Al Gorithm (Ascetic), Rhea Spawn,
+   The Loot goblin gambles for Coin3 and Coin4 by itself (Coin4's miss is fatal: since the Oct 2026 change it risks it). Al Gorithm (Ascetic), Rhea Spawn,
    Polly Gonn (Loot goblin): only Greed differs. Minimums are placeholders.
 9. `level_09` The Secret Room (draft by Claude): an EXPLORATION level. Long platforms with walls: each next landing
    only shows from the far end, so "No paint, no way" needs a walk splat there. **TrapButton** (unpainted, next to

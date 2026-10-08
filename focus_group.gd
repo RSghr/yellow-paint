@@ -75,7 +75,7 @@ const TRAIT_INFO := {
 	greed = [
 		"Only picks up loot a few steps away, on the floor they are standing on.\nAnything further is left behind unless the way to it is painted.",
 		"Walks over to any loot they spot, but never risks a jump for it.\nA collectible across a gap needs a painted landing.",
-		"Wants every collectible before touching the waystone, and will jump for unpainted loot if a miss wouldn't be fatal.\nLoot over a deadly drop still needs paint.",
+		"Goes for every collectible in sight before following any paint, and improvises the jump to reach it if it looks reachable.\nIt doesn't always land. Loot out of reach is remembered for later.",
 	],
 	patience = [
 		"Barely strays from the last splat to look around, so the next one must be visible from there.\nNever jumps anywhere unpainted, not even toward the waystone.",
