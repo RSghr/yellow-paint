@@ -189,7 +189,7 @@ func level_finished(total: int, rounds: Array = []) -> String:
 			continue
 		var testers := level_testers(info.path)
 		_deliver(MAIL_WRITER.announcement(info.name, total, testers, ps), unlock_id)
-		var used: Array = delivered_mails.map(func(m): return m.get("template", ""))
+		var used := used_templates()
 		# The Nth main level unlocked has its own story mails (mail_writer.gd STORY_SCHEDULE): those replace
 		# the random office mail.
 		var ordinal := 0
@@ -210,7 +210,7 @@ func level_finished(total: int, rounds: Array = []) -> String:
 			_deliver(MAIL_WRITER.performance(LEVELS[current].name, total, UNLOCK_STARS, ps,
 				current == final_level()), perf_id)
 			if randf() < 0.5:  # Office life goes on while you redo your playtests.
-				var office := MAIL_WRITER.office_mail(delivered_mails.map(func(m): return m.get("template", "")))
+				var office := MAIL_WRITER.office_mail(used_templates())
 				if not office.is_empty():
 					_deliver(office, "%s_office" % perf_id)
 			_save()
@@ -245,6 +245,17 @@ func _deliver(mail: Dictionary, id: String) -> void:
 	mail.id = id
 	delivered_mails.append(mail)
 	new_mail_ping = true
+
+
+## Templates of every delivered mail, so no story is ever sent twice. Mails saved before tester stories had
+## template ids also count by subject ("tester_<subject>").
+func used_templates() -> Array:
+	var used := []
+	for m in delivered_mails:
+		if m.get("template", "") != "":
+			used.append(m.template)
+		used.append("tester_" + str(m.get("subject", "")))
+	return used
 
 
 func _has_mail(id: String) -> bool:

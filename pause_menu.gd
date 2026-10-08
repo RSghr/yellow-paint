@@ -10,6 +10,8 @@ signal resumed
 var _panel: Control
 var _settings: Control
 var _was_mouse_captured := true
+## Set by game.gd: returns true when Esc should leave the level instead of pausing (the 3 testers are done).
+var leave_instead: Callable
 
 
 func _ready() -> void:
@@ -25,6 +27,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _settings:
 		return  # The settings overlay handles its own Esc.
 	get_viewport().set_input_as_handled()
+	if not get_tree().paused and leave_instead.is_valid() and leave_instead.call():
+		Sfx.play("ui_click")
+		Progress.to_menu()
+		return
 	if get_tree().paused:
 		resume()
 	else:
