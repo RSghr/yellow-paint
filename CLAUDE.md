@@ -34,7 +34,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `levels/_template.tscn`, `tools/new_level.gd` | Level template + EditorScript (File > Run) that creates the next `level_XX.tscn`. Guide: `docs/LEVEL_DESIGN.md` (also has the roster with stars and the current lineups; keep them in sync). |
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
 | `art/thinkbox_sky.gdshader` | The sky (used by `game.tscn`'s WorldEnvironment): the ThinkBox's untextured fallback dome (flat blue-grey, faint lat/long wireframe, `grid_strength`) with ONE blocky rectangle of the real sky streamed in (`show_patch`). **Rolled at random each time a level loads** (`game.gd` `_roll_sky()`, `sky_variant`, `SKY_NAMES`): `variant` 0 midday (blue, near-white sun, around the scene's DirectionalLight), 1 sunset (at the horizon under the sun), 2 night (pixel stars, crescent moon), about 1/3 each; 3 = missing texture, `missing_texture_chance` 0.5%: the whole dome is the magenta/black checker on a cube. `force_sky` (game.gd, -1 = random) to test one. The grey boxes are lit the same whatever the sky (the ThinkBox doesn't do time of day; fixed ambient colour). No `TIME` in the shader (it would re-render the sky every frame). Kept cool and dull so paint, hotfixes and loot stand out. |
-| `level.gd` | `@tool` root script of every level: `level_name`, `intro_text`, `death_height`, `post_launch`, `music` (track name, empty = game), 3 rounds (`tester_N` dropdown + `minimum_N`); editor warnings for missing spawns/goal/bad lineup. F6 on a level scene launches it inside `game.tscn`. |
+| `level.gd` | `@tool` root script of every level: `level_name`, `intro_text`, `death_height`, `music` (track name, empty = game), 3 rounds (`tester_N` dropdown + `minimum_N`); editor warnings for missing spawns/goal/bad lineup. F6 on a level scene launches it inside `game.tscn`. |
 | `levels/` | Level scenes: world only (Geometry, Interactables/Coins, Goal, `RunnerSpawn`/`OperatorSpawn` Marker3Ds). |
 | `runner.gd/.tscn` | The AI playtester (perception, trust, planning, speech). **V** = debug view: vision cone, known paint, plan, plus the **reach cylinder** (`draw_reach`, called every frame by `game.gd`): ground band = jump distance, floating band = jump height, label "Jump reach". Centred on the floor the operator aims at (spectating: on the tester). Only while painting: hidden from Enter until R so the vision view stays clean. |
 | `character.gd/.tscn` | The operator: FPS movement, jetpack (hold Space), fly mode (F), paint (LMB), scrape (RMB). **Bounds** (`bounds`, set by `game.gd`): an invisible wall at the far edge of the overheat zone (sides and top only; falling is `FALL_RESET_Y`'s job). |
@@ -65,7 +65,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   Chad's ending mail + the **day-one patch notes** (`MailWriter.patch_notes`, from `tester_stats`), Inlook opens on them.
   Closing Inlook once the patch notes were read (or their "Publish patch notes & launch" button) fades to `credits.tscn`.
   After the credits: Patch 1.1 (`shipped()`): Chad's early access mail (names the post-launch level, $4.99), scores
-  kept, no more score mails (no stakes), `post_launch` levels open (`Level.post_launch`, tagged DLC), Start menu shows
+  kept, no more score mails (no stakes), DLC levels open (file name `level_dlc_XX.tscn` = `post_launch` in `Progress.LEVELS`, `Progress.DLC_PREFIX`; shown as "DLC 1" by `Progress.level_label()`, main levels are numbered without them), Start menu shows
   the ending. The results card of the last level says "Chad needs your greenlight" / "The launch is on hold until...".
 - **Best runs** (`Progress.best_runs`, per level key then tester): the stats of the 3 rounds behind the level's saved best
   score (`game.gd` `round_runs` = each round's finishing attempt, passed to `Progress.record()`; replaced on a new best,
@@ -236,23 +236,24 @@ Lineups are a first pass; per-round minimums are set by the user from playtestin
 4. `level_04` The Gauntlet: everything combined. Frank Rate, Dee Sync, Sven Tory.
 5. `level_05` The Tower: the user's vertical spiral level. Door2 is an elevator platform (button next to it, rises 10m,
    comes back down after 4 s with nobody on it: `return_after`). David Goodenough, Mike Rotransaction, Rhea Spawn.
-6. `level_06` Victory lap (**post-launch**, the $4.99 DLC): a straight road blocked by a wall. Its button raises the wall
-   AND `Geometry/Maze` (every maze wall is a door, sunk 3.6 m into the block), so the route has to be painted blind.
-   Sven Tory, David Goodenough, Bea Tah (the extremes). Gap under Door7's end (z 13.6-15) is a known shortcut.
-7. `level_07` Hanging Gardens (the user's): a JUMP level, each tester takes a different path for their reach.
+6. `level_06` Hanging Gardens (the user's): a JUMP level, each tester takes a different path for their reach.
    Frank Rate, Al Gorithm, Mike Rotransaction.
-8. `level_08` The Vault (draft by Claude, for the user to edit): a GREED level. Start → A_Long → B (up a ramp) →
+7. `level_07` The Vault (draft by Claude, for the user to edit): a GREED level. Start → A_Long → B (up a ramp) →
    goal, 3.5 m gaps. Coin1/Coin2 on A_Long (Ascetic only takes Coin1), Coin3 on LedgeSafe (3 m off A_Long's side, a
    miss lands on SafetyTerrace at -1.5 and the Ramp leads up to B), Coin4 on LedgeDeadly (same gap, over the pit).
    The Loot goblin gambles for Coin3 and Coin4 by itself (Coin4's miss is fatal: since the Oct 2026 change it risks it). Al Gorithm (Ascetic), Rhea Spawn,
    Polly Gonn (Loot goblin): only Greed differs. Minimums are placeholders.
-9. `level_09` The Secret Room (draft by Claude): an EXPLORATION level. Long platforms with walls: each next landing
+8. `level_08` The Secret Room (draft by Claude): an EXPLORATION level. Long platforms with walls: each next landing
    only shows from the far end, so "No paint, no way" needs a walk splat there. **TrapButton** (unpainted, next to
    R2's landing) sinks R4 (a door, `move_direction` down): the Explorer presses unpainted buttons the moment it has no
    painted spot left to go to, so leaning on its exploring ruins the run (it then jumps onto the sunk paint and dies).
    Never paint the trap (painted buttons get pressed by everyone). Breakable plank bridge to the waystone (paint its top
    for the Explorer), coin nook on R2 (walkable: no gamble). Waystone > 22 m away until R4. Cass Cene, Rhea Spawn,
    Bea Tah: only Exploration differs.
+
+DLC 1. `level_dlc_01` Victory lap (**post-launch**, the $4.99 DLC): a straight road blocked by a wall. Its button raises the wall
+   AND `Geometry/Maze` (every maze wall is a door, sunk 3.6 m into the block), so the route has to be painted blind.
+   Sven Tory, David Goodenough, Bea Tah (the extremes). Gap under Door7's end (z 13.6-15) is a known shortcut.
 
 ## Adding a level
 Run `tools/new_level.gd` (Script editor > File > Run) or duplicate `levels/_template.tscn` as `levels/level_XX.tscn`.

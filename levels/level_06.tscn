@@ -1,216 +1,278 @@
-[gd_scene format=3 uid="uid://blrx0caiwibxk"]
+[gd_scene format=3 uid="uid://bl5rtafcdm3hn"]
 
-[ext_resource type="PackedScene" path="res://wall_button.tscn" id="3_j8rst"]
-[ext_resource type="PackedScene" path="res://door.tscn" id="4_ifoay"]
+[ext_resource type="PackedScene" path="res://breakable.tscn" id="3_3c2ka"]
+[ext_resource type="PackedScene" path="res://door.tscn" id="4_2j5vl"]
+[ext_resource type="PackedScene" path="res://wall_button.tscn" id="5_icb4y"]
 [ext_resource type="PackedScene" uid="uid://caufl8sqp5orp" path="res://debug_block.tscn" id="block"]
 [ext_resource type="PackedScene" path="res://coin.tscn" id="coin"]
 [ext_resource type="PackedScene" path="res://goal.tscn" id="goal"]
 [ext_resource type="Script" uid="uid://d2xo6jturp86h" path="res://level.gd" id="lvl_script"]
 
-[node name="Level06" type="Node3D" unique_id=918810662]
+[node name="Level07" type="Node3D" unique_id=295756734]
 editor_description = "Level root. Set level_name, intro_text and the 3 rounds (tester + minimum) in the Inspector. See docs/LEVEL_DESIGN.md."
 script = ExtResource("lvl_script")
-level_name = "Victory Lap"
+level_name = "Hanging Gardens"
 intro_text = ""
-post_launch = true
-tester_1 = "Sven Tory"
-minimum_1 = 20
-tester_2 = "David Goodenough"
-minimum_2 = 21
-tester_3 = "Bea Tah"
-minimum_3 = 20
+tester_1 = "Frank Rate"
+minimum_1 = 11
+tester_2 = "Al Gorithm"
+minimum_2 = 15
+tester_3 = "Mike Rotransaction"
+minimum_3 = 26
 
-[node name="RunnerSpawn" type="Marker3D" parent="." unique_id=1379500677]
+[node name="RunnerSpawn" type="Marker3D" parent="." unique_id=976302730]
 editor_description = "Where the playtester starts. Keep it 0.9 above the floor (its origin is at its middle)."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.539854, 0.9, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.3960495, 1.2042942, -9.714647)
 
-[node name="OperatorSpawn" type="Marker3D" parent="." unique_id=146368039]
+[node name="OperatorSpawn" type="Marker3D" parent="." unique_id=227428968]
 editor_description = "Where you (the operator) start. 1.05 above the floor. Rotate it to set the starting view."
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -32.039856, 1.05, 2)
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -17.54348, 1.05, -7.880043)
 
-[node name="Geometry" type="Node3D" parent="." unique_id=1707925669]
+[node name="Geometry" type="Node3D" parent="." unique_id=1139409346]
 editor_description = "Static blocks: instance debug_block.tscn and set size/color (never scale blocks)."
 
-[node name="PitFloor" parent="Geometry" unique_id=1502346685 instance=ExtResource("block")]
+[node name="PitFloor" parent="Geometry" unique_id=435861646 instance=ExtResource("block")]
 editor_description = "Catches falls. Its top (y = -4) is below the level's death_height (-2.5), so falling here = lost."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, -4.5, 0)
-size = Vector3(80, 1, 40)
+size = Vector3(50, 1, 30)
 color = Color(0.35, 0.2, 0.2, 1)
 
-[node name="StartPlatform" parent="Geometry" unique_id=1988772049 instance=ExtResource("block")]
+[node name="StartPlatform" parent="Geometry" unique_id=791581134 instance=ExtResource("block")]
 editor_description = "Top at y = 0 (center y = -2, height 4)."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.539854, -2, 0)
-size = Vector3(8, 4, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.04348, -2, -9.880043)
+size = Vector3(8, 4, 6)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="GoalPlatform" parent="Geometry" unique_id=1404216734 instance=ExtResource("block")]
+[node name="GoalPlatform" parent="Geometry" unique_id=1471307625 instance=ExtResource("block")]
 editor_description = "3m gap from StartPlatform: one painted splat on its near edge is enough."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.21239, -1.9999995, 4.240143)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.691923, 24.109526, 0)
 size = Vector3(4, 4, 4)
 color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="WallButton" parent="Geometry" unique_id=1638777305 instance=ExtResource("3_j8rst")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -25.293, 0, -1.634)
-target = NodePath("../Door")
-extra_targets = Array[NodePath]([NodePath("../Maze")])
+[node name="GoalPlatform2" parent="Geometry" unique_id=2078449140 instance=ExtResource("block")]
+editor_description = "3m gap from StartPlatform: one painted splat on its near edge is enough."
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.691923, 9.840147, 0)
+size = Vector3(2, 30, 2)
+color = Color(0.58, 0.6, 0.64, 1)
 
-[node name="Block" parent="Geometry" unique_id=1445589096 instance=ExtResource("block")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.554779, -2, 0)
-size = Vector3(50, 4, 30)
+[node name="Block" parent="Geometry" unique_id=855058876 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.806322, 23.08528, 1.9073486e-06)
+size = Vector3(3.75, 2, 3)
 
-[node name="Door" parent="Geometry" unique_id=1725734844 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.39116, 1.6513984, 0)
-size = Vector3(0.5, 3.5, 30)
+[node name="Block2" parent="Geometry" unique_id=1509888572 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.921734, 21.670492, 0)
+size = Vector3(6, 1.5, 8)
 
-[node name="Maze" type="Node3D" parent="Geometry" unique_id=1597530864]
-editor_description = "The maze walls (doors). Sunk 3.6 m into the block; the button raises them all with the front wall. Set Y to 0 to edit them in place (put it back to -3.6 after). The cyan ghosts show where they end up."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.6, 0)
+[node name="Block3" parent="Geometry" unique_id=1188209368 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.760369, 19.323475, 0)
+size = Vector3(6, 2, 12)
 
-[node name="Door2" parent="Geometry/Maze" unique_id=292995611 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -15.440527, 1.651, -1.784547)
-size = Vector3(0.5, 3.5, 12)
+[node name="Block4" parent="Geometry" unique_id=1268703632 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1547813, 17.993698, -3.5998623)
+size = Vector3(6, 2, 4)
 
-[node name="Door3" parent="Geometry/Maze" unique_id=362674626 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -18.428097, 1.651, 1.293507)
+[node name="Block5" parent="Geometry" unique_id=1816462612 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1547813, 16.27877, 3.9908817)
+size = Vector3(6, 2, 4)
 
-[node name="Door5" parent="Geometry/Maze" unique_id=2000133983 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.28004, 1.651, 7.0740776)
-size = Vector3(0.5, 3.5, 12)
+[node name="Block6" parent="Geometry" unique_id=87924089 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1547813, 9.008832, -3.5998623)
+size = Vector3(3, 16, 3)
 
-[node name="Door6" parent="Geometry/Maze" unique_id=1863508985 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.267332, 1.651, 3.964057)
-size = Vector3(0.5, 3.5, 12)
+[node name="Block7" parent="Geometry" unique_id=1359051135 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1547813, 10.782631, 3.9908817)
+size = Vector3(2, 9, 2)
 
-[node name="Door9" parent="Geometry/Maze" unique_id=1349142686 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -11.053589, 1.651, 13.328561)
-size = Vector3(0.5, 3.5, 9)
+[node name="Block8" parent="Geometry" unique_id=410421504 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.760369, 12.344074, 0)
+size = Vector3(3, 12, 8)
 
-[node name="Door7" parent="Geometry/Maze" unique_id=2135539779 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.3004513, 1.651, 7.5673904)
-size = Vector3(0.5, 3.5, 12)
+[node name="Block9" parent="Geometry" unique_id=195417570 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.921734, 10.171333, 0)
+size = Vector3(3, 21, 4)
 
-[node name="Door4" parent="Geometry/Maze" unique_id=766931817 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5479832, 1.651, 1.3475469)
+[node name="Block10" parent="Geometry" unique_id=2145190819 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.3009834, -0.53206205, -10.016734)
+size = Vector3(9, 1, 2)
 
-[node name="Door8" parent="Geometry/Maze" unique_id=2023845570 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.30470276, 1.651, -2.9065847)
-size = Vector3(0.5, 3.5, 9)
+[node name="Block11" parent="Geometry" unique_id=1582593302 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6653666, 2.6031775, -6.098623)
+size = Vector3(2, 1, 2)
 
-[node name="Door10" parent="Geometry/Maze" unique_id=1928953424 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5479832, 1.651, -1.7686964)
+[node name="Block12" parent="Geometry" unique_id=1311106067 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.6506133, 5.33035, -4.0773005)
+size = Vector3(2, 1, 2)
 
-[node name="Door11" parent="Geometry/Maze" unique_id=390889232 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.259369, 1.651, -6.1316843)
-size = Vector3(0.5, 3.5, 9)
+[node name="Block13" parent="Geometry" unique_id=2021591526 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.260702, 8.164094, -0.9968319)
+size = Vector3(2, 1, 6)
 
-[node name="Door12" parent="Geometry/Maze" unique_id=1694847423 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.266739, 1.651, -5.0188723)
+[node name="Block14" parent="Geometry" unique_id=895565555 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1540115, 10.496336, 1.9856422)
+size = Vector3(2, 1, 2)
 
-[node name="Door13" parent="Geometry/Maze" unique_id=2045618920 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -9.015657, 1.651, -10.855992)
+[node name="Block15" parent="Geometry" unique_id=842544339 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7196752, 12.517121, -3.1189604)
+size = Vector3(2, 1, 2)
 
-[node name="Door14" parent="Geometry/Maze" unique_id=1427511821 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.279324, 1.651, -8.086088)
+[node name="Block16" parent="Geometry" unique_id=1299634856 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1663064, 14.772672, 3.242035)
+size = Vector3(2, 1, 5.5)
 
-[node name="Door15" parent="Geometry/Maze" unique_id=52143269 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -15.52657, 1.651, -8.173266)
+[node name="Breakable" parent="Geometry" unique_id=642043354 instance=ExtResource("3_3c2ka")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.155706, 19.279722, 2.263033)
+size = Vector3(6, 4, 0.5)
 
-[node name="Door16" parent="Geometry/Maze" unique_id=1548480229 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5782337, 1.6513984, -14.744523)
-size = Vector3(0.5, 3.5, 35)
+[node name="Block17" parent="Geometry" unique_id=1511986814 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1494117, 12.517121, -6.5555787)
+size = Vector3(3, 1, 3)
 
-[node name="Door17" parent="Geometry/Maze" unique_id=1434163643 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.17827415, 1.651, -7.160667)
+[node name="Block18" parent="Geometry" unique_id=2060909530 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.239151, 13.302106, -5.989989)
+size = Vector3(2, 1, 4)
 
-[node name="Door18" parent="Geometry/Maze" unique_id=1325576698 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3066349, 1.651, -13.014821)
-size = Vector3(0.5, 3.5, 3)
+[node name="Block19" parent="Geometry" unique_id=1374154671 instance=ExtResource("block")]
+transform = Transform3D(0.8660254, 0.5, 0, -0.5, 0.8660254, 0, 0, 0, 1, 3.6652188, 16.288, -6.072077)
+size = Vector3(2, 0.5, 2)
 
-[node name="Door19" parent="Geometry/Maze" unique_id=973673383 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9287395, 1.651, -8.9237)
-size = Vector3(0.5, 3.5, 3)
+[node name="Block20" parent="Geometry" unique_id=1654895619 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.98917, -2.9876347, -10.017)
+size = Vector3(10, 2, 4)
 
-[node name="Door20" parent="Geometry/Maze" unique_id=413892533 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.921894, 1.6509991, -9.989935)
-size = Vector3(0.5, 3.5, 9)
+[node name="Block21" parent="Geometry" unique_id=403251091 instance=ExtResource("block")]
+transform = Transform3D(0.70710677, 0, -0.70710677, 0, 1, 0, 0.70710677, 0, 0.70710677, 19.93718, -2.5038023, -6.190282)
+size = Vector3(10, 3, 4)
 
-[node name="Door21" parent="Geometry/Maze" unique_id=944432789 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.922, 1.651, 4.1335406)
-size = Vector3(0.5, 3.5, 12)
+[node name="Block22" parent="Geometry" unique_id=694664674 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.376835, 0.17804754, 0.014667511)
+size = Vector3(2, 1, 4)
 
-[node name="Door22" parent="Geometry/Maze" unique_id=1315640473 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.4255257, 1.651, -3.372124)
-size = Vector3(0.5, 3.5, 3)
+[node name="Block23" parent="Geometry" unique_id=789563373 instance=ExtResource("block")]
+transform = Transform3D(0.9659258, -0.25881904, 0, 0.25881904, 0.9659258, 0, 0, 0, 1, 24.630445, 2.4628606, 0.014667511)
+size = Vector3(2.5, 1, 2)
 
-[node name="Door23" parent="Geometry/Maze" unique_id=655413541 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.06946206, 1.6509995, 9.883149)
-size = Vector3(0.5, 3.5, 12)
+[node name="Block24" parent="Geometry" unique_id=704908933 instance=ExtResource("block")]
+transform = Transform3D(0.9848077, 0.17364818, 0, -0.17364818, 0.9848077, 0, 0, 0, 1, 20.745419, 4.6422668, 0.989336)
+size = Vector3(3, 1, 2)
 
-[node name="Door24" parent="Geometry/Maze" unique_id=541165773 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.597105, 1.6510005, 6.6235075)
+[node name="Block25" parent="Geometry" unique_id=2104210165 instance=ExtResource("block")]
+transform = Transform3D(0.9396926, -0.34202012, 0, 0.34202012, 0.9396926, 0, 0, 0, 1, 24.69139, 9.105965, 0.014667511)
+size = Vector3(3, 1, 4)
 
-[node name="Door25" parent="Geometry/Maze" unique_id=1488700779 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.631583, 1.651, 6.515847)
+[node name="Block26" parent="Geometry" unique_id=2058108609 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.402481, 6.816628, -0.8790941)
+size = Vector3(2, 1, 2)
 
-[node name="Door26" parent="Geometry/Maze" unique_id=1265014995 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 12.141019, 1.6509995, -1.6098928)
-size = Vector3(0.5, 3.5, 12)
+[node name="Block27" parent="Geometry" unique_id=1684345550 instance=ExtResource("block")]
+transform = Transform3D(0.9848077, 0.17364818, 0, -0.17364818, 0.9848077, 0, 0, 0, 1, 18.898535, 8.409315, 2.973843)
+size = Vector3(5, 5, 2)
 
-[node name="Door27" parent="Geometry/Maze" unique_id=272988462 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.254546, 1.651, -6.352107)
-size = Vector3(0.5, 3.5, 9)
+[node name="Block28" parent="Geometry" unique_id=1591496270 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.2539, 12.535369, 3.4739308)
+size = Vector3(2, 1, 4)
 
-[node name="Door28" parent="Geometry/Maze" unique_id=2083770447 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 15.462343, 1.6509991, -10.59966)
-size = Vector3(0.5, 3.5, 12)
+[node name="Block29" parent="Geometry" unique_id=183757310 instance=ExtResource("block")]
+transform = Transform3D(0.9659258, 0.25881904, 0, -0.25881904, 0.9659258, 0, 0, 0, 1, 7.707673, 14.934787, 3.996025)
+size = Vector3(3.5, 1, 4)
 
-[node name="Door29" parent="Geometry/Maze" unique_id=1657606076 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.114635, 1.651, -13.744373)
-size = Vector3(0.5, 3.5, 2.5)
+[node name="Block30" parent="Geometry" unique_id=320518962 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.741908, 14.106292, -2.4590569)
+size = Vector3(3, 1, 3)
 
-[node name="Door30" parent="Geometry/Maze" unique_id=2134769244 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 18.850254, 1.6509991, -12.745196)
-size = Vector3(0.5, 3.5, 9)
+[node name="Block31" parent="Geometry" unique_id=1745203400 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.169044, 15.857043, -2.9805107)
+size = Vector3(3.5, 1, 2)
 
-[node name="Door31" parent="Geometry/Maze" unique_id=123179902 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.086433, 1.651, -5.0039487)
-size = Vector3(0.5, 3.5, 15)
+[node name="Block32" parent="Geometry" unique_id=697030646 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.576054, 17.06477, -1.9622519)
+size = Vector3(4, 1, 2)
 
-[node name="Door32" parent="Geometry/Maze" unique_id=1704701354 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 17.3401, 1.6509991, -6.2735596)
-size = Vector3(0.5, 3.5, 12)
+[node name="Block33" parent="Geometry" unique_id=771838401 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.189722, 18.459915, 3.504491)
+size = Vector3(5, 1, 5)
 
-[node name="Door33" parent="Geometry/Maze" unique_id=1578021362 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.591537, 1.651, -4.7890773)
-size = Vector3(0.5, 3.5, 2.5)
+[node name="Block34" parent="Geometry" unique_id=472183934 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.768023, 18.839708, 5.4889984)
+size = Vector3(2, 1, 3)
 
-[node name="Door34" parent="Geometry/Maze" unique_id=1339042708 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 19.536283, 1.6509995, 2.2429912)
-size = Vector3(0.5, 3.5, 18)
+[node name="Block35" parent="Geometry" unique_id=1283149517 instance=ExtResource("block")]
+transform = Transform3D(0.49999994, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, 0.49999994, 21.610222, -3.4286957, 6.3492985)
+size = Vector3(8, 3, 4)
 
-[node name="Door35" parent="Geometry/Maze" unique_id=1966441373 instance=ExtResource("4_ifoay")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 17.300982, 1.6509995, 6.280284)
-size = Vector3(0.5, 3.5, 22.5)
+[node name="Block36" parent="Geometry" unique_id=84929503 instance=ExtResource("block")]
+transform = Transform3D(0.99999994, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 15.216325, -2.005334, 8.498026)
+size = Vector3(4, 4, 4)
 
-[node name="Door36" parent="Geometry/Maze" unique_id=1358886701 instance=ExtResource("4_ifoay")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.166275, 1.651, -8.20148)
-size = Vector3(0.5, 3.5, 13.5)
+[node name="Block37" parent="Geometry" unique_id=2139804195 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.197437, 2.8016396, -0.50737524)
+size = Vector3(2.5, 1, 3)
 
-[node name="Interactables" type="Node3D" parent="." unique_id=1344542114]
+[node name="Block38" parent="Geometry" unique_id=1361537274 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.700115, 4.628556, -2.9861784)
+size = Vector3(2.5, 1, 2)
+
+[node name="Block39" parent="Geometry" unique_id=276484635 instance=ExtResource("block")]
+transform = Transform3D(0.9396926, 0.34202012, 0, -0.34202012, 0.9396926, 0, 0, 0, 1, 13.393113, 6.4090185, -3.002174)
+size = Vector3(3, 1, 2)
+
+[node name="Block40" parent="Geometry" unique_id=1564320817 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.783882, 8.179077, -5.4874887)
+size = Vector3(3, 1, 3)
+
+[node name="Block41" parent="Geometry" unique_id=1335459773 instance=ExtResource("block")]
+transform = Transform3D(0.99999994, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 8.803452, 9.471685, 4.465974)
+size = Vector3(3, 1, 3)
+
+[node name="Block42" parent="Geometry" unique_id=601297119 instance=ExtResource("block")]
+transform = Transform3D(0.99999994, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 13.376479, 7.783429, 4.995681)
+size = Vector3(4, 1, 2)
+
+[node name="Block43" parent="Geometry" unique_id=439887392 instance=ExtResource("block")]
+transform = Transform3D(0.99999994, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 17.91186, 7.783429, 5.4769235)
+size = Vector3(3, 1, 3)
+
+[node name="Block44" parent="Geometry" unique_id=1631582952 instance=ExtResource("block")]
+transform = Transform3D(0.99999994, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 25.183933, -0.8280487, 6.1494327)
+size = Vector3(4, 18, 4)
+
+[node name="Block45" parent="Geometry" unique_id=1045864733 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.08143, 16.071804, -3.4730916)
+size = Vector3(3, 1, 5)
+
+[node name="Block46" parent="Geometry" unique_id=1960608854 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.345625, 18.194567, 4.4759684)
+size = Vector3(3, 1, 5)
+
+[node name="Block47" parent="Geometry" unique_id=1366485893 instance=ExtResource("block")]
+transform = Transform3D(0.99999994, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 0.9696865, -0.8280487, -1.2653568)
+size = Vector3(4, 18, 4)
+
+[node name="Block48" parent="Geometry" unique_id=1708576835 instance=ExtResource("block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1547813, -1.6610055, 3.9908817)
+size = Vector3(5, 16, 5)
+
+[node name="Interactables" type="Node3D" parent="." unique_id=1220133996]
 editor_description = "Put breakable.tscn, door.tscn and wall_button.tscn instances here."
 
-[node name="Coins" type="Node3D" parent="." unique_id=285615297]
+[node name="Door" parent="Interactables" unique_id=1776602313 instance=ExtResource("4_2j5vl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.323486, -0.23808742, 8.424089)
+move_direction = Vector3(0, 1, -3.5)
+move_distance = 5.3
+open_time = 3.0
+is_platform = true
+return_after = 10.0
+size = Vector3(2.5, 0.5, 2.5)
+
+[node name="WallButton" parent="Interactables" unique_id=1319989596 instance=ExtResource("5_icb4y")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 13.851407, 0, 8.4035425)
+target = NodePath("../Door")
+
+[node name="Coins" type="Node3D" parent="." unique_id=601871332]
 editor_description = "Instance coin.tscn here. The coin's origin sits on the floor."
 
-[node name="Coin" parent="Coins" unique_id=1741062012 instance=ExtResource("coin")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7541168, 0, -0.15705055)
+[node name="Coin" parent="Coins" unique_id=1811341326 instance=ExtResource("coin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9908514, -1.1920929e-07, -9.996191)
 
-[node name="Coin2" parent="Coins" unique_id=496488775 instance=ExtResource("coin")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.0558512, 0, -5.225703)
-
-[node name="Coin3" parent="Coins" unique_id=1993391051 instance=ExtResource("coin")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.392912, 0, 8.064138)
-
-[node name="Goal" parent="." unique_id=55813674 instance=ExtResource("goal")]
+[node name="Goal" parent="." unique_id=287332757 instance=ExtResource("goal")]
 editor_description = "The flag. Its origin sits on the floor."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.24173, 4.7683716e-07, 4.240143)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.688494, 26.109526, 0)

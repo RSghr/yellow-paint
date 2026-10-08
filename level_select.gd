@@ -428,7 +428,8 @@ func _level_row(i: int) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	panel.add_child(row)
-	var num := _label("%02d" % (i + 1), 30, CORP_BLUE)
+	var label := Progress.level_label(i)  # "Level 6" / "DLC 1"
+	var num := _label(label.get_slice(" ", 1).pad_zeros(2) if not info.post_launch else "DLC", 30, CORP_BLUE)
 	num.custom_minimum_size = Vector2(52, 0)
 	row.add_child(num)
 	var text := VBoxContainer.new()
