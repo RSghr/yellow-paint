@@ -14,9 +14,9 @@ level_name = "Victory Lap"
 intro_text = ""
 post_launch = true
 tester_1 = "Sven Tory"
-minimum_1 = 19
+minimum_1 = 20
 tester_2 = "David Goodenough"
-minimum_2 = 20
+minimum_2 = 21
 tester_3 = "Bea Tah"
 minimum_3 = 20
 

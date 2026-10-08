@@ -14,7 +14,9 @@ Paint the TOP and it climbs on it. Choose wisely, then press Enter."
 tester_1 = "Bea Tah"
 minimum_1 = 3
 tester_2 = "Moe Cap"
+minimum_2 = 5
 tester_3 = "Liv Elup"
+minimum_3 = 5
 
 [node name="RunnerSpawn" type="Marker3D" parent="." unique_id=1357247893]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 0)

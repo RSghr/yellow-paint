@@ -151,7 +151,7 @@ func _roll_sky() -> void:
 
 func _exit_tree() -> void:
 	_set_speed(0)  # Never leave the desktop/credits running fast.
-	_close_attempt("quit")  # Left mid-playtest (Tab, pause menu): it still counts as a test.
+	_close_attempt("quit")  # Left mid-playtest (pause menu): it still counts as a test.
 
 
 func _load_level() -> void:
@@ -305,9 +305,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("toggle_spectator"):
 		_toggle_spectator()
 	elif event.is_action_pressed("next_level") and _finished and round_index + 1 < Level.ROUNDS:
-		_start_round(round_index + 1)  # After the 3rd tester it's back to the computer (Tab).
-	elif event.is_action_pressed("back_to_menu"):
-		Progress.to_menu()
+		_start_round(round_index + 1)  # After the 3rd tester it's back to the computer (Esc > Level select).
 
 
 ## V (AI debug view): the tester's jump reach, centred where you aim (on a floor), or on the tester while spectating.
@@ -563,7 +561,8 @@ func _nav_keys() -> Array:
 	if round_index + 1 < Level.ROUNDS:
 		keys.append(["N", "next tester"])
 	keys.append(["Hold R", "retry this tester"])
-	keys.append(["Tab", "back to your desk" if round_index + 1 == Level.ROUNDS else "level select"])
+	if round_index + 1 == Level.ROUNDS:
+		keys.append(["Esc", "back to your desk"])  # No Tab shortcut: one stray key press used to throw a level away.
 	return keys
 
 
@@ -642,4 +641,4 @@ func _on_hold_hint(what: String, missing: PackedStringArray) -> String:
 func _on_died() -> void:
 	_set_speed(0)  # Results at normal speed.
 	_close_attempt("death")
-	results_card.show_death(runner.tester_name, [["Hold R", "retry"], ["Tab", "level select"]])
+	results_card.show_death(runner.tester_name, [["Hold R", "retry"], ["Esc", "menu"]])

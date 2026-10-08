@@ -1352,6 +1352,10 @@ func _decide() -> void:
 	if not _retry_jump.is_empty() and _try_retry_jump():
 		return
 	# Just fell and no painted way back: look around this floor first (wanders + patience), no blind leaps yet.
+	# Paint it can see but can't reach: say so BEFORE improvising, so the operator knows to paint closer.
+	if _say_too_far():
+		_start_scan(scan_time)
+		return
 	var cautious := _shaken and not (_wanders >= wander_limit and _lost_time >= patience)
 	if improvises and _goal_known and not cautious and _try_leap_of_faith():
 		return
@@ -1677,10 +1681,11 @@ func _say_too_far() -> bool:
 			continue
 		var d := pos - me
 		var flat := Vector2(d.x, d.z).length()
-		var beyond := flat > max_jump_distance or d.y > max_jump_up
-		if not beyond or flat > max_jump_distance + 4.0 or d.y > max_jump_up + 2.5:
-			continue
+		# Too far = it can't make that jump from this floor (take-off margin included), but a bit more reach would
+		# do it: the operator painted it just out of range. Way out of range isn't worth mentioning.
 		if not _link(me, pos).is_empty():
+			continue
+		if _link_within(me, pos, true, max_jump_distance + 1.5, max_jump_up + 1.0).is_empty():
 			continue
 		_too_far_said[pos.snapped(Vector3.ONE * 0.5)] = true
 		_look_at(pos, 1.0)

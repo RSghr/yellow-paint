@@ -180,16 +180,16 @@ In game, the player reads what each star level means by pressing **C** and hover
 
 ### Current lineups
 
-Minimums measured by the user in playtesting (October 2026), the fewest splats for a 15★ run.
+Minimums measured by the user in playtesting (8 October 2026, after the Greed trait), the fewest splats for a 15★ run.
 
 | Level | Round 1 | Round 2 | Round 3 |
 |---|---|---|---|
-| `level_01` Onboarding | Rhea Spawn (min 3) | Polly Gonn (min 3) | Al Gorithm (min 3) |
+| `level_01` Onboarding | Rhea Spawn (min 4) | Polly Gonn (min 2) | Al Gorithm (min 4) |
 | `level_02` Breakables | Bea Tah (min 3) | Moe Cap (min 5) | Liv Elup (min 5) |
 | `level_03` Buttons | Cass Cene (min 6) | Lou Tbox (min 2) | Max Levell (min 6) |
-| `level_04` The Gauntlet | Frank Rate (min 4) | Dee Sync (min 10) | Sven Tory (min 10) |
-| `level_05` The Tower | David Goodenough (min 20) | Mike Rotransaction (min 18) | Rhea Spawn (min 19) |
-| `level_06` Victory Lap (DLC) | Sven Tory (min 19) | David Goodenough (min 20) | Bea Tah (min 20) |
+| `level_04` The Gauntlet | Frank Rate (min 4) | Dee Sync (min 9) | Sven Tory (min 10) |
+| `level_05` The Tower | David Goodenough (min 19) | Mike Rotransaction (min 18) | Rhea Spawn (min 20) |
+| `level_06` Victory Lap (DLC) | Sven Tory (min 20) | David Goodenough (min 21) | Bea Tah (min 20) |
 | `level_07` Hanging Gardens | Frank Rate (min 11) | Al Gorithm (min 15) | Mike Rotransaction (min 26) |
 | `level_08` The Vault (draft, Greed) | Al Gorithm (min 8?) | Rhea Spawn (min 7?) | Polly Gonn (min 5?) |
 | `level_09` The Secret Room (draft) | Cass Cene (min 9?) | Rhea Spawn (min 7?) | Bea Tah (min 5?) |
