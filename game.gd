@@ -192,7 +192,7 @@ func _start_round(index: int) -> void:
 	_reset_run()
 	level_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN  # Right-aligned in the corner: grow leftwards.
 	level_label.text = "%s%s" % [
-		"" if Progress.level_override != "" else "Level %d: " % (Progress.current + 1), level.level_name]
+		"" if Progress.level_override != "" else "%s: " % Progress.level_label(Progress.current), level.level_name]
 	status_label.text = "Focus tester: %s" % r.tester
 	speech_feed.clear()
 	message_label.text = ""

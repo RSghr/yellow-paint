@@ -19,7 +19,7 @@ The template starts with `_`, so it's ignored. To reorder levels, rename the fil
 
 | Node | What it is |
 |---|---|
-| Root (`level.gd`) | Settings in the Inspector: `level_name` (menu/HUD), `intro_text` (shown at start), `death_height`, `post_launch` (Patch 1.1 bonus level, see 7), and **Round 1-3**: a tester (dropdown) and that round's `minimum`. |
+| Root (`level.gd`) | Settings in the Inspector: `level_name` (menu/HUD), `intro_text` (shown at start), `death_height`, and **Round 1-3**: a tester (dropdown) and that round's `minimum`. |
 | `RunnerSpawn` (Marker3D) | Where the playtester starts. Put it **0.9 above the floor** (its origin is at its middle). |
 | `OperatorSpawn` (Marker3D) | Where you start. **1.05 above the floor**. Rotate it to choose the starting view. |
 | `Geometry` | Static blocks: instances of `debug_block.tscn`. |
@@ -130,9 +130,11 @@ every level **after the tutorials** (levels 4+): 15 on all of them = Investors, 
 anything else = Decent. Adding a level 6 later changes what each ending asks for, and the new level becomes the
 one that triggers the greenlight.
 
-**Post-launch level (the $4.99 "secret area")**: tick **Post Launch** on the level root. It stays hidden until the
-game has shipped (Patch 1.1), never holds other levels back, doesn't count for the ending, and Chad's Patch 1.1
-mail names it. Give it a file name after the main levels (e.g. `level_06.tscn`).
+**Post-launch level (the $4.99 "secret area")**: name the file `level_dlc_01.tscn`, `level_dlc_02.tscn`... (lowercase:
+only files starting with `level_` are picked up). The file name is what makes it DLC: it sorts after the main levels,
+shows as "DLC 1" instead of a level number, stays hidden until the game has shipped (Patch 1.1), never holds other
+levels back, doesn't count for the ending, and Chad's Patch 1.1 mail names it. Main levels stay `level_01`,
+`level_02`... with no gaps, so their numbers in the game match the files.
 
 ## 7b. Pick the 3 testers
 
@@ -190,10 +192,10 @@ Minimums measured by the user in playtesting (8 October 2026, after the Greed tr
 | `level_03` Buttons | Cass Cene (min 6) | Lou Tbox (min 2) | Max Levell (min 6) |
 | `level_04` The Gauntlet | Frank Rate (min 4) | Dee Sync (min 9) | Sven Tory (min 10) |
 | `level_05` The Tower | David Goodenough (min 19) | Mike Rotransaction (min 18) | Rhea Spawn (min 20) |
-| `level_06` Victory Lap (DLC) | Sven Tory (min 20) | David Goodenough (min 21) | Bea Tah (min 20) |
-| `level_07` Hanging Gardens | Frank Rate (min 11) | Al Gorithm (min 15) | Mike Rotransaction (min 26) |
-| `level_08` The Vault (draft, Greed) | Al Gorithm (min 8?) | Rhea Spawn (min 7?) | Polly Gonn (min 5?) |
-| `level_09` The Secret Room (draft) | Cass Cene (min 9?) | Rhea Spawn (min 7?) | Bea Tah (min 5?) |
+| `level_06` Hanging Gardens | Frank Rate (min 11) | Al Gorithm (min 15) | Mike Rotransaction (min 26) |
+| `level_07` The Vault (draft, Greed) | Al Gorithm (min 8?) | Rhea Spawn (min 7?) | Polly Gonn (min 5?) |
+| `level_08` The Secret Room (draft) | Cass Cene (min 9?) | Rhea Spawn (min 7?) | Bea Tah (min 5?) |
+| `level_dlc_01` Victory Lap (DLC 1) | Sven Tory (min 20) | David Goodenough (min 21) | Bea Tah (min 20) |
 
 ### Add a new tester
 
