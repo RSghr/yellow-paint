@@ -17,6 +17,7 @@ const UNLOCK_ALL_SETTING := "yellow_paint/debug/unlock_all_levels"
 ## Testing: Project Settings > Yellow Paint > Debug > Show All Mails lists every mail in Inlook (debug builds only).
 const ALL_MAILS_SETTING := "yellow_paint/debug/show_all_mails"
 
+const DLC_PREFIX := "level_dlc_"  ## levels/level_dlc_XX.tscn = post-launch DLC (hidden until the game ships).
 var LEVELS: Array[Dictionary] = []  ## [{name, path, post_launch}], filled by _discover_levels().
 var current := 0  ## Index into LEVELS.
 var level_override := ""  ## Set when a level scene is launched directly (F6) and isn't in LEVELS.
@@ -58,8 +59,22 @@ func _discover_levels() -> void:
 	files.sort()
 	for f in files:
 		var path := LEVEL_DIR + f
+		# DLC = the file name: level_dlc_01.tscn, level_dlc_02.tscn... They sort after the numbered levels.
 		LEVELS.append({name = _read_root_prop(path, "level_name", path.get_file().get_basename()), path = path,
-			post_launch = bool(_read_root_prop(path, "post_launch", false))})
+			post_launch = f.begins_with(DLC_PREFIX)})
+
+
+## What the game calls level `index`: "Level 6" counts main levels only (the DLC doesn't take a number from
+## them), "DLC 1" counts the DLC ones.
+func level_label(index: int) -> String:
+	if index < 0 or index >= LEVELS.size():
+		return ""
+	var dlc: bool = LEVELS[index].post_launch
+	var n := 0
+	for i in index + 1:
+		if bool(LEVELS[i].post_launch) == dlc:
+			n += 1
+	return ("DLC %d" if dlc else "Level %d") % n
 
 
 ## Reads a property set on the level's root without instancing the whole scene.
@@ -471,10 +486,15 @@ static func level_testers(path: String) -> PackedStringArray:
 	var packed := load(path) as PackedScene
 	if packed:
 		var state := packed.get_state()
+		# A tester left at level.gd's default isn't written in the scene file: fall back to that default.
+		var defaults: Node = load("res://level.gd").new()
 		for key in ["tester_1", "tester_2", "tester_3"]:
+			var name: String = defaults.get(key)
 			for i in state.get_node_property_count(0):
 				if state.get_node_property_name(0, i) == key:
-					names.append(state.get_node_property_value(0, i))
+					name = state.get_node_property_value(0, i)
+			names.append(name)
+		defaults.free()
 	return names
 
 

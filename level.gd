@@ -16,9 +16,6 @@ extends Node3D
 		update_configuration_warnings()
 @export_multiline var intro_text := "Paint a route, then press Enter to start the playtest."
 @export var death_height := -2.5  ## The playtester is lost below this height. Keep it above the pit floor.
-## Post-launch content (the $4.99 "secret area"): hidden until the game ships (Patch 1.1), never needed
-## to unlock other levels, and doesn't count for the ending.
-@export var post_launch := false
 ## Music for this level: plays audio/music_<name>.ogg/.mp3/.wav. Empty = the usual "game" track
 ## (also used if the file is missing).
 @export var music := ""
