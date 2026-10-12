@@ -116,7 +116,7 @@ Everything resets when the player holds R (retry) (doors close, crates come back
 
 ## 7. Where the level appears
 
-Levels 1-3 are the tutorials and are always in Level Select. Every level after that is **hidden** until **every**
+Levels 1-3 are the tutorials: level 1 at first, then each opens once the one before was finished (any score). Every level after that is **hidden** until **every**
 level before it has scored at least **10/15**.
 
 **Testing:** turn on Project > Project Settings > (Advanced Settings) > **Yellow Paint > Debug > Unlock All Levels** to
