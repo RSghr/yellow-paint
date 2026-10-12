@@ -68,14 +68,14 @@ const TRAIT_VALUES := {  ## For the docs/editor only. The game shows stars.
 ## Written as the focus group's own notes on the tester. Keep them in sync with runner.gd's "Traits" values.
 const TRAIT_INFO := {
 	jump = [
-		"Clears about 4.5 m across and 2 m up, painted or not. Paint a landing further than that and they will tell you it's too far.\nJumps they improvise without paint land about half the time.",
-		"Clears about 5.5 m across and 2.5 m up.\nJumps they improvise without paint land about two times out of three.",
+		"Clears about 4.5 m across and 2 m up, painted or not. Paint a landing further than that and they will tell you it's too far (and try it anyway once nothing else is left).\nJumps they improvise without paint land about half the time.",
+		"Clears about 5.5 m across and 2.5 m up. A landing a bit further gets a try once nothing else is left.\nJumps they improvise without paint land about two times out of three.",
 		"Clears up to 7 m across and 3 m up.\nJumps they improvise without paint almost always land, so they get by on less paint.",
 	],
 	greed = [
 		"Only picks up loot a few steps away, on the floor they are standing on.\nAnything further is left behind unless the way to it is painted.",
 		"Walks over to any loot they spot, but never risks a jump for it.\nA collectible across a gap needs a painted landing.",
-		"Goes for every collectible in sight before following any paint, and improvises the jump to reach it if it looks reachable.\nIt doesn't always land. Loot out of reach is remembered for later.",
+		"Goes for every collectible in sight before following any paint, and improvises the jump to reach it if it looks reachable.\nJumps better than usual for loot, but doesn't always land. Loot out of reach is remembered for later.",
 	],
 	patience = [
 		"Barely strays from the last splat to look around, so the next one must be visible from there.\nNever jumps anywhere unpainted, not even toward the waystone.",
