@@ -98,8 +98,12 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
     `reach_up_by_level` 2.1 / 2.5 / 3.2 m → `max_jump_distance` / `max_jump_up`), plus `desperate_success_chance`
     0.5 / 0.65 / 0.95 (`jump_success_by_level`) and `leap_error` for improvised jumps (Short legs: leaps of faith also
     land only 50%, `short_legs`). A seen painted landing that's out of reach makes it say "Too far!" (`_say_too_far`,
-    once per spot, BEFORE it improvises: out of reach = no take-off on its floor works, margin included, but 1.5 m
-    more reach would; way out of range says nothing). Short legs needs gaps of ~3.3 m (Mike Rotransaction now finishes The Tower: minimum 18).
+    once per spot, BEFORE it improvises: out of reach = no take-off on its floor works, margin included, but
+    `stretch_reach` (2 m) more reach / `stretch_up` (1 m) more height would; way out of range says nothing).
+    **Stretch jump** (`_try_stretch_jump`, user's call Oct 2026): once out of options (same point as a desperate jump,
+    tried first), it jumps for that too-far splat anyway, once per spot, after a long hesitation ("It's yellow. It's
+    far. I'm going for it."): a gamble with its Jumping odds, a miss falls short (and "Round two" retries it after
+    the retrace). "No paint, no way" never does (it never improvises). Short legs needs gaps of ~3.3 m (Mike Rotransaction now finishes The Tower: minimum 18).
   - **Greed** (key `greed`, replaced Trust: everyone now has the old Thoughtful trust): Ascetic / Average / Loot goblin.
     - 1★ "Ascetic" (`greed_radius_by_level` 4 m): only wants loot on its own floor (|dy| < 0.6) within 4 m with a
       walkable path (`_wants_coin`, filters `known_coins()`). Anything else needs a painted way or is left behind.
@@ -108,12 +112,14 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
       sees on a platform within its jump reach (`_coin_jump` / `_gamble_ok`: a coin node only reachable by an unpainted
       jump, `_has_floor_under`), it goes for before unvisited paint and the waystone (`_pick_target`, right after
       reachable coins; not while retracing a fall). First time: walks to the take-off only (`_scouted_coins`, "Let me
-      just check something first"), looks around, then improvises the jump with its Jumping odds. **No safety check**:
-      a miss over a pit is a death (user's call, Oct 2026: on level 1 the pillar loot costs no paint for Polly, ~35-40%
-      deaths with her 65% odds). **Marked spot**: before the jump it marks its take-off (`_loot_anchor`, "Marking this
+      just check something first"), looks around, then improvises the jump with its Jumping odds **+ `loot_jump_bonus`
+      (0.25, max 97%)** (step flag `loot`: loot jumps and the way back to its marked spot, not dead-end returns).
+      **No safety check**: a miss over a pit is a death (user's call, Oct 2026: Polly 90%, Dee Sync 75%). **Marked spot**: before the jump it marks its take-off (`_loot_anchor`, "Marking this
       spot"). After grabbing the loot, if nothing painted leads on from there, it first looks around carefully for paint
       (`_try_loot_return`, `looked`), then goes back to the marked spot (same jump the other way, a gamble again; a
-      miss is a fall and the usual retrace takes over). The mark is dropped once it reaches a new splat.
+      miss is a fall and the usual retrace takes over). The mark is dropped once it reaches a new splat. Jumping on
+      from one loot ledge to the next keeps the mark, and the way back prefers spots that aren't loot ledges
+      (`_loot_ledges`: Frank went ledge to ledge on The Gauntlet, then "back" to the first ledge).
       Loot out of reach stays remembered (`_seen_coins`) and is gone for as soon as a known spot puts it in reach.
     - Old Trust code (`conviction_time`, `overreach`, `trust_bonus`) is kept dormant as plain exports at 0.
   - **Exploration** (key `patience` in code): No paint, no way / Curious / Explorer.
@@ -123,7 +129,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
     - 3★ Explorer: wanders 8 times up to 9 m, improvises after 16 s, and is **curious** (`curious_by_level`): presses
       unpainted buttons and smashes unpainted breakables it has seen (`known_curios`, `_seen_things`, path kind
       "curio", tried once nothing painted is left). Anything with paint is left to the paint. Each one is tried
-      **once** (`_tried_curios`: an elevator button re-arms, Mike once rode Hanging Gardens' 12 times), and never one
+      **once** (`_tried_curios`: an elevator button re-arms, Mike once rode Hanging Gardens' 12 times; a fall clears
+      the list, the elevator may be its way back up), and never one
       more than `setback_drop` + 1 m below the floor it trusts (curiosity doesn't send it back down the level).
       (Jumping for unpainted loot is the Loot goblin's now, not the Explorer's.)
   - Values live in runner.gd's "Traits" export arrays (index = trait level); `Runner.apply_profile()` applies them.
@@ -164,7 +171,9 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   landed, with each jump's take-off in `_trail_from` / `_trail_gamble`). Every landing updates the floor it trusts
   (`_home_y`), so landing more than `setback_drop` (1.5m) below it is a fall, whatever got it up there. After a fall it
   heads for the end of the trail (`_retrace_to`, where it fell from): painted links as usual, and the jumps it once made
-  can be made again the same way (`_replay_link`: same take-off, same landing; unpainted ones are gambles again). If
+  can be made again the same way (`_replay_link`: same take-off, same landing; unpainted ones are gambles again).
+  A trail stop whose floor is gone (the top of an elevator that went back down) is skipped: Mike used to jump at
+  thin air where the Hanging Gardens elevator had been. If
   the end isn't reachable it goes to the reachable trail stop furthest along (forward only, `_route_index`), and if
   none is, it explores as usual. Back where it fell, an improvised jump that failed is tried again at once
   (`_failed_jump` → `_retry_jump`, "Round two"). A landing only counts as "made it" if it's near the target in plan
@@ -178,7 +187,8 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   neither does smashing planks (they were in the way: the way on is through them).
 - **Dead-end return** (`_try_dead_end_return`, before a desperate jump): lost on a SIDE ledge it jumped onto (painted
   or not), it jumps back to where that jump took off ("Dead end. Back the way I came.", a gamble with its Jumping odds),
-  once per ledge (`_dead_ends`); the take-off becomes `_furthest`. Side ledge = it got no closer to the waystone (or,
+  once per ledge (`_dead_ends`); the take-off becomes `_furthest`. Same stretch window as stretch jumps (a way back
+  up to 2 m / 1 m out of range is tried too, it's its Jumping odds either way). Side ledge = it got no closer to the waystone (or,
   waystone unseen, no further from the start) than the floor it jumped from (`_is_progress`, 1.5 m): on a floor that
   was progress it improvises onward as before (Parkour routes like Hanging Gardens rely on it).
 - It plans **straight walks, or two straight walks around ONE corner** (`_corner_walk`: L-shaped via points, nudged,
@@ -206,7 +216,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   platform that is still moving are ignored until it stops (its `state_changed` triggers a rethink).
 - Priorities: unused hotfix > nearby coin (within `coin_detour`, Ascetic: `greed_radius`) > (Loot goblin) coin in jump
   reach > flag > painted interactable > unvisited paint > (Explorer) unpainted button/breakable > leap of faith >
-  wander > desperate jump.
+  wander > stretch jump > dead-end return > desperate jump.
 
 ## Times (logged, never scored)
 - `Runner.session_time` (playtest start → flag) and `time_lost` (`_is_lost()`: confused, wander walks, look-arounds
