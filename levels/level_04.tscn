@@ -18,7 +18,7 @@ minimum_1 = 4
 tester_2 = "Dee Sync"
 minimum_2 = 9
 tester_3 = "Sven Tory"
-minimum_3 = 10
+minimum_3 = 8
 
 [node name="RunnerSpawn" type="Marker3D" parent="." unique_id=1121332307]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.9, 0)

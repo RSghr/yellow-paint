@@ -403,7 +403,9 @@ func _open_levels() -> void:
 		elif not Progress.LEVELS[i].post_launch:
 			hidden += 1  # Locked levels are invisible: they arrive by email.
 	if hidden > 0:
-		col.add_child(_label("More playtests will be scheduled based on your results (%d/15 or better)." % Progress.UNLOCK_STARS, 15, MUTED))
+		var onboarding := Progress.tutorial_stage() < mini(Progress.TUTORIAL_COUNT, Progress.LEVELS.size()) - 1
+		col.add_child(_label("Finish this onboarding session to schedule the next one." if onboarding
+			else "More playtests will be scheduled based on your results (%d/15 or better)." % Progress.UNLOCK_STARS, 15, MUTED))
 	var w := _window("levels", "Level Select - PlaytestScheduler Pro", pad, Vector2(560, 120))
 	_focus_first_play(w)
 
