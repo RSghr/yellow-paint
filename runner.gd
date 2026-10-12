@@ -181,6 +181,8 @@ var _corner_cache := {}  ## "a|b" -> walk point around one corner (or INF): clea
 var _coin_attention := {}  ## coin instance id -> attention
 var _seen_coins := {}
 var _seen_things := {}  ## Explorer: unpainted buttons/breakables it has noticed (instance id -> true).
+var _tried_curios := {}  ## Explorer: the ones it already tried (instance id -> true). Never twice: an elevator button
+	## re-arms when the platform comes back down, and Mike Rotransaction rode one 12 times across Hanging Gardens.
 var _choices := {}  ## breakable id -> {i, t, choice}: remembered break-or-climb guesses
 var _task: Dictionary = {}  ## The interaction in progress.
 
@@ -293,6 +295,7 @@ func reset_to_spawn() -> void:
 	_coin_attention.clear()
 	_seen_coins.clear()
 	_seen_things.clear()
+	_tried_curios.clear()
 	_choices.clear()
 	_task = {}
 	_body.position = Vector3.ZERO
@@ -540,9 +543,12 @@ func known_curios() -> Array[Dictionary]:
 		return out
 	var seen := _seen_marks()
 	for node in get_tree().get_nodes_in_group("interactable"):
-		if not _seen_things.has(node.get_instance_id()) or node.is_used():
+		if not _seen_things.has(node.get_instance_id()) or node.is_used() or _tried_curios.has(node.get_instance_id()):
 			continue
 		if seen.any(func(m): return m.host == node):
+			continue
+		# Curiosity doesn't send it back down the level: only things around or above the floor it trusts.
+		if node.global_position.y < _home_y - setback_drop - 1.0:
 			continue
 		var pos: Vector3
 		if node.kind == "button":
@@ -844,6 +850,7 @@ func _start_interacting(step: Dictionary) -> void:
 	_timer = 0.0
 	_scan_duration = step.host.interact_duration()
 	if step.get("kind", "") == "curio":
+		_tried_curios[step.host.get_instance_id()] = true
 		if step.host.kind == "button":
 			say(["No paint, but a button is a button. *boop*", "Let's see what this one does.", "Pressing it. For science."].pick_random(), true)
 		else:
@@ -2003,6 +2010,25 @@ func _link(a: Vector3, b: Vector3, allow_jump := true) -> Dictionary:
 	return link
 
 
+## A jump down from `from` to `to` that comes back down to its take-off height while still over its own floor
+## (body included): it would land back on the ledge it jumped from, not on the splat below.
+func _lands_on_ledge(from: Vector3, to: Vector3) -> bool:
+	var d := to - from
+	var flat := Vector3(d.x, 0, d.z)
+	var vy := sqrt(2.0 * GRAVITY * jump_apex)  # Same arc as _jump_to (apex above the higher end: the take-off here).
+	var t := (vy + sqrt(vy * vy - 2.0 * GRAVITY * d.y)) / GRAVITY
+	var back_at_ledge := from + flat * ((2.0 * vy / GRAVITY) / t)  # Where it is when it's back at take-off height.
+	var space := get_world_3d().direct_space_state
+	var dir := flat.normalized() if flat.length() > 0.01 else Vector3.ZERO
+	var probes := [back_at_ledge, back_at_ledge - dir * 0.35]  # Its body trails behind the point it's above.
+	if flat.length() < 0.5:  # (Nearly) straight down: hanging on a rim, any side of its body can be on it.
+		probes = [from, from + Vector3(0.4, 0, 0), from - Vector3(0.4, 0, 0), from + Vector3(0, 0, 0.4), from - Vector3(0, 0, 0.4)]
+	for p in probes:
+		if _ground_y(space, p, from.y, 0.45) != null:
+			return true
+	return false
+
+
 func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_up: float) -> Dictionary:
 	var d := b - a
 	var flat := Vector2(d.x, d.z).length()
@@ -2016,7 +2042,10 @@ func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_
 		return {cost = a.distance_to(corner) + corner.distance_to(b), jump = false, via = corner}
 	if not allow_jump or d.y > reach_up + 1.5 or d.y < -max_drop - 1.5:
 		return {}
-	if flat <= reach and d.y <= reach_up and d.y >= -max_drop and _jump_clear(a, b):
+	# A drop must clear its own ledge: almost straight down off an edge it only hops on the spot and lands back on
+	# the rim (Mike on Hanging Gardens, hopping in place for 40 s at a splat just below the edge of his platform).
+	var drop := d.y < -1.0
+	if flat <= reach and d.y <= reach_up and d.y >= -max_drop and not (drop and _lands_on_ledge(a, b)) and _jump_clear(a, b):
 		return {cost = flat + 2.0, jump = true}
 	# Paint marks where to LAND. Walk to a sensible take-off point on this ground first: straight back toward where
 	# it stands, else up to 60 degrees either side (standing off to one side, the straight line can cross the gap
@@ -2026,7 +2055,7 @@ func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_
 	for angle in TAKEOFF_ANGLES:
 		var back := straight.rotated(Vector3.UP, deg_to_rad(angle))
 		var r := 1.2
-		while r <= reach and r < flat:
+		while r <= reach and (r < flat or drop):  # A drop may need a run-up from further back than where it stands.
 			var launch: Vector3 = b + back * r
 			# Steps of 0.2 m, and the very end of its reach too: with short legs the window between the edge margin
 			# and the reach can be narrower than one step.
@@ -2042,6 +2071,8 @@ func _link_within(a: Vector3, b: Vector3, allow_jump: bool, reach: float, reach_
 			if j.y > reach_up or j.y < -max_drop:
 				continue
 			if not _walkable(a, launch) or not _jump_clear(launch, b):
+				continue
+			if drop and _lands_on_ledge(launch, b):
 				continue
 			return {cost = a.distance_to(launch) + r + 2.0, jump = true, via = launch}
 	return {}

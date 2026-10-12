@@ -46,7 +46,12 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `overheat.gd` | The ThinkBox struggling when the operator strays (added by `game.gd`). **Comfort zone** = every visible thing in the level + `bounds_margin` 20 m on the sides, `bounds_headroom` 25 m above (`game.gd` `_operator_bounds()`): room for wide shots. Past it, over `strain_distance` 35 m: the screen pixelates, colours collapse and blocks glitch (canvas shader on a CanvasLayer under the HUD, follows the camera, clears when you come back) and the **fan** (`audio/fan.wav`, generated placeholder, looped) spins up and gets louder. The fan **never calms down** (`heat` only goes up) until you leave the level, then it spins down over `spin_down_time` (4 s; its player lives under the root so it outlives the level); it has its own "Fan" bus (SFX/Music sliders don't touch it, Master is compensated up to +30 dB) and keeps playing while paused. The operator's wall is at the far end of the strain zone. |
 
 ## Progression (Progress + mail_writer.gd)
-- Levels 1-3 (`TUTORIAL_COUNT`) are always in Level Select. Level N (4+) is **invisible** until EVERY level before it
+- **Onboarding**: levels 1-3 (`TUTORIAL_COUNT`) open one by one: at first only level 1, then each once the one before
+  was **finished** (any score, `Progress.earned`, `tutorial_stage()` = how many in a row are finished). Inlook's starting
+  mails (`inbox.gd` `stage`) come with them: stage 0 = Chad's welcome + IT's quick start guide; 1 (level 1 done) = IT's
+  "Workstation upgrade request" + HR's exit interview; 2 (level 2 done) = IT's password, Fun Friday, Art's moss. The
+  results card says "New playtest scheduled" and the desktop shows the new-mail toast (`level_finished` →
+  `_first_finish`). Level N (4+) is **invisible** until EVERY level before it
   has a best of `UNLOCK_STARS` (10/15) or more (`Progress.earned` / `missing_for`). There's no "next level" key: levels are started from the desktop. **Testing bypass**: Project Settings > Yellow Paint > Debug > Unlock All Levels
   (`yellow_paint/debug/unlock_all_levels`, debug builds only; turn on "Advanced Settings" to see it). It shows every
   level but doesn't send the unlock emails.
@@ -94,7 +99,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
     0.5 / 0.65 / 0.95 (`jump_success_by_level`) and `leap_error` for improvised jumps (Short legs: leaps of faith also
     land only 50%, `short_legs`). A seen painted landing that's out of reach makes it say "Too far!" (`_say_too_far`,
     once per spot, BEFORE it improvises: out of reach = no take-off on its floor works, margin included, but 1.5 m
-    more reach would; way out of range says nothing). Short legs needs gaps of ~3.3 m (The Tower needs 5 m: Mike Rotransaction can't finish it yet).
+    more reach would; way out of range says nothing). Short legs needs gaps of ~3.3 m (Mike Rotransaction now finishes The Tower: minimum 18).
   - **Greed** (key `greed`, replaced Trust: everyone now has the old Thoughtful trust): Ascetic / Average / Loot goblin.
     - 1★ "Ascetic" (`greed_radius_by_level` 4 m): only wants loot on its own floor (|dy| < 0.6) within 4 m with a
       walkable path (`_wants_coin`, filters `known_coins()`). Anything else needs a painted way or is left behind.
@@ -117,7 +122,9 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
     - 2★ Curious: wanders 3 times, 2-5 m, improvises after 8 s.
     - 3★ Explorer: wanders 8 times up to 9 m, improvises after 16 s, and is **curious** (`curious_by_level`): presses
       unpainted buttons and smashes unpainted breakables it has seen (`known_curios`, `_seen_things`, path kind
-      "curio", tried once nothing painted is left). Anything with paint is left to the paint.
+      "curio", tried once nothing painted is left). Anything with paint is left to the paint. Each one is tried
+      **once** (`_tried_curios`: an elevator button re-arms, Mike once rode Hanging Gardens' 12 times), and never one
+      more than `setback_drop` + 1 m below the floor it trusts (curiosity doesn't send it back down the level).
       (Jumping for unpainted loot is the Loot goblin's now, not the Explorer's.)
   - Values live in runner.gd's "Traits" export arrays (index = trait level); `Runner.apply_profile()` applies them.
 
@@ -148,6 +155,9 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   that bounced it straight back to its take-off is crossed off (`_futile_leaps`, `_is_futile_leap`).
 - Take-off search (`_link_within`): straight back from the landing toward the tester, else rotated up to ±60°
   (`TAKEOFF_ANGLES`), in 0.2 m steps plus the exact end of its reach (short legs' window can be narrower than a step).
+- **Drops must clear the ledge** (`_lands_on_ledge`): a jump more than 1 m down whose arc is back at take-off height
+  while still over its own floor (body included) isn't a link; the take-off search then looks further back for a
+  run-up. Before, a splat just below a platform's edge made Mike hop on the rim for 40 s.
 - Take-off points always keep `takeoff_margin` (0.6m) from the edge, and it can never start a jump while airborne
   (if it slips off, it just falls). `desperate_success_chance` is a probability (0-1).
 - **Retrace after a fall**: it keeps a **trail** (`_trail`, in order: paint spots it reached and where its unpainted jumps

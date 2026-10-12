@@ -14,11 +14,11 @@ script = ExtResource("lvl_script")
 level_name = "Hanging Gardens"
 intro_text = ""
 tester_1 = "Frank Rate"
-minimum_1 = 11
+minimum_1 = 12
 tester_2 = "Al Gorithm"
-minimum_2 = 15
+minimum_2 = 16
 tester_3 = "Mike Rotransaction"
-minimum_3 = 26
+minimum_3 = 20
 
 [node name="RunnerSpawn" type="Marker3D" parent="." unique_id=976302730]
 editor_description = "Where the playtester starts. Keep it 0.9 above the floor (its origin is at its middle)."

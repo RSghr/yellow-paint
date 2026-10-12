@@ -1,12 +1,14 @@
 extends RefCounted
 ## The emails in Inlook (the desktop's mail app). Newest first. Bodies are BBCode (RichTextLabel).
-## Add a starting mail: append a dictionary to MAILS with a unique `id`. Read state is saved in Progress.read_mails.
+## Add a starting mail: append a dictionary to MAILS with a unique `id` and a `stage` (0 = from the start, N = once
+## N tutorials were finished, see Progress.tutorial_stage()). Read state is saved in Progress.read_mails.
 ## Mails that arrive during play (new levels, flavor) are written by mail_writer.gd and stored in Progress.
 ## The "welcome" mail is the story intro (unread at first launch). "hr_exit" offers the save reset (level_select.gd).
 
 const MAILS := [
 	{
 		id = "welcome",
+		stage = 0,  ## Shows up once Progress.tutorial_stage() reaches this.
 		from = "Chad Bossworth",
 		address = "c.bossworth@synergex-interactive.biz",
 		cc = "Investor Relations; Legal; Marketing; Marketing (2); Brand Synergy Taskforce",
@@ -43,6 +45,7 @@ Synergex Interactive | [i]"We put the extra A in AAAA."[/i]
 	},
 	{
 		id = "keys",
+		stage = 0,
 		from = "IT Helpdesk",
 		address = "noreply-helpdesk@synergex-interactive.biz",
 		cc = "",
@@ -73,7 +76,7 @@ Yellow paint must be [b]subtle[/b], but it has to get the player through the lev
 If a playtest goes wrong, you can paint a [color=#e0402a][b]red hotfix[/b][/color] during the session. The tester will drop everything and go there. Management grants you [b]2 hotfixes per playtest[/b] (all three testers together). After that, every one breaks immersion, and your score with it.
 
 [b]Scores[/b]
-Each level is rated [b]out of 15[/b] (three testers, five stars each). A level needs at least [b]10/15[/b] before management schedules the next playtest.
+Each level is rated [b]out of 15[/b] (three testers, five stars each). The three onboarding sessions open one after the other: just finish them. After that, a level needs at least [b]10/15[/b] before management schedules the next playtest.
 
 If you have any further questions, please open a ticket. Tickets are reviewed quarterly.
 
@@ -81,6 +84,7 @@ IT Helpdesk | [i]"Any expired license needs to be approved by Legal and Darren f
 	},
 	{
 		id = "art",
+		stage = 2,
 		from = "Art Department",
 		address = "art-direction@synergex-interactive.biz",
 		cc = "",
@@ -102,6 +106,7 @@ The Art Department (both of us)""",
 	},
 	{
 		id = "workstation",
+		stage = 1,
 		from = "IT Helpdesk",
 		address = "noreply-helpdesk@synergex-interactive.biz",
 		cc = "",
@@ -125,6 +130,7 @@ IT Helpdesk | [i]"Any expired license needs to be approved by Legal and Darren f
 	},
 	{
 		id = "it",
+		stage = 2,
 		from = "IT Helpdesk",
 		address = "noreply-helpdesk@synergex-interactive.biz",
 		cc = "",
@@ -148,6 +154,7 @@ IT Helpdesk | [i]"Any expired license needs to be approved by Legal and Darren f
 	},
 	{
 		id = "fun",
+		stage = 2,
 		from = "People & Culture",
 		address = "happiness@synergex-interactive.biz",
 		cc = "",
@@ -169,6 +176,7 @@ People & Culture""",
 	},
 	{
 		id = "hr_exit",
+		stage = 1,
 		from = "People & Culture",
 		address = "happiness@synergex-interactive.biz",
 		cc = "",
@@ -206,7 +214,12 @@ static func all_mails() -> Array:
 		if _debug_mails.is_empty():  # Written once per session, so random lines don't change between refreshes.
 			_debug_mails = load("res://mail_writer.gd").debug_all_mails()
 		mails = _debug_mails + mails
-	for m in MAILS:
+	# Starting mails arrive with the onboarding (stage = tutorials finished), newest stage on top.
+	var stage := 99 if Progress.show_all_mails() else Progress.tutorial_stage()
+	var starting := []
+	for st in range(mini(stage, 9), -1, -1):  # Same stage: listed order.
+		starting += MAILS.filter(func(m): return m.get("stage", 0) == st)
+	for m in starting:
 		if m.id == "keys":
 			m = m.duplicate()
 			m.body = _with_keys(m.body)

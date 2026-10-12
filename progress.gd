@@ -10,7 +10,7 @@ const GAME_SCENE := "res://game.tscn"
 const MENU_SCENE := "res://level_select.tscn"
 const MAIL_WRITER := preload("res://mail_writer.gd")
 
-const TUTORIAL_COUNT := 3  ## Levels 1-3 are always available.
+const TUTORIAL_COUNT := 3  ## Levels 1-3: open one after the other, each once the one before was finished (any score).
 const UNLOCK_STARS := 10  ## A level after the tutorials appears once EVERY level before it scored this much (out of 15).
 ## Testing: Project Settings > Yellow Paint > Debug > Unlock All Levels shows every level (debug builds only).
 const UNLOCK_ALL_SETTING := "yellow_paint/debug/unlock_all_levels"
@@ -25,6 +25,7 @@ var resignations := 0  ## Times the player resigned (save reset via HR). Survive
 var seen_intro := false  ## The boss's welcome email has been read (Inlook opens on it at first launch).
 var read_mails: Array = []  ## Ids of Inlook emails already opened (see inbox.gd).
 var delivered_mails: Array = []  ## Emails received during play (mail_writer.gd), oldest first.
+var _first_finish := false  ## The last record() was this level's first finish (opens the next tutorial).
 var new_mail_ping := false  ## New mail since the desktop was last shown (it plays a sound).
 var open_levels_on_menu := false  ## Coming back from a level: the desktop reopens the Level Select window.
 var desktop_fade_in := false  ## Back from the credits: the desktop fades in from black.
@@ -115,7 +116,7 @@ func has_next() -> bool:
 	return level_override == "" and current + 1 < LEVELS.size() and is_unlocked(current + 1)
 
 
-## Tutorials are always open; a later level shows up once every level before it scored UNLOCK_STARS.
+## A tutorial opens once the one before it was finished (any score); a later level shows up once every level before it scored UNLOCK_STARS.
 ## Post-launch levels open when the game has shipped.
 func is_unlocked(index: int) -> bool:
 	if index < 0 or index >= LEVELS.size():
@@ -128,8 +129,17 @@ func is_unlocked(index: int) -> bool:
 ## Unlocked by playing (ignores the debug toggle). Used for the emails.
 func earned(index: int) -> bool:
 	if index < TUTORIAL_COUNT:
-		return true
+		return index == 0 or best(LEVELS[index - 1].path) > 0
 	return missing_for(index).is_empty()
+
+
+## How far the onboarding got: 0 = nothing finished yet, 1 = level 1 finished, 2 = levels 1 and 2 finished...
+## Inlook's starting mails come in by stage (inbox.gd `stage`).
+func tutorial_stage() -> int:
+	var stage := 0
+	while stage < mini(TUTORIAL_COUNT, LEVELS.size()) and best(LEVELS[stage].path) > 0:
+		stage += 1
+	return stage
 
 
 ## Names of the earlier levels that still need UNLOCK_STARS before `index` opens.
@@ -157,6 +167,17 @@ func show_all_mails() -> bool:
 ## Sends Chad's mails and returns the name of a level that just got unlocked ("" if none).
 ## `rounds`: [{tester, session, lost}] of this run, for Chad's comments about lost testers.
 func level_finished(total: int, rounds: Array = []) -> String:
+	# Onboarding: finishing a tutorial for the first time opens the next one, with the next starting mails.
+	var tutorial_unlock := ""
+	if _first_finish and level_override == "" and current + 1 < mini(TUTORIAL_COUNT, LEVELS.size()):
+		tutorial_unlock = LEVELS[current + 1].name
+		new_mail_ping = true
+	_first_finish = false
+	var unlocked := _level_finished_mails(total, rounds)
+	return unlocked if unlocked != "" else tutorial_unlock
+
+
+func _level_finished_mails(total: int, rounds: Array) -> String:
 	if level_override != "" or ship_state != "":
 		return ""  # After the greenlight there are no stakes: no more mails from Chad about scores.
 	var lost_note := MAIL_WRITER.lost_note(rounds)
@@ -203,7 +224,8 @@ func level_finished(total: int, rounds: Array = []) -> String:
 		_save()
 		return info.name
 	# This level is still holding things up: one review per score bracket.
-	if best(current_path()) < UNLOCK_STARS and not LEVELS[current].post_launch:
+	# (Not for levels 1-2: the next onboarding session opens whatever the score, nothing is on hold.)
+	if best(current_path()) < UNLOCK_STARS and not LEVELS[current].post_launch and current >= TUTORIAL_COUNT - 1:
 		var bracket := "15" if total >= 15 else ("10" if total >= 10 else ("5" if total >= 5 else "0"))
 		var perf_id := "perf_%s_%s" % [_key(current_path()), bracket]
 		if not _has_mail(perf_id):
@@ -409,6 +431,7 @@ func record(path: String, stars: int, runs: Array = []) -> bool:
 		return false
 	if level_override != "":
 		return false  # F6 test runs don't count.
+	_first_finish = best(path) == 0
 	var level := {}
 	for r in runs:
 		var s: Dictionary = level.get(r.tester, {})
