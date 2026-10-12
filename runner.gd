@@ -71,6 +71,9 @@ const PERCEPTION_INTERVAL := 0.1
 @export_subgroup("Jumping (Short legs / Average / Parkour)")
 @export var reach_by_level: Array[float] = [4.5, 5.5, 7.0]  ## max_jump_distance: how far ANY jump goes (painted ones too).
 @export var reach_up_by_level: Array[float] = [2.1, 2.5, 3.2]  ## max_jump_up: how high a ledge it can jump onto.
+@export var loot_jump_bonus := 0.25  ## Loot goblin: added to its Jumping odds for a jump to loot or back to its marked spot.
+@export var stretch_reach := 2.0  ## A painted landing up to this much further than its reach (and stretch_up higher)...
+@export var stretch_up := 1.0  ## ...is "too far", but once out of options it tries it anyway, with its Jumping odds.
 @export var jump_success_by_level: Array[float] = [0.5, 0.65, 0.95]  ## desperate_success_chance: odds that an improvised jump lands (Short legs: leaps of faith too).
 @export var leap_error_by_level: Array[float] = [0.7, 0.7, 0.25]  ## Leap-of-faith aim error in metres.
 @export_subgroup("Greed (Ascetic / Average / Loot goblin)")
@@ -111,6 +114,7 @@ var _dead_ends: Array[Vector3] = []  ## Floors it already jumped back from (see 
 var _futile_leaps: Array[Vector3] = []  ## Improvised landings it tried that put it right back where it took off.
 var _loot_anchor := Vector3.INF  ## Loot goblin: the spot it marked before jumping for loot (where it comes back to).
 var _loot_return := {}  ## Loot goblin: {at = landing} of the unpainted jump that got it to some loot (see _try_loot_return).
+var _loot_ledges: Array[Vector3] = []  ## Loot goblin: where its loot jumps landed (dead ends: not a way back).
 var _coin_jump := {}  ## Set by _decide: node index -> a coin it can only reach with an unpainted jump.
 var improvises := true  ## False = "No paint, no way": never jumps anywhere unpainted.
 var curious := false  ## Explorer: tries unpainted buttons/planks.
@@ -174,6 +178,7 @@ var _urgent := false  ## A hotfix appeared: drop whatever it's standing around d
 var _lost_time := 0.0  ## Seconds since it last made progress (reached paint/coin/button/flag, saw new paint, a door opened).
 var _last_jump_desperate := false
 var _too_far_said := {}  ## Spots it already complained were out of reach (cleared on reset).
+var _stretch_tried := {}  ## Too-far spots it already tried to jump to (cleared on reset).
 var _scan_looks: Array[Vector3] = []  ## Corridor openings still to check during this look-around.
 var _crumbs: Array[Vector3] = []  ## Where it has walked since the last NEW splat (every 2.5 m): its way back there.
 var _link_cache := {}  ## "a|b|jump" -> _link() result between two known spots (cleared when doors move, on reset).
@@ -306,10 +311,12 @@ func reset_to_spawn() -> void:
 	_lost_time = 0.0
 	_last_jump_desperate = false
 	_too_far_said.clear()
+	_stretch_tried.clear()
 	_corner_cache.clear()
 	_link_cache.clear()
 	_scouted_coins.clear()
 	_loot_return = {}
+	_loot_ledges.clear()
 	_loot_anchor = Vector3.INF
 	_futile_leaps.clear()
 	_dead_ends.clear()
@@ -780,6 +787,7 @@ func _process_jump(delta: float) -> void:
 				_home_y = feet().y  # Made it (painted or not): this is the floor it's on now.
 				if step.get("coin_gamble", false):
 					_loot_return = {at = feet()}  # It will need a way back once the loot is in the bag.
+					_loot_ledges.append(feet())
 				if step.jump:
 					# Remember the way and the take-off, so it can make this jump again after a fall.
 					var painted: bool = step.get("paint", false)
@@ -788,7 +796,8 @@ func _process_jump(delta: float) -> void:
 				return
 			if step.get("jump", false):
 				failed_jumps += 1
-				_failed_jump = {from = _jump_from, to = step.pos, improvised = step.leap}
+				_failed_jump = {from = _jump_from, to = step.pos, improvised = step.leap, loot = step.get("loot", false),
+					stretch = step.get("stretch", false)}
 				if step.leap and feet().distance_to(_jump_from) < 1.2:
 					_futile_leaps.append(step.pos)  # Bounced off something: don't keep trying that one.
 			# Any landing that isn't where it meant to go might be a fall.
@@ -798,6 +807,7 @@ func _process_jump(delta: float) -> void:
 					_trail_add(feet(), _jump_from, true)
 				if step.get("coin_gamble", false):
 					_loot_return = {at = feet()}  # Landed by the loot after all: it will need a way back too.
+					_loot_ledges.append(feet())
 				if step.leap:
 					say(["Made it! ...mostly.", "Nailed it. Sort of."].pick_random(), true)
 		elif not _check_setback():  # Fell off something without meaning to?
@@ -816,6 +826,7 @@ func _check_setback() -> bool:
 	_lost_time = 0.0  # A full patience period on this floor before it improvises again.
 	if not _trail.is_empty():
 		_retrace_to = _trail.back()  # Where it was when it fell.
+		_tried_curios.clear()  # The button it pressed on the way (an elevator) may be the way back up: one more go.
 		say(["Ow. Okay, I know the way back up.", "Fell. Let's retrace my steps.", "That was a shortcut. Down."].pick_random(), true)
 	return true
 
@@ -911,8 +922,8 @@ func _advance() -> void:
 		if step.get("desperate", false):
 			doubt = 1.6
 			Sfx.play("desperate", 0.0)
-			if step.get("loot_return", false):
-				pass  # Already said it's heading back to its marked spot.
+			if step.get("loot_return", false) or step.get("stretch", false):
+				pass  # Already said why (heading back to its marked spot / that the paint is too far).
 			elif step.get("coin_gamble", false):
 				say(["No paint? That loot is worth it.", "I can make that. Probably. LOOT!", "Collectibles first, safety second."].pick_random(), true)
 			elif short_legs:
@@ -973,7 +984,9 @@ func _jump_to(step: Dictionary) -> void:
 		_start_scan(scan_time * 0.5)
 		return
 	_jump_from = from
-	if step.get("coin_gamble", false) and (_loot_anchor == Vector3.INF or from.y > _loot_anchor.y - 0.3):
+	# (Jumping on from one loot ledge to the next keeps the mark where it was: the ledge is no way back.)
+	if step.get("coin_gamble", false) and (_loot_anchor == Vector3.INF or from.y > _loot_anchor.y - 0.3) \
+			and not _loot_ledges.any(func(l): return l.distance_to(from) < 2.0):
 		# Loot goblin: mark where it jumps from, to come back here once the loot is in the bag (_try_loot_return).
 		# A retry from lower down (it fell somewhere survivable) keeps the original mark.
 		_loot_anchor = from
@@ -983,7 +996,10 @@ func _jump_to(step: Dictionary) -> void:
 	_last_jump_desperate = step.get("desperate", false)
 	if _last_jump_desperate and flat.length() > 0.01:
 		# A gamble with fixed odds: a miss falls well short, a hit lands about where it aimed.
-		if randf() >= desperate_success_chance:
+		var odds := desperate_success_chance
+		if step.get("loot", false):
+			odds = minf(odds + loot_jump_bonus, 0.97)  # Loot goblin: it REALLY wants that loot (or its marked spot).
+		if randf() >= odds:
 			target = from.lerp(target, randf_range(0.45, 0.65))
 		else:
 			target += flat.normalized() * randf_range(-0.2, 0.3)
@@ -1234,9 +1250,12 @@ func _decide() -> void:
 			jumpable.append(false)
 	if _retrace_to != Vector3.INF:
 		# Retracing: the places it got to without paint are stepping stones too (jumping to them is a gamble again).
+		var tspace := get_world_3d().direct_space_state
 		for p in _trail:
 			if nodes.any(func(n): return n.distance_to(p) < 1.0):
 				continue
+			if _ground_y(tspace, p, p.y, 0.45) == null:
+				continue  # Its floor isn't there any more (the top of an elevator that went back down).
 			nodes.append(p)
 			trust.append(1)
 			kinds.append("trail")
@@ -1319,6 +1338,7 @@ func _decide() -> void:
 				_path[0].leap = true
 				_path[0].desperate = true
 				_path[0].coin_gamble = true
+				_path[0].loot = true  # Loot goblin odds (loot_jump_bonus).
 			if via_point[i] != null:
 				_path.push_front({pos = via_point[i], jump = false, trust = 99, leap = false,
 					paint = false, kind = "walk", host = null})
@@ -1381,6 +1401,10 @@ func _decide() -> void:
 	# Out of ideas for `patience` seconds AND it has finished a full round of looking around
 	# (that's usually when it spots paint it missed): gamble on a jump instead of sulking.
 	# Stuck on a floor it jumped onto: go back the way it came before gambling on somewhere new.
+	# Paint just out of reach (it said "Too far!"): nothing else left, so it tries that jump anyway, with its odds.
+	if improvises and _lost_time >= patience and _wanders >= wander_limit and _try_stretch_jump():
+		_lost_time = 0.0
+		return
 	if improvises and _lost_time >= patience and _wanders >= wander_limit and _try_dead_end_return():
 		_lost_time = 0.0
 		return
@@ -1624,6 +1648,10 @@ func _replay_link(a: Vector3, b: Vector3) -> Dictionary:
 	var from: Vector3 = _safe_takeoff(_trail_from[kb], b)
 	if a.distance_to(from) > 0.6 and not _walkable(a, from):
 		return {}
+	# The floor it landed on must still be there: the top of an elevator that has since gone back down isn't
+	# (Mike jumped at thin air where the Hanging Gardens elevator had been).
+	if _ground_y(get_world_3d().direct_space_state, b, b.y, 0.45) == null:
+		return {}
 	return {cost = a.distance_to(from) + from.distance_to(b) + 4.0, jump = true, via = from, replay = _trail_gamble[kb]}
 
 
@@ -1647,7 +1675,8 @@ func _try_dead_end_return() -> bool:
 		if _is_progress(from, me):
 			return false  # It moved forward getting here: improvise onward instead.
 		var back := _safe_takeoff(from, stop)
-		var link := _link_within(me, back, true, max_jump_distance, max_jump_up)
+		# Its Jumping odds either way, so a way back a bit out of its range (stretch_reach / stretch_up) is tried too.
+		var link := _link_within(me, back, true, max_jump_distance + stretch_reach, max_jump_up + stretch_up)
 		if link.is_empty() or not link.jump:
 			continue
 		_dead_ends.append(me)
@@ -1708,7 +1737,15 @@ func _try_loot_return() -> bool:
 	for p in _trail + _trail_from:
 		if p != Vector3.INF and absf(p.y - me.y) < 0.8 and not _walkable(me, p):
 			others.append(p)
-	others.sort_custom(func(a, b): return me.distance_to(a) < me.distance_to(b))
+	# Nearest first, but another loot ledge it already gambled its way onto is a dead end too: those last
+	# (Frank went loot ledge to loot ledge on The Gauntlet, then "back" to the first one instead of the main floor).
+	var on_loot_ledge := func(p: Vector3) -> bool: return _loot_ledges.any(func(l): return l.distance_to(p) < 2.0)
+	others.sort_custom(func(a, b):
+		var la: bool = on_loot_ledge.call(a)
+		var lb: bool = on_loot_ledge.call(b)
+		if la != lb:
+			return lb
+		return me.distance_to(a) < me.distance_to(b))
 	spots.append_array(others)
 	for to in spots:
 		var link := _link_within(me, to, true, max_jump_distance, max_jump_up)
@@ -1719,7 +1756,7 @@ func _try_loot_return() -> bool:
 		if link.get("via") != null:
 			_path.append({pos = link.via, jump = false, trust = 99, leap = false, paint = false, kind = "walk", host = null})
 		_path.append({pos = to, jump = true, trust = 1, leap = true, desperate = true, paint = false, kind = "leap", host = null,
-			loot_return = true})
+			loot_return = true, loot = true})
 		say(["Nothing. Back to my marked spot.", "Dead end. Same jump, other direction.",
 			"No paint here. Retracing my steps."].pick_random(), true)
 		_advance()
@@ -1737,7 +1774,47 @@ func _try_retry_jump() -> bool:
 		if not _walkable(feet(), from):
 			return false
 		_path.append({pos = from, jump = false, trust = 99, leap = false, paint = false, kind = "walk"})
-	_path.append({pos = jump.to, jump = true, trust = 1, leap = true, desperate = true, paint = false, kind = "leap"})
+	var stretch: bool = jump.get("stretch", false)
+	_path.append({pos = jump.to, jump = true, trust = 1, leap = true, desperate = true, paint = stretch,
+		kind = "paint" if stretch else "leap", loot = jump.get("loot", false), stretch = stretch})
+	_advance()
+	return true
+
+
+## Out of options, with paint in sight that's just out of reach (up to stretch_reach further / stretch_up higher):
+## jump for it anyway, once per spot. A gamble with its Jumping odds, after a long hesitation (a miss falls short).
+## "No paint, no way" never does (it never improvises).
+func _try_stretch_jump() -> bool:
+	var me := feet()
+	var best: Dictionary = {}
+	var best_d := INF
+	for s in known_spots():
+		var pos: Vector3 = s.pos
+		var key := pos.snapped(Vector3.ONE * 0.5)
+		if _is_visited(pos) or _stretch_tried.has(key) or not _link(me, pos).is_empty():
+			continue
+		if pos.y < death_height + 0.5:
+			continue
+		var link := _link_within(me, pos, true, max_jump_distance + stretch_reach, max_jump_up + stretch_up)
+		if link.is_empty() or not link.jump:
+			continue
+		var d := me.distance_to(pos)
+		if _goal_known:
+			d = pos.distance_to(_goal.global_position)  # The one that gets it closest to the waystone.
+		if d < best_d:
+			best_d = d
+			best = {pos = pos, link = link, key = key}
+	if best.is_empty():
+		return false
+	_stretch_tried[best.key] = true
+	_path.clear()
+	if best.link.get("via") != null:
+		_path.append({pos = best.link.via, jump = false, trust = 99, leap = false, paint = false, kind = "walk", host = null})
+	_path.append({pos = best.pos, jump = true, trust = 1, leap = true, desperate = true, paint = true, kind = "paint",
+		host = null, stretch = true})
+	_look_at(best.pos, 1.0)
+	say(["It's yellow. It's far. I'm going for it.", "Nothing else to do. That paint it is.",
+		"Too far, they said. Watch me.", "If I don't make it, tell them to paint closer."].pick_random(), true)
 	_advance()
 	return true
 
@@ -1756,7 +1833,7 @@ func _say_too_far() -> bool:
 		# do it: the operator painted it just out of range. Way out of range isn't worth mentioning.
 		if not _link(me, pos).is_empty():
 			continue
-		if _link_within(me, pos, true, max_jump_distance + 1.5, max_jump_up + 1.0).is_empty():
+		if _link_within(me, pos, true, max_jump_distance + stretch_reach, max_jump_up + stretch_up).is_empty():
 			continue
 		_too_far_said[pos.snapped(Vector3.ONE * 0.5)] = true
 		_look_at(pos, 1.0)
