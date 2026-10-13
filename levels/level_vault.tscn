@@ -62,7 +62,7 @@ color = Color(0.58, 0.6, 0.64, 1)
 
 [node name="Ramp" parent="Geometry" unique_id=1859368317 instance=ExtResource("block")]
 editor_description = "From the terrace (y -1.5) up to B (y 0)."
-transform = Transform3D(-4.091645e-08, -1.5379483e-08, -1, -0.35184154, 0.93605924, 0, 0.93605924, 0.35184154, -4.371139e-08, 23.160244, -0.94, -4.9193344)
+transform = Transform3D(-4.091645e-08, -1.5379483e-08, -1, -0.35184154, 0.93605924, 0, 0.93605924, 0.35184154, -4.371139e-08, 20.614504, -0.94, -4.9193344)
 size = Vector3(4.272, 0.4, 3)
 color = Color(0.45, 0.47, 0.5, 1)
 
@@ -86,7 +86,7 @@ color = Color(0.58, 0.6, 0.64, 1)
 
 [node name="A_Long4" parent="Geometry" unique_id=96357682 instance=ExtResource("block")]
 editor_description = "10 m long. Coin1 is by the landing; Coin2 is 7 m further: the Ascetic only takes coins within ~4 m of where it stands, so it needs a splat near Coin2 (or the route to pass it)."
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.737734, -0.8841667, -4.9830294)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.737734, -2.0974953, -4.9830294)
 size = Vector3(3, 7, 4)
 color = Color(0.58, 0.6, 0.64, 1)
 
