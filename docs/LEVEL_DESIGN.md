@@ -198,7 +198,7 @@ Minimums measured by the user in playtesting (8 October 2026, after the Greed tr
 | `level_buttons` Buttons | Cass Cene (min 6) | Lou Tbox (min 2) | Max Levell (min 6) |
 | `level_gauntlet` The Gauntlet | Frank Rate (min 4) | Dee Sync (min 9) | Sven Tory (min 8) |
 | `level_vault` The Vault (Greed) | Al Gorithm (min 7) | Rhea Spawn (min 6) | Polly Gonn (min 2) |
-| `level_secret_room` The Secret Room (Exploration) | Cass Cene (min ?) | Rhea Spawn (min 4) | Bea Tah (min ?) |
+| `level_secret_room` The Secret Room (Exploration) | Cass Cene (min 5) | Rhea Spawn (min 4) | Bea Tah (min 4) |
 | `level_tower` The Tower | David Goodenough (min 19) | Mike Rotransaction (min 18) | Rhea Spawn (min 21) |
 | `level_hanging_gardens` Hanging Gardens | Frank Rate (min 12) | Al Gorithm (min 16) | Mike Rotransaction (min 20) |
 | `level_dlc_victory_lap` Victory Lap (DLC 1) | Sven Tory (min 20) | David Goodenough (min 21) | Bea Tah (min 20) |
