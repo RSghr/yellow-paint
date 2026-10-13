@@ -21,6 +21,8 @@ func _go() -> void:
 	var progress = root.get_node("Progress")
 	for run in runs:
 		progress.current = progress.LEVELS.map(func(l): return l.path).find(data.level)
+		if progress.current == -1:  # Logs from before the level files were renamed (level_05...): find it by its name.
+			progress.current = progress.LEVELS.map(func(l): return l.name).find(data.level_name)
 		var game = load("res://game.tscn").instantiate()
 		root.add_child(game)
 		for i in 5:
