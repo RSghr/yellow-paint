@@ -7,16 +7,18 @@ How to make a Yellow Paint level, from an empty file to a tuned, playable level.
 **Easiest: the New Level tool**
 1. In Godot, open `tools/new_level.gd` in the Script editor.
 2. **File > Run** (Ctrl+Shift+X).
-3. It creates `levels/level_new.tscn` from `levels/_template.tscn`, with `order` = after the last level, and opens it.
+3. It creates `levels/level_new.tscn` from `levels/_template.tscn` and opens it.
 4. **Rename the file right away** to what the level is (`level_lava_bridge.tscn`, FileSystem dock), then never again:
    saves and playtest logs are keyed by the file name.
+5. Open `game.tscn`, select the root node **Game**, and in the Inspector's **Level order** add it to `levels` (or `dlc`)
+   where you want it.
 
 **By hand:** duplicate `levels/_template.tscn` (or any existing level) in the FileSystem dock, name it
-`level_<something>.tscn` and set its `order`.
+`level_<something>.tscn` and add it to the list.
 
-Levels appear in the level select **automatically**, sorted by their **`order`** (root node, Inspector), not by file
-name. The template starts with `_`, so it's ignored. **To reorder levels, change the `order` numbers** (one line per
-scene in git), never the file names.
+**The order of the game is those two lists** on game.tscn's root (Inspector > Level order): `levels` = the main
+game, `dlc` = the post-launch levels. Drag entries to reorder; never rename the files. A level file in neither list
+still shows up, at the end, with a warning in the Output. The template starts with `_`, so it's ignored.
 
 ## 2. What a level contains
 
@@ -133,12 +135,12 @@ every level **after the tutorials** (levels 4+): 15 on all of them = Investors, 
 anything else = Decent. Adding a level 6 later changes what each ending asks for, and the new level becomes the
 one that triggers the greenlight.
 
-**Post-launch level (the $4.99 "secret area")**: name the file `level_dlc_<something>.tscn` (lowercase: only files
-starting with `level_` are picked up; DLC levels have their own `order`, 1, 2...). The file name is what makes it DLC:
+**Post-launch level (the $4.99 "secret area")**: put it in game.tscn's `dlc` list (name the file
+`level_dlc_<something>.tscn`: only files starting with `level_` are picked up). Being in that list is what makes it DLC:
 it comes after the main levels,
 shows as "DLC 1" instead of a level number, stays hidden until the game has shipped (Patch 1.1), never holds other
 levels back, doesn't count for the ending, and Chad's Patch 1.1 mail names it. Main levels are numbered in the game
-by their place in the order ("Level 5"), whatever their `order` values (gaps are fine).
+by their place in the `levels` list ("Level 5").
 
 ## 7b. Pick the 3 testers
 

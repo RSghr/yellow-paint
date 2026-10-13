@@ -23,6 +23,14 @@ const OVERHEAT := preload("res://overheat.gd")
 const SPEECH_FEED := preload("res://speech_feed.gd")
 const RESULTS_CARD := preload("res://results_card.gd")
 
+@export_group("Level order")
+## Every level of the game, in the order they're played (drag to reorder). Read by Progress at startup.
+## Level files are named after the level (level_tower.tscn) and never renamed: saves and playtest logs use the name.
+## A level file in levels/ that's in neither list still shows up, at the end (with a warning).
+@export_file("*.tscn") var levels: Array[String] = []
+## The post-launch levels (the $4.99 DLC), in order: hidden until the game ships (Patch 1.1), shown as "DLC 1"...
+@export_file("*.tscn") var dlc: Array[String] = []
+
 @export_group("Scoring")
 ## Paint penalty steps, as a fraction of the round minimum: reaching minimum * (1 + step) costs 1, 2, 3 stars.
 ## Each step is at least one splat more than the one before (so the first one is at least minimum + 1).

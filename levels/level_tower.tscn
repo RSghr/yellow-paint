@@ -12,7 +12,6 @@
 editor_description = "Level root. Set level_name, intro_text and the 3 rounds (tester + minimum) in the Inspector. See docs/LEVEL_DESIGN.md."
 script = ExtResource("lvl_script")
 level_name = "The Tower"
-order = 7
 intro_text = "Manage to reach the the top and collect all the coins!"
 tester_1 = "David Goodenough"
 minimum_1 = 19
