@@ -10,6 +10,7 @@
 [node name="Level03" type="Node3D" unique_id=955787291]
 script = ExtResource("lvl_script")
 level_name = "Buttons"
+order = 3
 intro_text = "Buttons! The playtester only presses buttons painted yellow (painting the door won't help).
 A side ledge needs a painted way back, too. Press Enter when ready."
 tester_1 = "Cass Cene"

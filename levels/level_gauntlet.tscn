@@ -11,6 +11,7 @@
 [node name="Level04" type="Node3D" unique_id=291362872]
 script = ExtResource("lvl_script")
 level_name = "The Gauntlet"
+order = 4
 intro_text = "Everything at once: gaps, planks, a locked door and a crate.
 Paint a route, then press Enter to start the playtest."
 tester_1 = "Frank Rate"

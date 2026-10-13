@@ -66,7 +66,7 @@ const STORY_MAILS := {
 		"hey.\n\nare you okay? i know about the fan. i know about the paint. i know what goes on the slide.\n\nyou don't know me. i sat at your desk before you, back when it was on the 2nd floor and had a window. This is contractor [b]#3502[/b].\n\nthey never revoked my login. corporate security never renewed the credentials. i still get all the mails. \n\nYou did good. the testers found the flag. nobody will ever know it was you.\n\ndon't reply. replies go to a folder nobody reads.\n\ni read it.\n\n#3502"],
 }
 
-## The antivirus feud: one mail per main level unlocked (1 = The Gauntlet, 2 = The Tower, ...).
+## The antivirus feud: one mail per main level unlocked (1 = the first level after the onboarding, 2 = the next...).
 const ANTIVIRUS_THREAD := [
 	["Corporate Security", "security@synergex-interactive.biz", "New mandatory antivirus: VigilantShield Enterprise",
 		"Team,\n\nFollowing the recent leak, every workstation now runs [b]VigilantShield Enterprise[/b], in addition to the four antiviruses already installed. They will scan each other. This is called defense in depth.\n\nYou may notice your workstation is slower. That is what being safe feels like.\n\nCorporate Security"],
