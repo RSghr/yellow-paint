@@ -30,7 +30,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `pause_menu.gd` | Esc in game: Resume / Settings / Level select / Quit. Added by `game.gd`. Once the 3rd tester's results are up, Esc goes straight back to the desktop instead (`leave_instead`). |
 | `spectator_camera.gd` | Orbit camera following the playtester (A on AZERTY = physical Q). Operator is frozen (`active = false`) while spectating. |
 | `focus_group.gd` | `FocusGroup`: the tester `ROSTER` (pun names, parody `outlet` (IBN, Polygone...), archetype `intro`, jump/greed/exploration (`patience`) traits 0-2), star display, results quotes. |
-| `art/paint_splat.png` | Splat image (white placeholder), tinted by `PaintManager.paint_color`. |
+| `art/paint_splat.png` | Splat image (white splat shape), tinted by `PaintManager.paint_color`. |
 | `levels/_template.tscn`, `tools/new_level.gd` | Level template + EditorScript (File > Run) that creates `level_new.tscn` (rename the file once, right away, then add it to game.tscn's Level order). Guide: `docs/LEVEL_DESIGN.md` (also has the roster with stars and the current lineups; keep them in sync). |
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
 | `art/thinkbox_sky.gdshader` | The sky (used by `game.tscn`'s WorldEnvironment): the ThinkBox's untextured fallback dome (flat blue-grey, faint lat/long wireframe, `grid_strength`) with ONE blocky rectangle of the real sky streamed in (`show_patch`). **Rolled at random each time a level loads** (`game.gd` `_roll_sky()`, `sky_variant`, `SKY_NAMES`): `variant` 0 midday (blue, near-white sun, around the scene's DirectionalLight), 1 sunset (at the horizon under the sun), 2 night (pixel stars, crescent moon), about 1/3 each; 3 = missing texture, `missing_texture_chance` 0.5%: the whole dome is the magenta/black checker on a cube. `force_sky` (game.gd, -1 = random) to test one. The grey boxes are lit the same whatever the sky (the ThinkBox doesn't do time of day; fixed ambient colour). No `TIME` in the shader (it would re-render the sky every frame). Kept cool and dull so paint, hotfixes and loot stand out. |
@@ -265,7 +265,7 @@ Lineups are a first pass; per-round minimums are set by the user from playtestin
 6. `level_secret_room` The Secret Room (Claude's draft, edited by the user Oct 13): an EXPLORATION level. Long platforms
    with walls (each next landing only shows from the far end); **TrapButton** (unpainted) sinks R4: the Explorer
    presses unpainted buttons, so leaning on its exploring ruins the run. Never paint the trap. Cass Cene, Rhea Spawn,
-   Bea Tah: only Exploration differs. Only minimum_2 (4) is set so far (1 and 3 = level.gd's default 5).
+   Bea Tah: only Exploration differs. Minimums 5/4/4 (5 is level.gd's default, so minimum_1 isn't written in the file).
 7. `level_tower` The Tower: the user's vertical spiral level. Door2 is an elevator platform (button next to it, rises 10m,
    comes back down after 4 s with nobody on it: `return_after`). David Goodenough, Mike Rotransaction, Rhea Spawn.
 8. `level_hanging_gardens` Hanging Gardens (the user's): a JUMP level, each tester takes a different path for their
