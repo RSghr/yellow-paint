@@ -14,6 +14,10 @@ extends Node3D
 	set(v):
 		level_name = v
 		update_configuration_warnings()
+## Where this level comes in the game: lower first (1 = the first level). To reorder levels, change these numbers;
+## never rename the files (saves and playtest logs are keyed by file name). DLC levels (level_dlc_*) have their own
+## numbering, after the main game. Same number = file name order.
+@export var order := 0
 @export_multiline var intro_text := "Paint a route, then press Enter to start the playtest."
 @export var death_height := -2.5  ## The playtester is lost below this height. Keep it above the pit floor.
 ## Music for this level: plays audio/music_<name>.ogg/.mp3/.wav. Empty = the usual "game" track

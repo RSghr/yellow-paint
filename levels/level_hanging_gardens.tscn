@@ -12,6 +12,7 @@
 editor_description = "Level root. Set level_name, intro_text and the 3 rounds (tester + minimum) in the Inspector. See docs/LEVEL_DESIGN.md."
 script = ExtResource("lvl_script")
 level_name = "Hanging Gardens"
+order = 8
 intro_text = ""
 tester_1 = "Frank Rate"
 minimum_1 = 12

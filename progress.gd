@@ -60,9 +60,17 @@ func _discover_levels() -> void:
 	files.sort()
 	for f in files:
 		var path := LEVEL_DIR + f
-		# DLC = the file name: level_dlc_01.tscn, level_dlc_02.tscn... They sort after the numbered levels.
+		# DLC = the file name: level_dlc_victory_lap.tscn... They come after the main game.
 		LEVELS.append({name = _read_root_prop(path, "level_name", path.get_file().get_basename()), path = path,
-			post_launch = f.begins_with(DLC_PREFIX)})
+			post_launch = f.begins_with(DLC_PREFIX), order = int(_read_root_prop(path, "order", 0))})
+	# The order is each level's `order` (level.gd), not its file name: reordering never renames a file (saves and
+	# playtest logs are keyed by file name). Main game first, then DLC; same number = file name order.
+	LEVELS.sort_custom(func(a, b):
+		if a.post_launch != b.post_launch:
+			return b.post_launch
+		if a.order != b.order:
+			return a.order < b.order
+		return a.path < b.path)
 
 
 ## What the game calls level `index`: "Level 6" counts main levels only (the DLC doesn't take a number from
@@ -533,13 +541,23 @@ static func level_testers(path: String) -> PackedStringArray:
 
 
 func _key(path: String) -> String:
-	return path.get_file().get_basename()  # "level_01"
+	return path.get_file().get_basename()  # "level_tower"
+
+
+## Saves before the levels got their `order` (Oct 2026) keyed them by numbered file names, in this arrangement.
+const OLD_LEVEL_KEYS := {
+	level_01 = "level_onboarding", level_02 = "level_breakables", level_03 = "level_buttons", level_04 = "level_gauntlet",
+	level_05 = "level_tower", level_06 = "level_hanging_gardens", level_07 = "level_vault", level_08 = "level_secret_room",
+	level_dlc_01 = "level_dlc_victory_lap",
+}
+const SAVE_VERSION := 2
 
 
 func _load() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(SAVE_PATH) != OK:
 		return
+	var migrate: bool = cfg.get_value("meta", "version", 1) < SAVE_VERSION
 	resignations = cfg.get_value("employee", "resignations", 0)
 	# "best_total" (out of 15, 3 testers per level). The old "best_stars" section (out of 5) is ignored.
 	seen_intro = cfg.get_value("story", "seen_intro", false)
@@ -554,10 +572,36 @@ func _load() -> void:
 	ending = cfg.get_value("release", "ending", "")
 	for key in cfg.get_section_keys("best_total") if cfg.has_section("best_total") else []:
 		best_stars[key] = cfg.get_value("best_total", key, 0)
+	if migrate:
+		_migrate_level_keys()
+		_save()
 
+
+## Old save: numbered level keys ("level_05") -> the level files' names ("level_tower"), in scores, times, stats and
+## mail ids ("unlock_level_05" -> "unlock_level_tower"), so nothing is lost and no unlock mail is sent twice.
+func _migrate_level_keys() -> void:
+	var rename := func(key: String) -> String:
+		return OLD_LEVEL_KEYS.get(key, key)
+	var rename_id := func(id: String) -> String:
+		for old in OLD_LEVEL_KEYS:
+			var at := id.find(old)
+			# Whole key only ("level_05" in "perf_level_05_10", not "level_0" in something else).
+			if at != -1 and (at + old.length() == id.length() or id[at + old.length()] == "_"):
+				return id.substr(0, at) + OLD_LEVEL_KEYS[old] + id.substr(at + old.length())
+		return id
+	for dict in [best_stars, best_times, playtest_stats, best_runs]:
+		for key in dict.keys():
+			var nk: String = rename.call(key)
+			if nk != key:
+				dict[nk] = dict[key]
+				dict.erase(key)
+	for m in delivered_mails:
+		m.id = rename_id.call(str(m.get("id", "")))
+	read_mails = read_mails.map(func(id): return rename_id.call(str(id)))
 
 func _save() -> void:
 	var cfg := ConfigFile.new()
+	cfg.set_value("meta", "version", SAVE_VERSION)
 	cfg.set_value("employee", "resignations", resignations)
 	cfg.set_value("story", "seen_intro", seen_intro)
 	cfg.set_value("story", "read_mails", read_mails)
