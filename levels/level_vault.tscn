@@ -9,7 +9,6 @@
 editor_description = "GREED level (Ascetic / Average / Loot goblin, everything else average). Route: Start, A, B, Goal. Coins: by the landing (free), far end of A (Ascetic needs a splat near it), a ledge over a safe terrace (Loot goblin gambles), a ledge over the pit (painted for all). Minimums are placeholders."
 script = ExtResource("lvl_script")
 level_name = "The Vault"
-order = 5
 intro_text = "Some testers want every collectible in the world. Some won't take a step for one. The vault has plenty, in good places and in bad ones."
 tester_1 = "Al Gorithm"
 minimum_1 = 7

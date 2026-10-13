@@ -21,6 +21,8 @@ ssao_enabled = true
 
 [node name="Game" type="Node3D"]
 script = ExtResource("game_script")
+levels = Array[String](["res://levels/level_onboarding.tscn", "res://levels/level_breakables.tscn", "res://levels/level_buttons.tscn", "res://levels/level_gauntlet.tscn", "res://levels/level_vault.tscn", "res://levels/level_secret_room.tscn", "res://levels/level_tower.tscn", "res://levels/level_hanging_gardens.tscn"])
+dlc = Array[String](["res://levels/level_dlc_victory_lap.tscn"])
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_ryguw")

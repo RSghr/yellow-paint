@@ -8,7 +8,6 @@
 [node name="Level01" type="Node3D" unique_id=1467570383]
 script = ExtResource("lvl_script")
 level_name = "Onboarding"
-order = 1
 intro_text = "The playtester only jumps to ledges painted yellow.
 Paint where it should LAND (one splat per ledge is usually enough), then press Enter.
 Three testers will play it, one after the other. Some need more paint than others."

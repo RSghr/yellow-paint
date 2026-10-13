@@ -22,7 +22,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `results_card.gd` | End-of-round results card (same style as the tester card): stars pop in, paint/coins/hotfix rows, review quote + byline, level total /15 after round 3 with NEW BEST / "New playtest scheduled" / "on hold" note, key chips. Also the "Focus tester lost" card. |
 | `round_intro.gd` | Start of each round: level intro banner at the top (round 1 only) + tester card sliding in bottom-left (name, outlet, intro, stars popping in). Fades after `hold_time` (7s) or when the playtest starts. **C** (`toggle_tester_card`) brings the card back / hides it (it stays until C again). While it's up that way the cursor is free (`inspecting_changed` → `game.gd` `_on_card_inspecting`, recaptured on close) and hovering a trait row shows what its stars mean (`FocusGroup.TRAIT_INFO`, 2-3 lines per star level, written as the focus group's notes: keep in sync with runner.gd's trait values). The top-right HUD shows the level name and "Focus tester: name" (StatusLabel). |
 | `speech_feed.gd` | Tester speech on the HUD as a chat log under the tester name: "Name: message", oldest on top, newest at the bottom, max 3 lines, each fades `line_life` (6s) after it was said. The newest line is `newest_scale` (1.2x) bigger until the next one. Hidden while spectating. |
-| `progress.gd` | Autoload `Progress`: **auto-discovers** `levels/level_*.tscn` (ordered by each level's `order`, names from `level_name`; save keys = file names, `SAVE_VERSION` 2 migrated the old `level_05`-style keys, `OLD_LEVEL_KEYS`), current level, best stars in `user://progress.cfg`. |
+| `progress.gd` | Autoload `Progress`: **auto-discovers** `levels/level_*.tscn` (ordered by game.tscn's **Level order** lists `levels` / `dlc`, names from `level_name`; unlisted files come last with a warning; save keys = file names, `SAVE_VERSION` 2 migrated the old `level_05`-style keys, `OLD_LEVEL_KEYS`), current level, best stars in `user://progress.cfg`. |
 | `settings.gd` | Autoload `Settings`: mouse sensitivity, master / SFX / music volume (buses "Master", "SFX", "Music"; SFX and Music are created in code and send to Master), fullscreen (`user://settings.cfg`). |
 | `sfx.gd` | Autoload `Sfx`: `Sfx.play("name")` on the "SFX" bus. Plays `audio/<name>.ogg/.wav/.mp3` if present, silent otherwise. The same sound twice within 60 ms plays once (30 maze walls = one door sound). List in `SOUNDS` and `audio/README.md`. |
 | `music.gd` | Autoload `Music`: looping background music, crossfaded (`Music.play("desk")`). Files `audio/music_<track>`; tracks `desk` (desktop), `game` (levels, or `Level.music`), `credits` (falls back to desk), optional `credits_<ending>` per ending. "Music" bus created by `Settings` (`music_volume`). |
@@ -31,7 +31,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
 | `spectator_camera.gd` | Orbit camera following the playtester (A on AZERTY = physical Q). Operator is frozen (`active = false`) while spectating. |
 | `focus_group.gd` | `FocusGroup`: the tester `ROSTER` (pun names, parody `outlet` (IBN, Polygone...), archetype `intro`, jump/greed/exploration (`patience`) traits 0-2), star display, results quotes. |
 | `art/paint_splat.png` | Splat image (white placeholder), tinted by `PaintManager.paint_color`. |
-| `levels/_template.tscn`, `tools/new_level.gd` | Level template + EditorScript (File > Run) that creates `level_new.tscn` with the next `order` (rename the file once, right away). Guide: `docs/LEVEL_DESIGN.md` (also has the roster with stars and the current lineups; keep them in sync). |
+| `levels/_template.tscn`, `tools/new_level.gd` | Level template + EditorScript (File > Run) that creates `level_new.tscn` (rename the file once, right away, then add it to game.tscn's Level order). Guide: `docs/LEVEL_DESIGN.md` (also has the roster with stars and the current lineups; keep them in sync). |
 | `game.tscn/.gd` | Hosts a level: loads it, spawns runner + operator, HUD, paint budget, scoring, results. |
 | `art/thinkbox_sky.gdshader` | The sky (used by `game.tscn`'s WorldEnvironment): the ThinkBox's untextured fallback dome (flat blue-grey, faint lat/long wireframe, `grid_strength`) with ONE blocky rectangle of the real sky streamed in (`show_patch`). **Rolled at random each time a level loads** (`game.gd` `_roll_sky()`, `sky_variant`, `SKY_NAMES`): `variant` 0 midday (blue, near-white sun, around the scene's DirectionalLight), 1 sunset (at the horizon under the sun), 2 night (pixel stars, crescent moon), about 1/3 each; 3 = missing texture, `missing_texture_chance` 0.5%: the whole dome is the magenta/black checker on a cube. `force_sky` (game.gd, -1 = random) to test one. The grey boxes are lit the same whatever the sky (the ThinkBox doesn't do time of day; fixed ambient colour). No `TIME` in the shader (it would re-render the sky every frame). Kept cool and dull so paint, hotfixes and loot stand out. |
 | `level.gd` | `@tool` root script of every level: `level_name`, `intro_text`, `death_height`, `music` (track name, empty = game), 3 rounds (`tester_N` dropdown + `minimum_N`); editor warnings for missing spawns/goal/bad lineup. F6 on a level scene launches it inside `game.tscn`. |
@@ -70,7 +70,7 @@ ray tracing) and say so (`Runner.ADMIRE`, `admire_chance`). Mails, patch notes a
   Chad's ending mail + the **day-one patch notes** (`MailWriter.patch_notes`, from `tester_stats`), Inlook opens on them.
   Closing Inlook once the patch notes were read (or their "Publish patch notes & launch" button) fades to `credits.tscn`.
   After the credits: Patch 1.1 (`shipped()`): Chad's early access mail (names the post-launch level, $4.99), scores
-  kept, no more score mails (no stakes), DLC levels open (file name `level_dlc_XX.tscn` = `post_launch` in `Progress.LEVELS`, `Progress.DLC_PREFIX`; shown as "DLC 1" by `Progress.level_label()`, main levels are numbered without them), Start menu shows
+  kept, no more score mails (no stakes), DLC levels open (game.tscn's `dlc` list = `post_launch` in `Progress.LEVELS`; shown as "DLC 1" by `Progress.level_label()`, main levels are numbered without them), Start menu shows
   the ending. The results card of the last level says "Chad needs your greenlight" / "The launch is on hold until...".
 - **Best runs** (`Progress.best_runs`, per level key then tester): the stats of the 3 rounds behind the level's saved best
   score (`game.gd` `round_runs` = each round's finishing attempt, passed to `Progress.record()`; replaced on a new best,
@@ -248,9 +248,11 @@ Scraping (and Backspace clear) is **locked during a playtest**: from Enter until
 but each splat is a **hotfix** (`PaintMark.hotfix`, counted in `game.gd` `hotfixes`; R deletes them via `remove_hotfixes()`).
 
 ## Levels (in `Progress.LEVELS` order)
-**Order = each level's `order` (level.gd, Inspector), NOT the file name.** Files are named after the level
-(`level_tower.tscn`) and never renamed: saves and playtest logs are keyed by file name, and a rename makes git see a
-whole new scene. To reorder, change the `order` numbers (Oct 13: the user moved the Vault and the Secret Room before the Tower).
+**Order = game.tscn's root, Inspector > Level order: `levels` (main game) and `dlc` (post-launch), two lists of level
+files** (game.gd exports, read by `Progress._discover_levels` without instancing). Being in `dlc` is what makes a level
+DLC. Files are named after the level (`level_tower.tscn`) and never renamed: saves and playtest logs are keyed by file
+name, and a rename makes git see a whole new scene. To reorder, drag the list (Oct 13: the user moved the Vault and
+the Secret Room before the Tower).
 Lineups are a first pass; per-round minimums are set by the user from playtesting (retune after trait changes).
 1. `level_onboarding` Onboarding: paint landings. Rhea Spawn (default), Polly Gonn (loot goblin), Al Gorithm (ascetic).
 2. `level_breakables` Breakables: planks side = smash, crate top = climb; coin on a crate. Bea Tah, Moe Cap, Liv Elup.
@@ -274,9 +276,9 @@ DLC 1. `level_dlc_victory_lap` Victory lap (**post-launch**, the $4.99 DLC): a s
    Sven Tory, David Goodenough, Bea Tah (the extremes). Gap under Door7's end (z 13.6-15) is a known shortcut.
 
 ## Adding a level
-Run `tools/new_level.gd` (Script editor > File > Run): it creates `levels/level_new.tscn` with `order` = last + 1.
-Rename the file to what the level is (`level_lava_bridge.tscn`) right away, then never again; DLC files start with
-`level_dlc_`. Or duplicate `levels/_template.tscn` and set `order` yourself. It's picked up automatically. Full guide with the AI's numbers and a checklist: `docs/LEVEL_DESIGN.md`.
+Run `tools/new_level.gd` (Script editor > File > Run): it creates `levels/level_new.tscn`. Rename the file to what
+the level is (`level_lava_bridge.tscn`) right away, then never again, and add it to game.tscn's Level order (`levels`
+or `dlc`). Or duplicate `levels/_template.tscn`. An unlisted level file still shows up, last, with a warning. Full guide with the AI's numbers and a checklist: `docs/LEVEL_DESIGN.md`.
 
 ## Testing headless
 Godot 4.6 Linux binary can run the game headless. Use `--fixed-fps 60` to simulate faster than real time.
