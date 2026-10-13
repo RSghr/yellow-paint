@@ -395,7 +395,6 @@ func _open_levels() -> void:
 		pad.add_theme_constant_override("margin_" + side, 18)
 	pad.add_child(col)
 	col.add_child(_label("Patch 1.1: replay any session" if Progress.shipped() else "Scheduled playtest sessions", 24, INK))
-	col.add_child(_label("Each session: 3 focus testers, one after the other. Your paint stays between testers.", 15, MUTED))
 	var hidden := 0
 	for i in Progress.LEVELS.size():
 		if Progress.is_unlocked(i):

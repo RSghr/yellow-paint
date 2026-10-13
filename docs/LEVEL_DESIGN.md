@@ -7,13 +7,16 @@ How to make a Yellow Paint level, from an empty file to a tuned, playable level.
 **Easiest: the New Level tool**
 1. In Godot, open `tools/new_level.gd` in the Script editor.
 2. **File > Run** (Ctrl+Shift+X).
-3. It creates the next free `levels/level_XX.tscn` from `levels/_template.tscn` and opens it.
+3. It creates `levels/level_new.tscn` from `levels/_template.tscn`, with `order` = after the last level, and opens it.
+4. **Rename the file right away** to what the level is (`level_lava_bridge.tscn`, FileSystem dock), then never again:
+   saves and playtest logs are keyed by the file name.
 
-**By hand:** duplicate `levels/_template.tscn` (or any existing level) in the FileSystem dock and
-name it `level_XX.tscn`.
+**By hand:** duplicate `levels/_template.tscn` (or any existing level) in the FileSystem dock, name it
+`level_<something>.tscn` and set its `order`.
 
-Levels appear in the level select **automatically**, in file-name order (`level_01`, `level_02`...).
-The template starts with `_`, so it's ignored. To reorder levels, rename the files.
+Levels appear in the level select **automatically**, sorted by their **`order`** (root node, Inspector), not by file
+name. The template starts with `_`, so it's ignored. **To reorder levels, change the `order` numbers** (one line per
+scene in git), never the file names.
 
 ## 2. What a level contains
 
@@ -130,11 +133,12 @@ every level **after the tutorials** (levels 4+): 15 on all of them = Investors, 
 anything else = Decent. Adding a level 6 later changes what each ending asks for, and the new level becomes the
 one that triggers the greenlight.
 
-**Post-launch level (the $4.99 "secret area")**: name the file `level_dlc_01.tscn`, `level_dlc_02.tscn`... (lowercase:
-only files starting with `level_` are picked up). The file name is what makes it DLC: it sorts after the main levels,
+**Post-launch level (the $4.99 "secret area")**: name the file `level_dlc_<something>.tscn` (lowercase: only files
+starting with `level_` are picked up; DLC levels have their own `order`, 1, 2...). The file name is what makes it DLC:
+it comes after the main levels,
 shows as "DLC 1" instead of a level number, stays hidden until the game has shipped (Patch 1.1), never holds other
-levels back, doesn't count for the ending, and Chad's Patch 1.1 mail names it. Main levels stay `level_01`,
-`level_02`... with no gaps, so their numbers in the game match the files.
+levels back, doesn't count for the ending, and Chad's Patch 1.1 mail names it. Main levels are numbered in the game
+by their place in the order ("Level 5"), whatever their `order` values (gaps are fine).
 
 ## 7b. Pick the 3 testers
 
@@ -187,15 +191,15 @@ Minimums measured by the user in playtesting (8 October 2026, after the Greed tr
 
 | Level | Round 1 | Round 2 | Round 3 |
 |---|---|---|---|
-| `level_01` Onboarding | Rhea Spawn (min 4) | Polly Gonn (min 2) | Al Gorithm (min 4) |
-| `level_02` Breakables | Bea Tah (min 3) | Moe Cap (min 5) | Liv Elup (min 5) |
-| `level_03` Buttons | Cass Cene (min 6) | Lou Tbox (min 2) | Max Levell (min 6) |
-| `level_04` The Gauntlet | Frank Rate (min 4) | Dee Sync (min 9) | Sven Tory (min 10) |
-| `level_05` The Tower | David Goodenough (min 19) | Mike Rotransaction (min 18) | Rhea Spawn (min 20) |
-| `level_06` Hanging Gardens | Frank Rate (min 11) | Al Gorithm (min 15) | Mike Rotransaction (min 26) |
-| `level_07` The Vault (draft, Greed) | Al Gorithm (min 8?) | Rhea Spawn (min 7?) | Polly Gonn (min 5?) |
-| `level_08` The Secret Room (draft) | Cass Cene (min 9?) | Rhea Spawn (min 7?) | Bea Tah (min 5?) |
-| `level_dlc_01` Victory Lap (DLC 1) | Sven Tory (min 20) | David Goodenough (min 21) | Bea Tah (min 20) |
+| `level_onboarding` Onboarding | Rhea Spawn (min 4) | Polly Gonn (min 2) | Al Gorithm (min 4) |
+| `level_breakables` Breakables | Bea Tah (min 3) | Moe Cap (min 5) | Liv Elup (min 5) |
+| `level_buttons` Buttons | Cass Cene (min 6) | Lou Tbox (min 2) | Max Levell (min 6) |
+| `level_gauntlet` The Gauntlet | Frank Rate (min 4) | Dee Sync (min 9) | Sven Tory (min 8) |
+| `level_vault` The Vault (Greed) | Al Gorithm (min 7) | Rhea Spawn (min 6) | Polly Gonn (min 2) |
+| `level_secret_room` The Secret Room (Exploration) | Cass Cene (min ?) | Rhea Spawn (min 4) | Bea Tah (min ?) |
+| `level_tower` The Tower | David Goodenough (min 19) | Mike Rotransaction (min 18) | Rhea Spawn (min 21) |
+| `level_hanging_gardens` Hanging Gardens | Frank Rate (min 12) | Al Gorithm (min 16) | Mike Rotransaction (min 20) |
+| `level_dlc_victory_lap` Victory Lap (DLC 1) | Sven Tory (min 20) | David Goodenough (min 21) | Bea Tah (min 20) |
 
 ### Add a new tester
 

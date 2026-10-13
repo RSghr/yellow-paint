@@ -12,6 +12,7 @@
 editor_description = "Level root. Set level_name, intro_text and the 3 rounds (tester + minimum) in the Inspector. See docs/LEVEL_DESIGN.md."
 script = ExtResource("lvl_script")
 level_name = "Hanging Gardens"
+order = 8
 intro_text = ""
 tester_1 = "Frank Rate"
 minimum_1 = 12
@@ -196,7 +197,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.768023, 18.839708, 5.48899
 size = Vector3(2, 1, 3)
 
 [node name="Block35" parent="Geometry" unique_id=1283149517 instance=ExtResource("block")]
-transform = Transform3D(0.49999994, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, 0.49999994, 21.610222, -3.4286957, 6.3492985)
+transform = Transform3D(0.3622753, 0, 0.9320711, 0, 1, 0, -0.9320711, 0, 0.3622753, 20.773182, -3.4286957, 5.4913025)
 size = Vector3(8, 3, 4)
 
 [node name="Block36" parent="Geometry" unique_id=84929503 instance=ExtResource("block")]
@@ -232,7 +233,7 @@ transform = Transform3D(0.99999994, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 17.91186, 7
 size = Vector3(3, 1, 3)
 
 [node name="Block44" parent="Geometry" unique_id=1631582952 instance=ExtResource("block")]
-transform = Transform3D(0.99999994, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 25.183933, -0.8280487, 6.1494327)
+transform = Transform3D(0.99999994, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 24.55999, -0.8280487, 5.8538938)
 size = Vector3(4, 18, 4)
 
 [node name="Block45" parent="Geometry" unique_id=1045864733 instance=ExtResource("block")]

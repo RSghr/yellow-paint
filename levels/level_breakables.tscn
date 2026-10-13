@@ -9,6 +9,7 @@
 [node name="Level02" type="Node3D" unique_id=829564806]
 script = ExtResource("lvl_script")
 level_name = "Breakables"
+order = 2
 intro_text = "Breakables! Paint the SIDE of something and the playtester smashes it.
 Paint the TOP and it climbs on it. Choose wisely, then press Enter."
 tester_1 = "Bea Tah"
