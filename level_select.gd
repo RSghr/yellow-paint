@@ -340,6 +340,9 @@ func _show_start_menu() -> void:
 			col.add_child(_menu_button(item[0], item[1]))
 		col.add_child(HSeparator.new())
 		col.add_child(_menu_button("Shut down...", _ask_shutdown))
+		# The game's real version (Project Settings > Application > Config > Version), so screenshots tell which build.
+		col.add_child(_label("ThinkBox 2009  ·  build %s" % ProjectSettings.get_setting("application/config/version", "dev"),
+			12, Color(1, 1, 1, 0.35)))
 		add_child(_start_menu)
 	_start_menu.visible = true
 	_start_menu.move_to_front()
