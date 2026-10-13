@@ -17,7 +17,7 @@ const UNLOCK_ALL_SETTING := "yellow_paint/debug/unlock_all_levels"
 ## Testing: Project Settings > Yellow Paint > Debug > Show All Mails lists every mail in Inlook (debug builds only).
 const ALL_MAILS_SETTING := "yellow_paint/debug/show_all_mails"
 
-const DLC_PREFIX := "level_dlc_"  ## levels/level_dlc_XX.tscn = post-launch DLC (hidden until the game ships).
+const DLC_PREFIX := "level_dlc_"  ## A level file that isn't in game.tscn's lists yet counts as DLC if named level_dlc_*.
 var LEVELS: Array[Dictionary] = []  ## [{name, path, post_launch}], filled by _discover_levels().
 var current := 0  ## Index into LEVELS.
 var level_override := ""  ## Set when a level scene is launched directly (F6) and isn't in LEVELS.
@@ -56,21 +56,31 @@ func _discover_levels() -> void:
 	var files: PackedStringArray = []
 	for f in ResourceLoader.list_directory(LEVEL_DIR):  # Also works in exported builds.
 		if f.begins_with("level_") and f.ends_with(".tscn"):
-			files.append(f)
+			files.append(LEVEL_DIR + f)
 	files.sort()
-	for f in files:
-		var path := LEVEL_DIR + f
-		# DLC = the file name: level_dlc_victory_lap.tscn... They come after the main game.
-		LEVELS.append({name = _read_root_prop(path, "level_name", path.get_file().get_basename()), path = path,
-			post_launch = f.begins_with(DLC_PREFIX), order = int(_read_root_prop(path, "order", 0))})
-	# The order is each level's `order` (level.gd), not its file name: reordering never renames a file (saves and
-	# playtest logs are keyed by file name). Main game first, then DLC; same number = file name order.
-	LEVELS.sort_custom(func(a, b):
-		if a.post_launch != b.post_launch:
-			return b.post_launch
-		if a.order != b.order:
-			return a.order < b.order
-		return a.path < b.path)
+	# The order is game.tscn's two lists (Inspector > Level order), not the file names: reordering never renames a
+	# file (saves and playtest logs are keyed by file name).
+	var main: Array = _read_root_prop(GAME_SCENE, "levels", [])
+	var dlc: Array = _read_root_prop(GAME_SCENE, "dlc", [])
+	for path in main + dlc:
+		if path in files:
+			_add_level(path, path in dlc)
+		else:
+			push_warning("Progress: %s is in game.tscn's level order but there's no such level file." % path)
+	for path in files:
+		if path in main or path in dlc:
+			continue
+		# A level file nobody listed yet (a new one): it still shows up, at the end. DLC by its file name.
+		push_warning("Progress: %s isn't in game.tscn's level order (Inspector > Level order): it comes last." % path)
+		_add_level(path, path.get_file().begins_with(DLC_PREFIX))
+	# Main game first, then DLC (an unlisted main level still goes before the DLC).
+	var sorted := LEVELS.filter(func(l): return not l.post_launch) + LEVELS.filter(func(l): return l.post_launch)
+	LEVELS.assign(sorted)
+
+
+func _add_level(path: String, post_launch: bool) -> void:
+	LEVELS.append({name = _read_root_prop(path, "level_name", path.get_file().get_basename()), path = path,
+		post_launch = post_launch})
 
 
 ## What the game calls level `index`: "Level 6" counts main levels only (the DLC doesn't take a number from
@@ -544,7 +554,7 @@ func _key(path: String) -> String:
 	return path.get_file().get_basename()  # "level_tower"
 
 
-## Saves before the levels got their `order` (Oct 2026) keyed them by numbered file names, in this arrangement.
+## Saves from before the levels were named after themselves (Oct 2026) used numbered file names, in this arrangement.
 const OLD_LEVEL_KEYS := {
 	level_01 = "level_onboarding", level_02 = "level_breakables", level_03 = "level_buttons", level_04 = "level_gauntlet",
 	level_05 = "level_tower", level_06 = "level_hanging_gardens", level_07 = "level_vault", level_08 = "level_secret_room",
