@@ -287,6 +287,9 @@ Write a throwaway `extends SceneTree` script in the project root (delete it afte
 using raycasts, call `game.runner.start()`, and step `physics_frame`. The AI is random, so run each scenario several times.
 
 ## Release (Windows)
+- **Version** (x.y.z: x = 0 until the game is called complete, y = feature update / level pack, z = fixes and tweaks):
+  `application/config/version` in project.godot (shown at the bottom of the Start menu, "ThinkBox 2009 · build 0.9.2")
+  AND `file_version` / `product_version` in export_presets.cfg ("0.9.2.0"). Bump all three together. First itch build: 0.9.2.
 - `export_presets.cfg`: "Windows Desktop", single .exe (PCK embedded, no console), icon `art/Logo.ico` (multi-size,
   made from `art/Logo.png`), output `windows/YellowPaint.exe` (git-ignored). Excludes `docs/`, `tools/`, `*.md`.
 - Boot splash = `art/boot_splash.png` (the desktop wallpaper rendered without icons, bg `#0C1528`): it fades into an
